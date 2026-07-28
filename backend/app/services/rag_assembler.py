@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from app.models.manuscript import Scene
 from app.models.codex import CodexEntry
 
-def assemble_context(scene_id: int, db: Session) -> str:
+def assemble_context(scene_id: int, user_id: int, db: Session) -> str:
     """
     Ensambla el System Prompt inyectando los beats de la escena, 
     el texto escrito previamente, y la información del Codex (RAG).
     """
-    scene = db.query(Scene).filter(Scene.id == scene_id).first()
+    # 1. Recuperar la Escena
+    scene = db.query(Scene).filter(Scene.id == scene_id, Scene.user_id == user_id).first()
     if not scene:
         return "Actúa como un escritor experto."
         

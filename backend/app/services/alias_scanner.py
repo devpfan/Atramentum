@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from app.models.codex import CodexAlias, CodexEntry
 
-def scan_text_for_aliases(text: str, db: Session) -> List[Dict[str, Any]]:
+def scan_text_for_aliases(text: str, user_id: int, db: Session) -> List[Dict[str, Any]]:
     """
     Escanea el texto y busca ocurrencias de todos los alias guardados en la base de datos.
     Retorna una lista de entidades detectadas para que el frontend las resalte.
@@ -12,7 +12,7 @@ def scan_text_for_aliases(text: str, db: Session) -> List[Dict[str, Any]]:
         return []
 
     # Obtenemos todos los alias junto con su información del Codex
-    aliases = db.query(CodexAlias).join(CodexEntry).all()
+    aliases = db.query(CodexAlias).join(CodexEntry).filter(CodexEntry.user_id == user_id).all()
     
     detected_entities = {}
     

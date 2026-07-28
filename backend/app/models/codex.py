@@ -18,6 +18,7 @@ class CodexEntry(Base):
     __tablename__ = "codex_entries"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, index=True, nullable=False)
     category = Column(Enum(CodexCategory), nullable=False)
     description = Column(Text, nullable=True) # Descripción detallada de la entidad

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.core.config import settings
-from app.api.routes import codex, scenes, analyze, ai
+from app.api.routes import codex, scenes, analyze, ai, auth
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -8,6 +8,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(codex.router, prefix=f"{settings.API_V1_STR}/codex", tags=["codex"])
 app.include_router(scenes.router, prefix=f"{settings.API_V1_STR}/scenes", tags=["scenes"])
 app.include_router(analyze.router, prefix=f"{settings.API_V1_STR}/analyze", tags=["analyze"])

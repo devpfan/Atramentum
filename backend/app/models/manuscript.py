@@ -6,6 +6,7 @@ class Series(Base):
     __tablename__ = "series"
     
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
     
@@ -20,6 +21,7 @@ class Book(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     synopsis = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     series_id = Column(Integer, ForeignKey("series.id"), nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -37,6 +39,7 @@ class Act(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     order = Column(Integer, default=1)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
 
     book = relationship("Book", back_populates="acts")
@@ -46,6 +49,7 @@ class Chapter(Base):
     __tablename__ = "chapters"
     
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String, nullable=False)
     order = Column(Integer, default=1)
     act_id = Column(Integer, ForeignKey("acts.id"), nullable=False)
@@ -61,6 +65,7 @@ class Scene(Base):
     __tablename__ = "scenes"
     
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String, nullable=False)
     order = Column(Integer, default=1)
     
