@@ -1,0 +1,38 @@
+import json
+from sqlalchemy.orm import Session
+from app.models.manuscript import Scene
+from app.models.codex import CodexEntry
+
+def assemble_context(scene_id: int, db: Session) -> str:
+    """
+    Ensambla el System Prompt inyectando los beats de la escena, 
+    el texto escrito previamente, y la información del Codex (RAG).
+    """
+    scene = db.query(Scene).filter(Scene.id == scene_id).first()
+    if not scene:
+        return "Actúa como un escritor experto."
+        
+    context_lines = []
+    context_lines.append("Actúa como un escritor experto y asiste al autor a redactar su libro.")
+    
+    if scene.beats:
+        context_lines.append("\n--- BEATS DE LA ESCENA (Lo que debe suceder) ---")
+        for beat in scene.beats:
+            if isinstance(beat, dict) and 'content' in beat:
+                context_lines.append(f"- {beat['content']}")
+            else:
+                context_lines.append(f"- {json.dumps(beat)}")
+                
+    if scene.content:
+        context_lines.append("\n--- TEXTO ACTUAL DE LA ESCENA ---")
+        context_lines.append(scene.content)
+        
+    # Agregamos la información del Codex al contexto (Lore)
+    entries = db.query(CodexEntry).all()
+    if entries:
+        context_lines.append("\n--- LORE DEL MUNDO (CODEX) ---")
+        for entry in entries:
+            desc = entry.description or ""
+            context_lines.append(f"[{entry.category.value}] {entry.name}: {desc}")
+
+    return "\n".join(context_lines)
