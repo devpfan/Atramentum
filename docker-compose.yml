@@ -1,0 +1,16 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: atramentum_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=atramentum
+    ports:
+      - "5432:5432"
+    volumes:
+      - atramentum_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  atramentum_data:
