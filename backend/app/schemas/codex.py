@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.models.codex import CodexCategory
 from datetime import datetime
 
@@ -20,7 +20,7 @@ class CodexEntryBase(BaseModel):
     name: str
     category: CodexCategory
     description: Optional[str] = None
-    attributes: Optional[str] = None
+    attributes: Optional[Dict[str, Any]] = None
 
 class CodexEntryCreate(CodexEntryBase):
     aliases: Optional[List[str]] = []

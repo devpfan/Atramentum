@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, func, Enum
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
 from .base import Base
 import enum
@@ -22,7 +23,7 @@ class CodexEntry(Base):
     name = Column(String, index=True, nullable=False)
     category = Column(Enum(CodexCategory), nullable=False)
     description = Column(Text, nullable=True) # Descripción detallada de la entidad
-    attributes = Column(Text, nullable=True) # Atributos adicionales (pueden ser estructurados en el futuro)
+    attributes = Column(JSONB, nullable=True) # Atributos adicionales como JSON
     
     # Campo vectorial para búsqueda semántica (768 dimensiones es el estándar para Gemini embeddings)
     embedding = Column(Vector(768), nullable=True) 
