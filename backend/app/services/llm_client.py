@@ -14,7 +14,7 @@ async def generate_scene_text(context: str, prompt: str):
 
     try:
         response = await client.aio.models.generate_content_stream(
-            model='gemini-2.5-flash',
+            model='gemini-flash-lite-latest',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=context,
@@ -44,7 +44,7 @@ async def edit_selected_text(selected_text: str, instruction: str):
     
     try:
         response = await client.aio.models.generate_content_stream(
-            model='gemini-2.5-flash',
+            model='gemini-flash-lite-latest',
             contents=user_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
