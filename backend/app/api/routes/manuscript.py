@@ -16,6 +16,7 @@ router = APIRouter()
 class BookBase(BaseModel):
     title: str
     synopsis: Optional[str] = None
+    target_word_count: Optional[int] = 50000
 
 class BookSchema(BookBase):
     id: int
@@ -59,7 +60,12 @@ def get_books(db: Session = Depends(get_db), current_user: User = Depends(get_cu
 
 @router.post("/books", response_model=BookSchema)
 def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    book = Book(title=book_in.title, synopsis=book_in.synopsis, user_id=current_user.id)
+    book = Book(
+        title=book_in.title, 
+        synopsis=book_in.synopsis, 
+        target_word_count=book_in.target_word_count,
+        user_id=current_user.id
+    )
     db.add(book)
     db.commit()
     db.refresh(book)
@@ -88,6 +94,7 @@ def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: 
 class BookUpdate(BaseModel):
     title: Optional[str] = None
     synopsis: Optional[str] = None
+    target_word_count: Optional[int] = None
 
 @router.put("/books/{book_id}", response_model=BookSchema)
 def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -106,6 +113,9 @@ def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get
         
     if book_update.synopsis is not None:
         book.synopsis = book_update.synopsis
+        
+    if book_update.target_word_count is not None:
+        book.target_word_count = book_update.target_word_count
         
     db.commit()
     db.refresh(book)

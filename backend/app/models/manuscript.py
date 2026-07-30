@@ -22,6 +22,7 @@ class Book(Base):
     title = Column(String, index=True, nullable=False)
     synopsis = Column(Text, nullable=True)
     previous_titles = Column(JSON, nullable=True, default=list) # Historial de títulos de trabajo
+    target_word_count = Column(Integer, default=50000)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     series_id = Column(Integer, ForeignKey("series.id"), nullable=True)
     

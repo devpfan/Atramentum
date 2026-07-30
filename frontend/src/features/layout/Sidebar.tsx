@@ -1,13 +1,15 @@
-import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder } from 'lucide-react';
+import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import SettingsModal from './SettingsModal';
+import { StatisticsModal } from './StatisticsModal';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const setToken = useAppStore(state => state.setToken);
   const { books, activeBookId, fetchBooks, setActiveBookId, createBook } = useManuscriptStore();
   const navigate = useNavigate();
@@ -88,6 +90,14 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="p-3 border-t border-[var(--color-border)] space-y-1">
         <button 
+          onClick={() => setIsStatsOpen(true)}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+          title="Estadísticas y Metas"
+        >
+          <BarChart2 size={20} />
+          {!isCollapsed && <span className="font-medium text-sm">Estadísticas</span>}
+        </button>
+        <button 
           onClick={() => setIsSettingsOpen(true)}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
           title="Configuración"
@@ -106,6 +116,7 @@ export default function Sidebar() {
       </div>
     </div>
     {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
+    {isStatsOpen && <StatisticsModal onClose={() => setIsStatsOpen(false)} />}
     </>
   );
 }

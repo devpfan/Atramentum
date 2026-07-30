@@ -23,7 +23,10 @@ export interface Book {
   id: number;
   title: string;
   synopsis?: string;
+  previous_titles?: string[];
+  target_word_count: number;
   user_id: number;
+  created_at: string;
 }
 
 export interface ManuscriptTree {
