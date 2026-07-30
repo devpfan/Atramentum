@@ -62,6 +62,9 @@ def update_entry(entry_id: int, entry_update: CodexEntryUpdate, db: Session = De
 
     for key, value in update_data.items():
         setattr(db_entry, key, value)
+        if key == "attributes":
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(db_entry, "attributes")
 
     db.commit()
     db.refresh(db_entry)

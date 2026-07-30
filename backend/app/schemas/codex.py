@@ -28,6 +28,7 @@ class CodexEntryCreate(CodexEntryBase):
 class CodexEntryUpdate(CodexEntryBase):
     name: Optional[str] = None
     category: Optional[CodexCategory] = None
+    aliases: Optional[List[str]] = None
 
 class CodexEntry(CodexEntryBase):
     id: int

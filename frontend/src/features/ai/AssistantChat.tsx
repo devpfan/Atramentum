@@ -2,23 +2,27 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore, type ChatMessage } from '../../store/useChatStore';
 import { useAppStore } from '../../store/useAppStore';
 import { Send, X, Bot, User, Trash2 } from 'lucide-react';
+import { useManuscriptStore } from '../../store/useManuscriptStore';
 
 export default function AssistantChat() {
-  const { messages, isOpen, toggleChat, addMessage, updateMessage, fetchChatHistory, clearChatHistory } = useChatStore();
+  const isOpen = useChatStore(state => state.isOpen);
+  const toggleChat = useChatStore(state => state.toggleChat);
+  const { messages, fetchChatHistory, clearChatHistory, addMessage, updateMessage } = useChatStore();
   const token = useAppStore(state => state.token);
+  const activeSceneId = useManuscriptStore(state => state.activeSceneId);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Por ahora hardcodeamos la escena 0 (global) porque la tabla de escenas está vacía
-  const SCENE_ID = 0;
+  const SCENE_ID = activeSceneId || 0; // Si no hay escena activa, usamos la 0 (global)
 
-  // Cargar historial al abrir
+  // Cargar historial al abrir o cambiar de escena
   useEffect(() => {
     if (isOpen && token) {
       fetchChatHistory(SCENE_ID, token);
     }
-  }, [isOpen, token, fetchChatHistory]);
+  }, [isOpen, SCENE_ID, token, fetchChatHistory]);
 
   // Auto-scroll to bottom
   useEffect(() => {

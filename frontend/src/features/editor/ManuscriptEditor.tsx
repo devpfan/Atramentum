@@ -1,39 +1,71 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import { AutoTagExtension } from './extensions/AutoTagExtension';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useAppStore } from '../../store/useAppStore';
+import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { Wand2, PenLine, Sparkles, Shrink } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
+import ManuscriptSidebar from './ManuscriptSidebar';
 
 export default function ManuscriptEditor() {
-  const { entries, fetchEntries, isLoading } = useCodexStore();
+  const { entries, fetchEntries } = useCodexStore();
+  const { tree, fetchTree, activeSceneId, updateActiveSceneContent } = useManuscriptStore();
+  
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // Tooltip State
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; entry: CodexEntry | null }>({
     visible: false, x: 0, y: 0, entry: null
   });
 
-  // Cargar Codex
+  // Cargar datos
   useEffect(() => {
     fetchEntries();
-  }, [fetchEntries]);
+    fetchTree();
+  }, [fetchEntries, fetchTree]);
+
+  // Encontrar la escena activa
+  const activeScene = activeSceneId && tree 
+    ? tree.chapters.flatMap(c => c.scenes).find(s => s.id === activeSceneId) 
+    : null;
+
+  // Manejo del autoguardado con debounce manual
+  const debounceTimeout = useRef<number | null>(null);
+
+  const handleUpdateContent = useCallback((newContent: string) => {
+    setSaveStatus('saving');
+    if (debounceTimeout.current) window.clearTimeout(debounceTimeout.current);
+    
+    debounceTimeout.current = window.setTimeout(async () => {
+      await updateActiveSceneContent(newContent);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    }, 1000); // 1 segundo de debounce
+  }, [updateActiveSceneContent]);
 
   const editor = useEditor({
     extensions: [StarterKit, AutoTagExtension],
-    content: `
-      <h2>Capítulo 1: El Comienzo</h2>
-      <p>Había una vez un rey llamado Arturo que gobernaba con justicia. Su espada, Excalibur, brillaba en la oscuridad de la sala. Sin embargo, en el reino de Camelot, oscuros secretos acechaban.</p>
-    `,
+    content: activeScene?.content || '<p>Comienza a escribir aquí...</p>',
     editorProps: {
       attributes: {
         class: 'prose prose-invert prose-lg max-w-none focus:outline-none min-h-[500px]',
       },
     },
+    onUpdate: ({ editor }) => {
+      handleUpdateContent(editor.getHTML());
+    }
   });
+
+  // Si cambia la escena activa, actualizamos el contenido del editor
+  useEffect(() => {
+    if (editor && activeScene && editor.getHTML() !== activeScene.content) {
+      editor.commands.setContent(activeScene.content || '<p>Comienza a escribir aquí...</p>');
+    }
+  }, [activeSceneId, editor]);
 
   // Delegación de eventos para Tooltip del Codex
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -53,7 +85,6 @@ export default function ManuscriptEditor() {
         }
       }
     }
-    // Ocultar si no está sobre un tag
     setTooltip(prev => prev.visible ? { ...prev, visible: false } : prev);
   };
 
@@ -83,7 +114,6 @@ export default function ManuscriptEditor() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
-      // Borramos el texto seleccionado
       editor.chain().focus().deleteSelection().run();
 
       let done = false;
@@ -92,7 +122,6 @@ export default function ManuscriptEditor() {
         done = doneReading;
         if (value) {
           const chunk = decoder.decode(value, { stream: !done });
-          // Insertamos en texto plano como va llegando
           editor.commands.insertContent(chunk);
         }
       }
@@ -103,77 +132,94 @@ export default function ManuscriptEditor() {
     }
   };
 
-  if (isLoading) {
-    return <div className="animate-pulse p-8 text-[var(--color-text-secondary)]">Cargando base de datos del Codex...</div>;
-  }
-
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 h-full relative">
-      
-      {/* Tooltip Flotante */}
-      {tooltip.visible && tooltip.entry && (
-        <div 
-          className="fixed z-50 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl p-4 rounded-xl max-w-xs pointer-events-none transition-opacity"
-          style={{ left: tooltip.x, top: tooltip.y }}
-        >
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-bold text-[var(--color-text-primary)]">{tooltip.entry.name}</h3>
-            <span className="text-xs bg-[#6366f1]/20 text-[#6366f1] px-2 py-0.5 rounded-full font-medium">
-              {tooltip.entry.category}
-            </span>
-          </div>
-          {tooltip.entry.description && (
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              {tooltip.entry.description}
-            </p>
+    <div className="flex h-full w-full bg-[var(--color-background)]">
+      <ManuscriptSidebar />
+
+      <div className="flex-1 overflow-y-auto relative p-8">
+        {/* Indicador de Autoguardado */}
+        <div className="absolute top-4 right-8 text-xs text-[var(--color-text-secondary)] font-medium">
+          {saveStatus === 'saving' && <span className="animate-pulse">Guardando...</span>}
+          {saveStatus === 'saved' && <span className="text-emerald-400">Guardado ✓</span>}
+        </div>
+
+        <div className="max-w-4xl mx-auto relative">
+          {/* Tooltip Flotante */}
+          {tooltip.visible && tooltip.entry && (
+            <div 
+              className="fixed z-50 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl p-4 rounded-xl max-w-xs pointer-events-none transition-opacity"
+              style={{ left: tooltip.x, top: tooltip.y }}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-bold text-[var(--color-text-primary)]">{tooltip.entry.name}</h3>
+                <span className="text-xs bg-[#6366f1]/20 text-[#6366f1] px-2 py-0.5 rounded-full font-medium">
+                  {tooltip.entry.category}
+                </span>
+              </div>
+              {tooltip.entry.description && (
+                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                  {tooltip.entry.description}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Editor Principal */}
+          {activeSceneId ? (
+            <div 
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-10 shadow-xl min-h-[70vh] cursor-text"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
+            >
+              <h1 className="text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]">
+                {activeScene?.title || 'Sin Título'}
+              </h1>
+              
+              {editor && (
+                <BubbleMenu editor={editor} className="flex overflow-hidden rounded-xl shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md">
+                  <button 
+                    onClick={() => handleAiAction("Reescribe este texto de forma más profesional y literaria.")}
+                    disabled={isAiLoading}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#6366f1]/20 hover:text-[#6366f1] transition-colors disabled:opacity-50"
+                  >
+                    <PenLine size={16} /> Reescribir
+                  </button>
+                  <div className="w-px bg-[var(--color-border)]"></div>
+                  <button 
+                    onClick={() => handleAiAction("Expande este texto añadiendo más detalles descriptivos.")}
+                    disabled={isAiLoading}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-emerald-500/20 hover:text-emerald-400 transition-colors disabled:opacity-50"
+                  >
+                    <Sparkles size={16} /> Expandir
+                  </button>
+                  <div className="w-px bg-[var(--color-border)]"></div>
+                  <button 
+                    onClick={() => handleAiAction("Resume este texto en una frase más corta y directa.")}
+                    disabled={isAiLoading}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-amber-500/20 hover:text-amber-400 transition-colors disabled:opacity-50"
+                  >
+                    <Shrink size={16} /> Resumir
+                  </button>
+                  
+                  {isAiLoading && (
+                    <>
+                      <div className="w-px bg-[var(--color-border)]"></div>
+                      <div className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)]">
+                        <Wand2 size={16} className="animate-pulse text-[#6366f1]" /> Pensando...
+                      </div>
+                    </>
+                  )}
+                </BubbleMenu>
+              )}
+              
+              <EditorContent editor={editor} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center min-h-[50vh] text-[var(--color-text-secondary)]">
+              Selecciona una escena en la barra lateral para empezar a escribir.
+            </div>
           )}
         </div>
-      )}
-
-      {/* Editor Principal */}
-      <div 
-        className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-10 shadow-xl min-h-[70vh] cursor-text"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
-      >
-        {editor && (
-          <BubbleMenu editor={editor} className="flex overflow-hidden rounded-xl shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md">
-            <button 
-              onClick={() => handleAiAction("Reescribe este texto de forma más profesional y literaria.")}
-              disabled={isAiLoading}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#6366f1]/20 hover:text-[#6366f1] transition-colors disabled:opacity-50"
-            >
-              <PenLine size={16} /> Reescribir
-            </button>
-            <div className="w-px bg-[var(--color-border)]"></div>
-            <button 
-              onClick={() => handleAiAction("Expande este texto añadiendo más detalles descriptivos.")}
-              disabled={isAiLoading}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-emerald-500/20 hover:text-emerald-400 transition-colors disabled:opacity-50"
-            >
-              <Sparkles size={16} /> Expandir
-            </button>
-            <div className="w-px bg-[var(--color-border)]"></div>
-            <button 
-              onClick={() => handleAiAction("Resume este texto en una frase más corta y directa.")}
-              disabled={isAiLoading}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-amber-500/20 hover:text-amber-400 transition-colors disabled:opacity-50"
-            >
-              <Shrink size={16} /> Resumir
-            </button>
-            
-            {isAiLoading && (
-              <>
-                <div className="w-px bg-[var(--color-border)]"></div>
-                <div className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)]">
-                  <Wand2 size={16} className="animate-pulse text-[#6366f1]" /> Pensando...
-                </div>
-              </>
-            )}
-          </BubbleMenu>
-        )}
-        
-        <EditorContent editor={editor} />
       </div>
     </div>
   );

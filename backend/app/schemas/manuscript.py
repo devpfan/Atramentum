@@ -29,3 +29,23 @@ class Scene(SceneBase):
 
     class Config:
         from_attributes = True
+
+class ChapterBase(BaseModel):
+    title: str
+    order: Optional[int] = 1
+
+class ChapterCreate(ChapterBase):
+    act_id: int
+
+class Chapter(ChapterBase):
+    id: int
+    act_id: int
+    scenes: List[Scene] = []
+
+    class Config:
+        from_attributes = True
+
+class ManuscriptTree(BaseModel):
+    book_id: int
+    title: str
+    chapters: List[Chapter] = []

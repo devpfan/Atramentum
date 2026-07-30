@@ -1,7 +1,7 @@
 import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -28,13 +28,13 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-        <NavItem icon={<Book size={20} />} label="Manuscrito" isCollapsed={isCollapsed} isActive={true} />
-        <NavItem icon={<Library size={20} />} label="Codex" isCollapsed={isCollapsed} />
+        <NavItem to="/app" icon={<Book size={20} />} label="Manuscrito" isCollapsed={isCollapsed} end />
+        <NavItem to="/app/codex" icon={<Library size={20} />} label="Codex" isCollapsed={isCollapsed} />
       </div>
 
       {/* Footer */}
       <div className="p-3 border-t border-[var(--color-border)] space-y-1">
-        <NavItem icon={<Settings size={20} />} label="Configuración" isCollapsed={isCollapsed} />
+        <NavItem to="/app/settings" icon={<Settings size={20} />} label="Configuración" isCollapsed={isCollapsed} />
         <button 
           onClick={handleLogout}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-red-500/10 hover:text-red-400 transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
@@ -47,11 +47,15 @@ export default function Sidebar() {
   );
 }
 
-function NavItem({ icon, label, isCollapsed, isActive = false }: { icon: React.ReactNode, label: string, isCollapsed: boolean, isActive?: boolean }) {
+function NavItem({ to, icon, label, isCollapsed, end = false }: { to: string, icon: React.ReactNode, label: string, isCollapsed: boolean, end?: boolean }) {
   return (
-    <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'} ${isCollapsed ? 'justify-center' : ''}`}>
+    <NavLink 
+      to={to}
+      end={end}
+      className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'} ${isCollapsed ? 'justify-center' : ''}`}
+    >
       {icon}
       {!isCollapsed && <span className="font-medium text-sm">{label}</span>}
-    </button>
+    </NavLink>
   );
 }

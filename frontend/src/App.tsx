@@ -7,6 +7,7 @@ import RegisterView from './features/auth/RegisterView'
 import AppLayout from './features/layout/AppLayout'
 
 import ManuscriptEditor from './features/editor/ManuscriptEditor'
+import CodexView from './features/codex/CodexView'
 
 function App() {
   const token = useAppStore(state => state.token)
@@ -26,7 +27,7 @@ function App() {
         {/* Rutas Protegidas de la Aplicación */}
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<ManuscriptEditor />} />
-          {/* Aquí añadiremos /app/codex después */}
+          <Route path="codex" element={<CodexView />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
