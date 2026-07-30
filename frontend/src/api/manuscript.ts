@@ -6,7 +6,7 @@ export interface Scene {
   title: string;
   order: number;
   content: string | null;
-  beats: any[] | null;
+  beats: string[] | null;
   pov: string | null;
   status: string;
 }

@@ -6,7 +6,7 @@ class SceneBase(BaseModel):
     title: str
     order: Optional[int] = 1
     content: Optional[str] = None
-    beats: Optional[List[Dict[str, Any]]] = None # Lista de beats u objetos JSON
+    beats: Optional[List[str]] = None # Lista de beats como strings
     pov: Optional[str] = None
     status: Optional[str] = "Draft"
 
@@ -17,7 +17,7 @@ class SceneUpdate(BaseModel):
     title: Optional[str] = None
     order: Optional[int] = None
     content: Optional[str] = None
-    beats: Optional[List[Dict[str, Any]]] = None
+    beats: Optional[List[str]] = None
     pov: Optional[str] = None
     status: Optional[str] = None
 

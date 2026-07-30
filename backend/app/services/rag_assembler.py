@@ -18,6 +18,8 @@ def assemble_context(scene_id: int, user_id: int, db: Session) -> str:
             for beat in scene.beats:
                 if isinstance(beat, dict) and 'content' in beat:
                     context_lines.append(f"- {beat['content']}")
+                elif isinstance(beat, str):
+                    context_lines.append(f"- {beat}")
                 else:
                     context_lines.append(f"- {json.dumps(beat)}")
                     

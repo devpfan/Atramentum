@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { manuscriptApi } from '../api/manuscript'
-import type { ManuscriptTree } from '../api/manuscript'
+import type { ManuscriptTree, Scene } from '../api/manuscript'
 
 interface ManuscriptState {
   tree: ManuscriptTree | null;
@@ -12,7 +12,7 @@ interface ManuscriptState {
   setActiveSceneId: (id: number | null) => void;
   createChapter: () => Promise<void>;
   createScene: (chapterId: number, title: string) => Promise<void>;
-  updateActiveSceneContent: (content: string) => Promise<void>;
+  updateActiveScene: (data: Partial<Scene>) => Promise<void>;
 }
 
 export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
@@ -58,7 +58,7 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
     }
   },
 
-  updateActiveSceneContent: async (content: string) => {
+  updateActiveScene: async (data: Partial<Scene>) => {
     const { activeSceneId, tree } = get();
     if (!activeSceneId || !tree) return;
     
@@ -68,7 +68,7 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
     for (const chapter of newTree.chapters) {
       for (const scene of chapter.scenes) {
         if (scene.id === activeSceneId) {
-          scene.content = content;
+          Object.assign(scene, data);
           found = true;
           break;
         }
@@ -79,7 +79,7 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
 
     // Background sync
     try {
-      await manuscriptApi.updateScene(activeSceneId, { content });
+      await manuscriptApi.updateScene(activeSceneId, data);
     } catch (err: any) {
       console.error("Error saving scene:", err);
     }

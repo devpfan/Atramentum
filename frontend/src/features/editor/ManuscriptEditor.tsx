@@ -9,12 +9,14 @@ import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { Wand2, PenLine, Sparkles, Shrink } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
+import SceneInspector from './SceneInspector';
 
 export default function ManuscriptEditor() {
   const { entries, fetchEntries } = useCodexStore();
-  const { tree, fetchTree, activeSceneId, updateActiveSceneContent } = useManuscriptStore();
+  const { tree, fetchTree, activeSceneId, updateActiveScene } = useManuscriptStore();
   
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isGeneratingScene, setIsGeneratingScene] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // Tooltip State
@@ -41,11 +43,11 @@ export default function ManuscriptEditor() {
     if (debounceTimeout.current) window.clearTimeout(debounceTimeout.current);
     
     debounceTimeout.current = window.setTimeout(async () => {
-      await updateActiveSceneContent(newContent);
+      await updateActiveScene({ content: newContent });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     }, 1000); // 1 segundo de debounce
-  }, [updateActiveSceneContent]);
+  }, [updateActiveScene]);
 
   const editor = useEditor({
     extensions: [StarterKit, AutoTagExtension],
@@ -132,6 +134,55 @@ export default function ManuscriptEditor() {
     }
   };
 
+  const handleGenerateScene = async (beatsText: string) => {
+    if (!editor || !activeSceneId) return;
+    const token = useAppStore.getState().token;
+    
+    setIsGeneratingScene(true);
+    // Limpiamos el editor para la nueva generación
+    editor.commands.setContent('');
+    
+    try {
+      const prompt = `Escribe la prosa para esta escena detalladamente siguiendo estos beats (eventos clave):\n${beatsText}`;
+      
+      const res = await fetch('http://127.0.0.1:8000/api/v1/ai/generate-scene', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          scene_id: activeSceneId,
+          prompt: prompt
+        })
+      });
+
+      if (!res.body) throw new Error('Sin respuesta del servidor.');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: !done });
+          // Insertamos en texto plano, Tiptap lo formatea si hay saltos de linea
+          // Reemplazar saltos de línea con etiquetas p si es necesario
+          editor.commands.insertContent(chunk);
+        }
+      }
+      
+      // Aseguramos que guarde el resultado final
+      handleUpdateContent(editor.getHTML());
+    } catch (err) {
+      console.error("Error generating scene", err);
+      alert("Hubo un error al generar la escena.");
+    } finally {
+      setIsGeneratingScene(false);
+    }
+  };
+
   return (
     <div className="flex h-full w-full bg-[var(--color-background)]">
       <ManuscriptSidebar />
@@ -179,7 +230,7 @@ export default function ManuscriptEditor() {
                 <BubbleMenu editor={editor} className="flex overflow-hidden rounded-xl shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md">
                   <button 
                     onClick={() => handleAiAction("Reescribe este texto de forma más profesional y literaria.")}
-                    disabled={isAiLoading}
+                    disabled={isAiLoading || isGeneratingScene}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#6366f1]/20 hover:text-[#6366f1] transition-colors disabled:opacity-50"
                   >
                     <PenLine size={16} /> Reescribir
@@ -187,7 +238,7 @@ export default function ManuscriptEditor() {
                   <div className="w-px bg-[var(--color-border)]"></div>
                   <button 
                     onClick={() => handleAiAction("Expande este texto añadiendo más detalles descriptivos.")}
-                    disabled={isAiLoading}
+                    disabled={isAiLoading || isGeneratingScene}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-emerald-500/20 hover:text-emerald-400 transition-colors disabled:opacity-50"
                   >
                     <Sparkles size={16} /> Expandir
@@ -195,7 +246,7 @@ export default function ManuscriptEditor() {
                   <div className="w-px bg-[var(--color-border)]"></div>
                   <button 
                     onClick={() => handleAiAction("Resume este texto en una frase más corta y directa.")}
-                    disabled={isAiLoading}
+                    disabled={isAiLoading || isGeneratingScene}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-amber-500/20 hover:text-amber-400 transition-colors disabled:opacity-50"
                   >
                     <Shrink size={16} /> Resumir
@@ -221,6 +272,8 @@ export default function ManuscriptEditor() {
           )}
         </div>
       </div>
+
+      <SceneInspector onGenerate={handleGenerateScene} isGenerating={isGeneratingScene} />
     </div>
   );
 }
