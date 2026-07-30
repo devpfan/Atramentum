@@ -13,6 +13,8 @@ export interface CodexEntry {
   description: string | null;
   attributes: Record<string, any>;
   aliases: CodexAlias[];
+  series_id: number | null;
+  book_id: number | null;
 }
 
 export const codexApi = {

@@ -27,6 +27,7 @@ export interface Book {
   target_word_count: number;
   user_id: number;
   created_at: string;
+  series_id?: number;
 }
 
 export interface ManuscriptTree {

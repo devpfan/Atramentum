@@ -6,20 +6,23 @@ import { AutoTagExtension } from './extensions/AutoTagExtension';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { Wand2, PenLine, Sparkles, Shrink } from 'lucide-react';
+import { Wand2, PenLine, Sparkles, Shrink, PanelRightOpen } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
 import SceneInspector from './SceneInspector';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import Underline from '@tiptap/extension-underline';
+import EditorToolbar from './EditorToolbar';
 
 export default function ManuscriptEditor() {
   const { entries, fetchEntries } = useCodexStore();
-  const { tree, fetchTree, activeSceneId, updateActiveScene } = useManuscriptStore();
+  const { tree, fetchTree, activeSceneId, updateActiveScene, activeBookId } = useManuscriptStore();
   const { editorFontFamily, editorFontSize, editorLineHeight } = useSettingsStore();
   
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isGeneratingScene, setIsGeneratingScene] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
 
   // Tooltip State
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; entry: CodexEntry | null }>({
@@ -28,9 +31,14 @@ export default function ManuscriptEditor() {
 
   // Cargar datos
   useEffect(() => {
-    fetchEntries();
+    if (activeBookId) {
+      fetchEntries();
+    }
+  }, [fetchEntries, activeBookId]);
+
+  useEffect(() => {
     fetchTree();
-  }, [fetchEntries, fetchTree]);
+  }, [fetchTree]);
 
   // Encontrar la escena activa
   const activeScene = activeSceneId && tree 
@@ -52,7 +60,7 @@ export default function ManuscriptEditor() {
   }, [updateActiveScene]);
 
   const editor = useEditor({
-    extensions: [StarterKit, AutoTagExtension],
+    extensions: [StarterKit, AutoTagExtension, Underline],
     content: activeScene?.content || '<p>Comienza a escribir aquí...</p>',
     editorProps: {
       attributes: {
@@ -70,6 +78,13 @@ export default function ManuscriptEditor() {
       editor.commands.setContent(activeScene.content || '<p>Comienza a escribir aquí...</p>');
     }
   }, [activeSceneId, editor]);
+
+  // Forzar actualización de tags cuando las entradas del codex (Archivum) terminen de cargar
+  useEffect(() => {
+    if (editor && entries.length > 0) {
+      editor.view.dispatch(editor.state.tr.setMeta('forceUpdate', true));
+    }
+  }, [entries, editor]);
 
   // Delegación de eventos para Tooltip del Codex
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -219,7 +234,7 @@ export default function ManuscriptEditor() {
 
           {activeSceneId ? (
             <div 
-              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-10 shadow-xl min-h-[70vh] cursor-text"
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col"
               style={{
                 fontFamily: editorFontFamily,
                 fontSize: `${editorFontSize}px`,
@@ -228,9 +243,12 @@ export default function ManuscriptEditor() {
               onMouseMove={handleMouseMove}
               onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
             >
-              <h1 className="text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]" style={{ fontFamily: 'sans-serif' }}>
-                {activeScene?.title || 'Sin Título'}
-              </h1>
+              <EditorToolbar editor={editor} />
+              
+              <div className="px-10 pb-10 flex-1">
+                <h1 className="text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]" style={{ fontFamily: 'sans-serif' }}>
+                  {activeScene?.title || 'Sin Título'}
+                </h1>
               
               {editor && (
                 <BubbleMenu editor={editor} className="flex overflow-hidden rounded-xl shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md">
@@ -270,6 +288,7 @@ export default function ManuscriptEditor() {
               )}
               
               <EditorContent editor={editor} />
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center min-h-[50vh] text-[var(--color-text-secondary)]">
@@ -279,7 +298,22 @@ export default function ManuscriptEditor() {
         </div>
       </div>
 
-      <SceneInspector onGenerate={handleGenerateScene} isGenerating={isGeneratingScene} />
+      <SceneInspector 
+        onGenerate={handleGenerateScene} 
+        isGenerating={isGeneratingScene} 
+        isOpen={isInspectorOpen}
+        onToggle={() => setIsInspectorOpen(!isInspectorOpen)}
+      />
+
+      {!isInspectorOpen && activeSceneId && (
+        <button
+          onClick={() => setIsInspectorOpen(true)}
+          className="fixed right-4 top-24 z-20 p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-l-lg shadow-lg text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+          title="Abrir Inspector de Escena"
+        >
+          <PanelRightOpen size={24} />
+        </button>
+      )}
     </div>
   );
 }

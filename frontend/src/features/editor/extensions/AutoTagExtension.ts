@@ -16,8 +16,8 @@ export const AutoTagExtension = Extension.create({
             return getDecorations(doc);
           },
           apply(tr, oldState) {
-            // Re-calcular decoraciones solo si el documento cambió
-            if (tr.docChanged) {
+            // Re-calcular decoraciones si el documento cambió o si se forzó la actualización (ej. al cargar el codex)
+            if (tr.docChanged || tr.getMeta('forceUpdate')) {
               return getDecorations(tr.doc);
             }
             return oldState;

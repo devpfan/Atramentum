@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useCodexStore } from '../../store/useCodexStore';
+import { useManuscriptStore } from '../../store/useManuscriptStore';
 import type { CodexEntry } from '../../api/codex';
-import { Save, Trash2, X, Plus } from 'lucide-react';
+import { Save, Trash2, X, Plus, Globe, Book } from 'lucide-react';
 
 interface CodexEditorProps {
   entry: CodexEntry | null;
@@ -10,8 +11,13 @@ interface CodexEditorProps {
 
 export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
   const { createEntry, updateEntry, deleteEntry, isLoading } = useCodexStore();
+  const { activeBookId, books } = useManuscriptStore();
+  
+  const activeBook = books.find(b => b.id === activeBookId);
+  const hasSeries = !!activeBook?.series_id;
   
   const isNew = !entry;
+  const [isGlobal, setIsGlobal] = useState(entry ? !!entry.series_id : false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -43,12 +49,26 @@ export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
         aliases: [],
         attributes: {}
       });
+      setIsGlobal(false);
     }
   }, [entry]);
 
   const handleSave = async () => {
     try {
-      const currentData = { ...formData };
+      // Determinar ids según si es global o no
+      let finalBookId = activeBookId;
+      let finalSeriesId = null;
+      
+      if (isGlobal && hasSeries) {
+        finalBookId = null;
+        finalSeriesId = activeBook.series_id;
+      }
+      
+      const currentData: any = { 
+        ...formData,
+        book_id: finalBookId,
+        series_id: finalSeriesId
+      };
       
       // Auto-añadir atributo si hay algo escrito en los inputs
       if (newAttrKey.trim() && newAttrVal.trim()) {
@@ -166,7 +186,24 @@ export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
             />
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Categoría</label>
+            <div className="flex justify-between items-center">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Categoría</label>
+              {hasSeries && (
+                <button
+                  type="button"
+                  onClick={() => setIsGlobal(!isGlobal)}
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                    isGlobal 
+                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                      : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                  }`}
+                  title={isGlobal ? "Disponible en toda la Serie" : "Solo disponible en este Libro"}
+                >
+                  {isGlobal ? <Globe size={12} /> : <Book size={12} />}
+                  {isGlobal ? 'Global (Serie)' : 'Local (Libro)'}
+                </button>
+              )}
+            </div>
             <select 
               value={formData.category}
               onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}

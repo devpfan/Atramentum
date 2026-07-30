@@ -21,7 +21,8 @@ class CodexEntryBase(BaseModel):
     category: CodexCategory
     description: Optional[str] = None
     attributes: Optional[Dict[str, Any]] = None
-    book_id: int
+    book_id: Optional[int] = None
+    series_id: Optional[int] = None
 
 class CodexEntryCreate(CodexEntryBase):
     aliases: Optional[List[str]] = []

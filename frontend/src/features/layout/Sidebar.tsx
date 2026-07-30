@@ -92,7 +92,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         <NavItem to="/app" icon={<Book size={20} />} label="Manuscrito" isCollapsed={isCollapsed} end />
-        <NavItem to="/app/codex" icon={<Library size={20} />} label="Codex" isCollapsed={isCollapsed} />
+        <NavItem to="/app/codex" icon={<Library size={20} />} label="Archivum" isCollapsed={isCollapsed} />
       </div>
 
       {/* Footer */}

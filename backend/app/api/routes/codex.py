@@ -4,6 +4,7 @@ from typing import List
 
 from app.db.database import get_db
 from app.models.codex import CodexEntry, CodexAlias
+from app.models.manuscript import Book
 from app.models.user import User
 from app.schemas.codex import CodexEntry as CodexEntrySchema, CodexEntryCreate, CodexEntryUpdate
 from app.api.deps import get_current_user
@@ -18,7 +19,8 @@ def create_entry(entry: CodexEntryCreate, db: Session = Depends(get_db), current
         category=entry.category,
         description=entry.description,
         attributes=entry.attributes,
-        book_id=entry.book_id
+        book_id=entry.book_id,
+        series_id=entry.series_id
     )
     db.add(db_entry)
     db.commit()
@@ -35,7 +37,24 @@ def create_entry(entry: CodexEntryCreate, db: Session = Depends(get_db), current
 
 @router.get("/", response_model=List[CodexEntrySchema])
 def read_entries(book_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    entries = db.query(CodexEntry).filter(CodexEntry.user_id == current_user.id, CodexEntry.book_id == book_id).offset(skip).limit(limit).all()
+    from sqlalchemy import or_
+    
+    # Obtener el libro para saber su series_id
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+
+    if book.series_id:
+        entries = db.query(CodexEntry).filter(
+            CodexEntry.user_id == current_user.id,
+            or_(CodexEntry.book_id == book_id, CodexEntry.series_id == book.series_id)
+        ).offset(skip).limit(limit).all()
+    else:
+        entries = db.query(CodexEntry).filter(
+            CodexEntry.user_id == current_user.id,
+            CodexEntry.book_id == book_id
+        ).offset(skip).limit(limit).all()
+        
     return entries
 
 @router.get("/{entry_id}", response_model=CodexEntrySchema)

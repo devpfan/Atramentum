@@ -1,12 +1,12 @@
-# Atramentum ✒️
+# Atramentum 
 
 Atramentum es una aplicación inteligente de asistencia a la escritura diseñada específicamente para novelistas, escritores y creadores de mundos. Fusiona la gestión estructural tradicional de un manuscrito con el poder de la Inteligencia Artificial para acelerar el proceso creativo sin perder el control autoral.
 
-## Características Principales ✨
+## Características Principales 
 
 *   **Gestión Multi-Proyecto:** Organiza múltiples libros o proyectos literarios de forma independiente en una sola cuenta.
 *   **Gestión de Manuscritos Estructurada:** Divide tu obra en Actos, Capítulos y Escenas con un árbol de navegación intuitivo.
-*   **El Codex (Bíblia de la Historia):** Un repositorio dedicado para el *lore* de tu historia. Crea entradas detalladas para Personajes, Lugares, Objetos y Conceptos. El Codex es independiente para cada proyecto, manteniendo universos separados.
+*   **El Archivum (Bíblia de la Historia):** Un repositorio dedicado para el *lore* de tu historia. Crea entradas detalladas para Personajes, Lugares, Objetos y Conceptos. El Codex es independiente para cada proyecto, manteniendo universos separados.
 *   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Codex (RAG - *Retrieval-Augmented Generation*).
 *   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado y autocompletado inteligente de etiquetas del Codex.
 *   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias.
@@ -14,7 +14,7 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 *   **Estadísticas y Metas:** Mantén la motivación visualizando tu progreso en tiempo real con barras de progreso y conteo de palabras inteligente.
 *   **Personalización Visual:** Interfaz de usuario altamente estética y adaptable con 7 modos de color distintos (Oscuro, Claro, Sepia, Océano, Bosque, Vino y Lavanda).
 
-## Arquitectura Técnica 🛠️
+## Arquitectura Técnica 
 
 Atramentum está construido con una arquitectura moderna separada en Frontend y Backend:
 
@@ -32,14 +32,14 @@ Atramentum está construido con una arquitectura moderna separada en Frontend y 
 *   **Autenticación:** JWT (JSON Web Tokens)
 *   **IA:** Integración con proveedores de LLM usando flujos asíncronos (Server-Sent Events) para generación en tiempo real.
 
-## Requisitos Previos 📋
+## Requisitos Previos 
 
 *   Node.js (v18+)
 *   Python (3.10+)
 *   Poetry (Gestor de dependencias de Python)
 *   PostgreSQL (Servidor local o remoto)
 
-## Instalación y Configuración 🚀
+## Instalación y Configuración 
 
 ### 1. Base de Datos
 Asegúrate de tener PostgreSQL ejecutándose y crea una base de datos para el proyecto.
@@ -79,6 +79,6 @@ npm run dev
 ```
 El frontend estará disponible normalmente en `http://localhost:5173`.
 
-## Licencia 📄
+## Licencia 
 
-Este proyecto es de código abierto.
+Todos los derechos reservados. El modelo de licenciamiento definitivo aún está por definirse.

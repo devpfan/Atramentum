@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 interface SceneInspectorProps {
   onGenerate: (beatsText: string) => void;
   isGenerating: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
-export default function SceneInspector({ onGenerate, isGenerating }: SceneInspectorProps) {
+export default function SceneInspector({ onGenerate, isGenerating, isOpen, onToggle }: SceneInspectorProps) {
   const { tree, activeSceneId, updateActiveScene } = useManuscriptStore();
   
   const activeScene = activeSceneId && tree 
@@ -45,9 +47,14 @@ export default function SceneInspector({ onGenerate, isGenerating }: SceneInspec
     }
   };
 
+  if (!isOpen) return null;
+
   if (!activeScene) {
     return (
-      <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex items-center justify-center p-4 text-center shrink-0">
+      <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex items-center justify-center p-4 text-center shrink-0 relative">
+        <button onClick={onToggle} className="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]">
+          <X size={20} />
+        </button>
         <p className="text-[var(--color-text-secondary)] text-sm">
           Selecciona una escena para ver sus propiedades.
         </p>
@@ -57,9 +64,14 @@ export default function SceneInspector({ onGenerate, isGenerating }: SceneInspec
 
   return (
     <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0">
-      <div className="p-4 border-b border-[var(--color-border)]">
-        <h3 className="font-semibold text-[var(--color-text-primary)]">Inspector de Escena</h3>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-1">{activeScene.title}</p>
+      <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-start">
+        <div>
+          <h3 className="font-semibold text-[var(--color-text-primary)]">Inspector de Escena</h3>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1">{activeScene.title}</p>
+        </div>
+        <button onClick={onToggle} className="text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]">
+          <X size={20} />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">

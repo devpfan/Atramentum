@@ -41,7 +41,12 @@ export const useCodexStore = create<CodexState>((set, get) => ({
       const activeBookId = useManuscriptStore.getState().activeBookId;
       if (!activeBookId) throw new Error("No hay libro seleccionado");
       
-      const newEntry = await codexApi.create({ ...data, book_id: activeBookId })
+      const payload = { ...data };
+      if (payload.book_id === undefined) {
+        payload.book_id = activeBookId;
+      }
+      
+      const newEntry = await codexApi.create(payload)
       set({ entries: [...get().entries, newEntry], isLoading: false })
     } catch (err: any) {
       set({ error: err.message, isLoading: false })

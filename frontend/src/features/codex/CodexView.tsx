@@ -38,7 +38,7 @@ export default function CodexView() {
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-secondary)]">
             <BookOpen size={48} className="mb-4 opacity-50" />
-            <p>Selecciona una entrada del Codex para ver o editar sus detalles.</p>
+            <p>Selecciona una entrada del Archivum para ver o editar sus detalles.</p>
             <button 
               onClick={() => setSelectedEntryId(-1)} // -1 means "New Entry"
               className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition-opacity"

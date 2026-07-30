@@ -17,11 +17,13 @@ class BookBase(BaseModel):
     title: str
     synopsis: Optional[str] = None
     target_word_count: Optional[int] = 50000
+    series_id: Optional[int] = None
 
 class BookSchema(BookBase):
     id: int
     user_id: int
     created_at: datetime
+    series_id: Optional[int] = None
     
     class Config:
         from_attributes = True
@@ -64,6 +66,7 @@ def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: 
         title=book_in.title, 
         synopsis=book_in.synopsis, 
         target_word_count=book_in.target_word_count,
+        series_id=book_in.series_id,
         user_id=current_user.id
     )
     db.add(book)
@@ -95,6 +98,7 @@ class BookUpdate(BaseModel):
     title: Optional[str] = None
     synopsis: Optional[str] = None
     target_word_count: Optional[int] = None
+    series_id: Optional[int] = None
 
 @router.put("/books/{book_id}", response_model=BookSchema)
 def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -116,6 +120,9 @@ def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get
         
     if book_update.target_word_count is not None:
         book.target_word_count = book_update.target_word_count
+        
+    if book_update.series_id is not None:
+        book.series_id = book_update.series_id
         
     db.commit()
     db.refresh(book)

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCodexStore } from '../../store/useCodexStore';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Globe, Book } from 'lucide-react';
 
 interface CodexListProps {
   selectedEntryId: number | null;
@@ -20,7 +20,7 @@ export default function CodexList({ selectedEntryId, onSelectEntry }: CodexListP
     <div className="flex flex-col h-full bg-[var(--color-surface)]">
       <div className="p-4 border-b border-[var(--color-border)] space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Codex</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Archivum</h2>
           <button 
             onClick={() => onSelectEntry(-1)} 
             className="p-1 rounded-md bg-[var(--color-primary)] text-white hover:opacity-90"
@@ -55,7 +55,14 @@ export default function CodexList({ selectedEntryId, onSelectEntry }: CodexListP
                 : 'text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]'
             }`}
           >
-            <span className="font-medium truncate">{entry.name}</span>
+            <div className="flex justify-between items-start w-full gap-2">
+              <span className="font-medium truncate flex-1">{entry.name}</span>
+              {entry.series_id ? (
+                <span title="Global (Serie)"><Globe size={14} className={selectedEntryId === entry.id ? 'text-[#6366f1]' : 'text-purple-400'} /></span>
+              ) : (
+                <span title="Local (Libro)"><Book size={14} className={selectedEntryId === entry.id ? 'text-[#6366f1]' : 'text-blue-400'} /></span>
+              )}
+            </div>
             <span className={`text-xs ${selectedEntryId === entry.id ? 'text-[#6366f1]/80' : 'text-[var(--color-text-secondary)]'}`}>
               {entry.category}
             </span>

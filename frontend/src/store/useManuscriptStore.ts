@@ -1,8 +1,11 @@
 import { create } from 'zustand'
 import { manuscriptApi } from '../api/manuscript'
+import { seriesApi } from '../api/series'
 import type { ManuscriptTree, Scene, Book, Chapter } from '../api/manuscript'
+import type { Series } from '../api/series'
 
 interface ManuscriptState {
+  series: Series[];
   books: Book[];
   activeBookId: number | null;
   tree: ManuscriptTree | null;
@@ -10,10 +13,14 @@ interface ManuscriptState {
   isLoading: boolean;
   error: string | null;
   
+  fetchSeries: () => Promise<void>;
+  createSeries: (title: string, description?: string) => Promise<void>;
+  deleteSeries: (id: number) => Promise<void>;
+  
   fetchBooks: () => Promise<void>;
   setActiveBookId: (id: number | null) => void;
   fetchTree: () => Promise<void>;
-  createBook: (title: string, synopsis?: string) => Promise<void>;
+  createBook: (title: string, synopsis?: string, series_id?: number) => Promise<void>;
   updateBook: (id: number, data: Partial<Book>) => Promise<void>;
   deleteBook: (id: number) => Promise<void>;
   setActiveSceneId: (id: number | null) => void;
@@ -25,12 +32,42 @@ interface ManuscriptState {
 }
 
 export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
+  series: [],
   books: [],
   activeBookId: null,
   tree: null,
   activeSceneId: null,
   isLoading: false,
   error: null,
+  
+  fetchSeries: async () => {
+    try {
+      const series = await seriesApi.getSeries();
+      set({ series });
+    } catch (err: any) {
+      console.error(err);
+    }
+  },
+
+  createSeries: async (title: string, description?: string) => {
+    try {
+      const newSeries = await seriesApi.createSeries(title, description);
+      set({ series: [newSeries, ...get().series] });
+    } catch (err: any) {
+      console.error(err);
+    }
+  },
+
+  deleteSeries: async (id: number) => {
+    try {
+      await seriesApi.deleteSeries(id);
+      set({ series: get().series.filter(s => s.id !== id) });
+      // Reload books to clear series_id if necessary
+      await get().fetchBooks();
+    } catch (err: any) {
+      console.error(err);
+    }
+  },
   
   fetchBooks: async () => {
     try {
@@ -49,9 +86,13 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
     if (id) get().fetchTree();
   },
 
-  createBook: async (title: string, synopsis?: string) => {
+  createBook: async (title: string, synopsis?: string, series_id?: number) => {
     try {
       const newBook = await manuscriptApi.createBook(title, synopsis);
+      if (series_id) {
+        await manuscriptApi.updateBook(newBook.id, { series_id });
+        newBook.series_id = series_id;
+      }
       set({ books: [newBook, ...get().books], activeBookId: newBook.id, tree: null, activeSceneId: null });
       get().fetchTree();
     } catch (err: any) {

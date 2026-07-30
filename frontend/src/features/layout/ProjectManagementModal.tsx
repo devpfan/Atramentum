@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File, BookOpen, Folder } from 'lucide-react';
+import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File, BookOpen, Folder, Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 interface ProjectManagementModalProps {
@@ -8,11 +8,26 @@ interface ProjectManagementModalProps {
 }
 
 export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ onClose }) => {
-  const { books, deleteBook } = useManuscriptStore();
+  const { books, deleteBook, series, fetchSeries, createSeries, deleteSeries, updateBook } = useManuscriptStore();
   const token = useAppStore(state => state.token);
   
   const [bookToDelete, setBookToDelete] = useState<{id: number, title: string} | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  
+  const [isCreatingSeries, setIsCreatingSeries] = useState(false);
+  const [newSeriesTitle, setNewSeriesTitle] = useState('');
+  
+  useEffect(() => {
+    fetchSeries();
+  }, [fetchSeries]);
+
+  const handleCreateSeries = async () => {
+    if (newSeriesTitle.trim()) {
+      await createSeries(newSeriesTitle);
+      setNewSeriesTitle('');
+      setIsCreatingSeries(false);
+    }
+  };
 
   const handleExport = (bookId: number, format: string) => {
     // We can use a direct window.open or fetch to trigger download
@@ -54,14 +69,6 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-[var(--color-surface)] w-full max-w-4xl rounded-xl shadow-2xl border flex flex-col max-h-[90vh]">
@@ -86,71 +93,91 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
 
         {/* Body */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm">
-                <th className="pb-3 font-medium">Nombre del Proyecto</th>
-                <th className="pb-3 font-medium text-center">Creación</th>
-                <th className="pb-3 font-medium text-center">Exportar</th>
-                <th className="pb-3 font-medium text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {books.map(book => (
-                <tr key={book.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-background)] transition-colors group">
-                  <td className="py-4">
-                    <div className="font-semibold text-[var(--color-text-primary)]">{book.title}</div>
-                    {book.previous_titles && book.previous_titles.length > 0 && (
-                      <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center gap-1" title="Títulos Anteriores (Historial)">
-                        <FileType2 className="w-3 h-3" />
-                        {book.previous_titles.join(' → ')}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-4 text-center text-sm text-[var(--color-text-secondary)]">
-                    <div className="flex items-center justify-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(book.created_at)}
+          
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">Tus Series y Libros</h3>
+            <button 
+              onClick={() => setIsCreatingSeries(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors text-sm font-medium"
+            >
+              <Plus size={16} />
+              Nueva Serie
+            </button>
+          </div>
+          
+          {isCreatingSeries && (
+            <div className="mb-6 p-4 border border-indigo-500/30 bg-indigo-500/5 rounded-lg flex items-end gap-3">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Nombre de la Serie</label>
+                <input 
+                  type="text" 
+                  autoFocus
+                  value={newSeriesTitle}
+                  onChange={(e) => setNewSeriesTitle(e.target.value)}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500"
+                  placeholder="Ej: Universo Sci-Fi"
+                  onKeyDown={e => { if (e.key === 'Enter') handleCreateSeries(); if (e.key === 'Escape') setIsCreatingSeries(false); }}
+                />
+              </div>
+              <button onClick={handleCreateSeries} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-colors">Guardar</button>
+              <button onClick={() => setIsCreatingSeries(false)} className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-lg text-sm hover:bg-[var(--color-background)] transition-colors">Cancelar</button>
+            </div>
+          )}
+
+          <div className="space-y-8">
+            {/* Primero mostramos las Series */}
+            {series.map(s => {
+              const seriesBooks = books.filter(b => b.series_id === s.id);
+              return (
+                <div key={`series-${s.id}`} className="border border-[var(--color-border)] rounded-xl overflow-hidden">
+                  <div className="bg-[var(--color-surface-hover)] p-4 flex justify-between items-center border-b border-[var(--color-border)]">
+                    <div className="flex items-center gap-2">
+                      <Folder className="w-5 h-5 text-indigo-400" />
+                      <h4 className="font-bold text-[var(--color-text-primary)]">{s.title}</h4>
+                      <span className="text-xs px-2 py-0.5 bg-black/20 rounded-full text-[var(--color-text-secondary)]">{seriesBooks.length} libros</span>
                     </div>
-                  </td>
-                  <td className="py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="relative group/btn">
-                        <button onClick={() => handleExport(book.id, 'md')} className="p-1.5 bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 rounded transition-colors"><FileText className="w-4 h-4" /></button>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">Markdown</div>
-                      </div>
-                      <div className="relative group/btn">
-                        <button onClick={() => handleExport(book.id, 'docx')} className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded transition-colors"><File className="w-4 h-4" /></button>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">Word (.docx)</div>
-                      </div>
-                      <div className="relative group/btn">
-                        <button onClick={() => handleExport(book.id, 'pdf')} className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded transition-colors"><File className="w-4 h-4" /></button>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">PDF</div>
-                      </div>
-                      <div className="relative group/btn">
-                        <button onClick={() => handleExport(book.id, 'epub')} className="p-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-500 rounded transition-colors"><BookOpen className="w-4 h-4" /></button>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">EPUB</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 text-right">
                     <button 
-                      onClick={() => setBookToDelete({ id: book.id, title: book.title })}
-                      className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                      title="Eliminar Proyecto"
+                      onClick={() => {
+                        if (confirm(`¿Eliminar la serie "${s.title}"? Los libros no se borrarán, solo quedarán sueltos.`)) {
+                          deleteSeries(s.id);
+                        }
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      Eliminar Serie
                     </button>
-                  </td>
-                </tr>
-              ))}
-              {books.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-[var(--color-text-secondary)]">No hay proyectos.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                  
+                  {seriesBooks.length > 0 ? (
+                    <table className="w-full text-left border-collapse">
+                      <BookTableBody books={seriesBooks} onExport={handleExport} onDelete={(b) => setBookToDelete({id: b.id, title: b.title})} seriesList={series} onAssignSeries={updateBook} />
+                    </table>
+                  ) : (
+                    <div className="p-4 text-center text-sm text-[var(--color-text-secondary)]">No hay libros en esta serie. Puedes asignar libros desde la lista de abajo.</div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Libros sin serie */}
+            {books.filter(b => !b.series_id).length > 0 && (
+              <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
+                <div className="bg-[var(--color-surface-hover)] p-4 flex items-center gap-2 border-b border-[var(--color-border)]">
+                  <BookOpen className="w-5 h-5 text-[var(--color-text-secondary)]" />
+                  <h4 className="font-bold text-[var(--color-text-primary)]">Libros Independientes</h4>
+                </div>
+                <table className="w-full text-left border-collapse">
+                  <BookTableBody books={books.filter(b => !b.series_id)} onExport={handleExport} onDelete={(b) => setBookToDelete({id: b.id, title: b.title})} seriesList={series} onAssignSeries={updateBook} />
+                </table>
+              </div>
+            )}
+            
+            {books.length === 0 && series.length === 0 && (
+              <div className="text-center py-10 text-[var(--color-text-secondary)]">
+                No tienes ningún proyecto o serie aún.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -201,3 +228,98 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
     </div>
   );
 };
+
+// Helper component to render the table body for books
+const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }: { 
+  books: any[], 
+  onExport: (id: number, format: string) => void, 
+  onDelete: (book: any) => void,
+  seriesList: any[],
+  onAssignSeries: (id: number, data: any) => void
+}) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <>
+      <thead>
+        <tr className="border-b border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm">
+          <th className="pb-3 pl-4 font-medium w-1/3">Nombre del Proyecto</th>
+          <th className="pb-3 font-medium text-center">Creación</th>
+          <th className="pb-3 font-medium text-center">Exportar</th>
+          <th className="pb-3 pr-4 font-medium text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {books.map(book => (
+          <tr key={book.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-background)] transition-colors group">
+            <td className="py-4 pl-4">
+              <div className="font-semibold text-[var(--color-text-primary)]">{book.title}</div>
+              {book.previous_titles && book.previous_titles.length > 0 && (
+                <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center gap-1" title="Títulos Anteriores (Historial)">
+                  <FileType2 className="w-3 h-3" />
+                  {book.previous_titles.join(' → ')}
+                </div>
+              )}
+              {/* Selector de Serie */}
+              <select 
+                className="mt-2 text-xs bg-[var(--color-background)] border border-[var(--color-border)] rounded px-2 py-1 text-[var(--color-text-secondary)] focus:outline-none focus:border-indigo-500 max-w-[200px]"
+                value={book.series_id || ''}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value) : null;
+                  onAssignSeries(book.id, { series_id: val });
+                }}
+              >
+                <option value="">-- Sin Serie --</option>
+                {seriesList.map(s => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select>
+            </td>
+            <td className="py-4 text-center text-sm text-[var(--color-text-secondary)]">
+              <div className="flex items-center justify-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {formatDate(book.created_at)}
+              </div>
+            </td>
+            <td className="py-4">
+              <div className="flex items-center justify-center gap-2">
+                <div className="relative group/btn">
+                  <button onClick={() => onExport(book.id, 'md')} className="p-1.5 bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 rounded transition-colors"><FileText className="w-4 h-4" /></button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">Markdown</div>
+                </div>
+                <div className="relative group/btn">
+                  <button onClick={() => onExport(book.id, 'docx')} className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded transition-colors"><File className="w-4 h-4" /></button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">Word (.docx)</div>
+                </div>
+                <div className="relative group/btn">
+                  <button onClick={() => onExport(book.id, 'pdf')} className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded transition-colors"><File className="w-4 h-4" /></button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">PDF</div>
+                </div>
+                <div className="relative group/btn">
+                  <button onClick={() => onExport(book.id, 'epub')} className="p-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-500 rounded transition-colors"><BookOpen className="w-4 h-4" /></button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">EPUB</div>
+                </div>
+              </div>
+            </td>
+            <td className="py-4 pr-4 text-right">
+              <button 
+                onClick={() => onDelete(book)}
+                className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                title="Eliminar Proyecto"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </>
+  );
+};
+
