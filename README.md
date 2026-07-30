@@ -10,6 +10,9 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 *   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Codex (RAG - *Retrieval-Augmented Generation*).
 *   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado y autocompletado inteligente de etiquetas del Codex.
 *   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias.
+*   **Exportación Universal:** Compila tu manuscrito en cuestión de segundos a múltiples formatos listos para publicar o revisar: Markdown, Word (.docx), PDF y EPUB (100% compatible con Amazon Kindle).
+*   **Estadísticas y Metas:** Mantén la motivación visualizando tu progreso en tiempo real con barras de progreso y conteo de palabras inteligente.
+*   **Personalización Visual:** Interfaz de usuario altamente estética y adaptable con 7 modos de color distintos (Oscuro, Claro, Sepia, Océano, Bosque, Vino y Lavanda).
 
 ## Arquitectura Técnica 🛠️
 
