@@ -19,3 +19,10 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: str | None = None
+
+class UserEmailUpdate(BaseModel):
+    new_email: EmailStr
+
+class UserPasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str

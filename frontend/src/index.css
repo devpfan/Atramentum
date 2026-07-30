@@ -12,10 +12,92 @@
 }
 
 :root {
+  /* LIGHT MODE (Default) */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-primary: #6366f1; /* Indigo 500 */
+  --color-background: #f8fafc; /* Slate 50 */
+  --color-surface: #ffffff; /* White */
+  --color-surface-hover: #f1f5f9; /* Slate 100 */
+  --color-text-primary: #0f172a; /* Slate 900 */
+  --color-text-secondary: #475569; /* Slate 600 */
+  --color-border: #e2e8f0; /* Slate 200 */
+
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-text-primary);
+  color-scheme: light;
+}
+
+:root.dark {
+  /* DARK MODE */
+  --color-primary: #6366f1; /* Indigo 500 */
+  --color-background: #0f172a; /* Slate 900 */
+  --color-surface: #1e293b; /* Slate 800 */
+  --color-surface-hover: #334155; /* Slate 700 */
+  --color-text-primary: #f8fafc; /* Slate 50 */
+  --color-text-secondary: #94a3b8; /* Slate 400 */
+  --color-border: #334155;
   color-scheme: dark;
+}
+
+:root.sepia {
+  /* SEPIA MODE */
+  --color-primary: #d97706; /* Amber 600 */
+  --color-background: #fdf6e3; /* Solarized light bg */
+  --color-surface: #eee8d5; /* Solarized darker bg */
+  --color-surface-hover: #e5dfc9;
+  --color-text-primary: #4a3c31; /* Deep brown */
+  --color-text-secondary: #786452; /* Lighter brown */
+  --color-border: #d5c8b5;
+  color-scheme: light;
+}
+
+:root.ocean {
+  /* OCEAN MODE */
+  --color-primary: #0ea5e9; /* Sky 500 */
+  --color-background: #082f49; /* Sky 900 */
+  --color-surface: #0c4a6e; /* Sky 800 */
+  --color-surface-hover: #0369a1; /* Sky 700 */
+  --color-text-primary: #f0f9ff; /* Sky 50 */
+  --color-text-secondary: #bae6fd; /* Sky 200 */
+  --color-border: #0369a1;
+  color-scheme: dark;
+}
+
+:root.forest {
+  /* FOREST MODE */
+  --color-primary: #10b981; /* Emerald 500 */
+  --color-background: #064e3b; /* Emerald 900 */
+  --color-surface: #065f46; /* Emerald 800 */
+  --color-surface-hover: #047857; /* Emerald 700 */
+  --color-text-primary: #ecfdf5; /* Emerald 50 */
+  --color-text-secondary: #a7f3d0; /* Emerald 200 */
+  --color-border: #047857;
+  color-scheme: dark;
+}
+
+:root.rose {
+  /* ROSE/MAGENTA MODE (Vino) */
+  --color-primary: #f43f5e; /* Rose 500 */
+  --color-background: #4c0519; /* Rose 950 */
+  --color-surface: #881337; /* Rose 900 */
+  --color-surface-hover: #9f1239; /* Rose 800 */
+  --color-text-primary: #fff1f2; /* Rose 50 */
+  --color-text-secondary: #fecdd3; /* Rose 200 */
+  --color-border: #be123c; /* Rose 700 */
+  color-scheme: dark;
+}
+
+:root.lavender {
+  /* LAVENDER MODE (Light Purple) */
+  --color-primary: #c026d3; /* Fuchsia 600 */
+  --color-background: #fdf4ff; /* Fuchsia 50 */
+  --color-surface: #fae8ff; /* Fuchsia 100 */
+  --color-surface-hover: #f0abfc; /* Fuchsia 300 */
+  --color-text-primary: #4a044e; /* Fuchsia 950 */
+  --color-text-secondary: #701a75; /* Fuchsia 900 */
+  --color-border: #e879f9; /* Fuchsia 400 */
+  color-scheme: light;
 }
 
 body {
@@ -50,8 +132,8 @@ body {
   
 /* TipTap Styles */  
 .tiptap { outline: none; }  
-.tiptap p { margin-bottom: 1.2em; line-height: 1.8; font-size: 1.125rem; color: var(--color-text-secondary); transition: color 0.3s; }  
+.tiptap p { margin-bottom: 1.2em; color: var(--color-text-secondary); transition: color 0.3s; }  
 .tiptap p:focus-within { color: var(--color-text-primary); }  
 .tiptap h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2em; margin-bottom: 1em; color: var(--color-text-primary); }  
 .codex-tag { border-bottom: 2px solid var(--color-primary); cursor: pointer; transition: all 0.2s ease; }  
-.codex-tag:hover { background-color: var(--color-primary); color: white; border-radius: 4px; } 
+.codex-tag:hover { background-color: var(--color-primary); color: white; border-radius: 4px; }

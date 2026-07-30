@@ -27,13 +27,28 @@ export const authApi = {
     return response.data
   },
 
+  getMe: async () => {
+    const response = await apiClient.get('/auth/me')
+    return response.data
+  },
+
   getAISettings: async (): Promise<AISettings> => {
     const response = await apiClient.get<AISettings>('/auth/me/ai-settings')
     return response.data
   },
 
-  updateAISettings: async (settings: AISettings): Promise<AISettings> => {
+  updateAISettings: async (settings: AISettings) => {
     const response = await apiClient.put<AISettings>('/auth/me/ai-settings', settings)
+    return response.data
+  },
+
+  updateEmail: async (new_email: string) => {
+    const response = await apiClient.put('/auth/me/email', { new_email })
+    return response.data
+  },
+
+  updatePassword: async (current_password: string, new_password: string) => {
+    const response = await apiClient.put('/auth/me/password', { current_password, new_password })
     return response.data
   }
 }

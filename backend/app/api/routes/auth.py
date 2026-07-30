@@ -8,9 +8,30 @@ from app.db.database import get_db
 from app.core.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.api.deps import get_current_user
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, Token
+from app.schemas.user import UserCreate, UserResponse, Token, UserEmailUpdate, UserPasswordUpdate
 
 router = APIRouter()
+
+@router.put("/me/email", response_model=UserResponse)
+def update_email(email_data: UserEmailUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user = db.query(User).filter(User.email == email_data.new_email).first()
+    if user:
+        raise HTTPException(status_code=400, detail="Este correo ya está en uso.")
+    
+    current_user.email = email_data.new_email
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@router.put("/me/password", response_model=UserResponse)
+def update_password(password_data: UserPasswordUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta.")
+    
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):

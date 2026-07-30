@@ -1,174 +1,542 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Bot } from 'lucide-react';
+import { X, Save, Bot, Palette, Type, User } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import type { AISettings } from '../../api/auth';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface Props {
   onClose: () => void;
 }
 
+const FONTS = [
+  { value: 'Merriweather, serif', label: 'Merriweather (Serif)' },
+  { value: '"Playfair Display", serif', label: 'Playfair Display (Serif)' },
+  { value: 'Lora, serif', label: 'Lora (Serif)' },
+  { value: '"Crimson Text", serif', label: 'Crimson Text (Serif)' },
+  { value: '"EB Garamond", serif', label: 'EB Garamond (Serif)' },
+  { value: '"PT Serif", serif', label: 'PT Serif (Serif)' },
+  { value: 'Inter, sans-serif', label: 'Inter (Sans-serif)' },
+  { value: 'Roboto, sans-serif', label: 'Roboto (Sans-serif)' },
+  { value: 'Nunito, sans-serif', label: 'Nunito (Sans-serif)' },
+  { value: '"Fira Code", monospace', label: 'Fira Code (Mono)' },
+  { value: 'Courier, monospace', label: 'Courier (Mono)' },
+  { value: 'Inconsolata, monospace', label: 'Inconsolata (Mono)' },
+  { value: 'custom', label: 'Personalizada (Instalada localmente)...' }
+];
+
 export default function SettingsModal({ onClose }: Props) {
-  const [settings, setSettings] = useState<AISettings>({ provider: 'gemini' });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'appearance' | 'ai' | 'account'>('account');
+  
+  // AI State
+  const [aiSettings, setAiSettings] = useState<AISettings>({ provider: 'gemini' });
+  const [isLoadingAi, setIsLoadingAi] = useState(true);
+  const [isSavingAi, setIsSavingAi] = useState(false);
+
+  // Account State
+  const [currentEmail, setCurrentEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [accountSuccess, setAccountSuccess] = useState('');
+
+  // Appearance State (from Zustand, local to component before saving)
+  const { theme, editorFontFamily, editorFontSize, editorLineHeight, setTheme, setEditorFontFamily, setEditorFontSize, setEditorLineHeight, resetToDefault } = useSettingsStore();
+  
+  const [localTheme, setLocalTheme] = useState(theme);
+  const [localFontFamily, setLocalFontFamily] = useState(editorFontFamily);
+  const [localFontSize, setLocalFontSize] = useState(editorFontSize);
+  const [localLineHeight, setLocalLineHeight] = useState(editorLineHeight);
 
   useEffect(() => {
+    // Fetch AI Settings
     authApi.getAISettings()
       .then(data => {
-        setSettings(data);
-        setIsLoading(false);
+        setAiSettings(data);
+        setIsLoadingAi(false);
       })
       .catch(err => {
-        console.error("Error loading settings", err);
-        setIsLoading(false);
+        console.error("Error loading AI settings", err);
+        setIsLoadingAi(false);
+      });
+      
+    // Fetch User Info
+    authApi.getMe()
+      .then(data => {
+        setCurrentEmail(data.email);
+        setNewEmail(data.email);
+      })
+      .catch(err => {
+        console.error("Error loading user info", err);
       });
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await authApi.updateAISettings(settings);
+  const handleSaveAll = async () => {
+    // Save AI Settings to Backend
+    if (activeTab === 'ai') {
+      setIsSavingAi(true);
+      try {
+        await authApi.updateAISettings(aiSettings);
+      } catch (err) {
+        console.error("Error saving AI settings", err);
+        alert("Error al guardar la configuración de IA");
+      } finally {
+        setIsSavingAi(false);
+      }
+    }
+
+    // Save Account Settings
+    if (activeTab === 'account') {
+      setAccountError('');
+      setAccountSuccess('');
+      setIsSavingAccount(true);
+      try {
+        if (newEmail !== currentEmail) {
+          await authApi.updateEmail(newEmail);
+          setCurrentEmail(newEmail);
+          setAccountSuccess('Correo actualizado correctamente. ');
+        }
+        
+        if (currentPassword && newPassword) {
+          if (newPassword !== confirmPassword) {
+            setAccountError('Las contraseñas nuevas no coinciden.');
+            setIsSavingAccount(false);
+            return;
+          }
+          await authApi.updatePassword(currentPassword, newPassword);
+          setAccountSuccess(prev => prev + 'Contraseña actualizada correctamente.');
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        }
+      } catch (err: any) {
+        console.error("Error saving account settings", err);
+        setAccountError(err.response?.data?.detail || "Error al actualizar la cuenta");
+        setIsSavingAccount(false);
+        return;
+      }
+      setIsSavingAccount(false);
+    }
+
+    // Save Appearance to Zustand (Local Storage)
+    if (activeTab === 'appearance') {
+      setTheme(localTheme);
+      setEditorFontFamily(localFontFamily);
+      setEditorFontSize(localFontSize);
+      setEditorLineHeight(localLineHeight);
+      
+      // Toggle classes on document
+      document.documentElement.classList.remove('dark', 'sepia', 'ocean', 'forest', 'rose', 'lavender');
+      if (localTheme !== 'light') {
+        document.documentElement.classList.add(localTheme);
+      }
+    }
+
+    // Only close if it's not the account tab (to let them see the success message)
+    if (activeTab !== 'account') {
       onClose();
-    } catch (err) {
-      console.error("Error saving settings", err);
-      alert("Error al guardar la configuración");
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setSettings({ ...settings, [e.target.name]: e.target.value });
+  const handleAiChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setAiSettings({ ...aiSettings, [e.target.name]: e.target.value });
+  };
+
+  const handleResetDefaults = () => {
+    if (confirm('¿Estás seguro de que quieres restaurar los ajustes de apariencia por defecto?')) {
+      resetToDefault();
+      setLocalTheme('dark');
+      setLocalFontFamily('Merriweather, serif');
+      setLocalFontSize(16);
+      setLocalLineHeight(1.6);
+      document.documentElement.classList.remove('sepia', 'ocean', 'forest', 'rose', 'lavender', 'light');
+      document.documentElement.classList.add('dark');
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-2xl shadow-2xl flex max-h-[90vh] overflow-hidden">
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-          <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-            <Bot size={20} className="text-[#6366f1]" />
-            <h2 className="font-semibold">Configuración de Inteligencia Artificial</h2>
+        {/* Sidebar Tabs */}
+        <div className="w-48 border-r border-[var(--color-border)] bg-[var(--color-background)] p-4 space-y-2">
+          <h2 className="font-semibold text-[var(--color-text-primary)] mb-4 px-2">Configuración</h2>
+          
+          <button 
+            onClick={() => setActiveTab('account')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'account' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
+          >
+            <User size={16} /> Cuenta
+          </button>
+          <button 
+            onClick={() => setActiveTab('appearance')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'appearance' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
+          >
+            <Palette size={16} /> Apariencia
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('ai')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'ai' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
+          >
+            <Bot size={16} /> Asistente IA
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 flex flex-col">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+            <h3 className="font-semibold text-[var(--color-text-primary)]">
+              {activeTab === 'appearance' ? 'Apariencia y Editor' : 
+               activeTab === 'ai' ? 'Configuración de Inteligencia Artificial' : 'Opciones de Cuenta'}
+            </h3>
+            <button onClick={onClose} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-1">
+              <X size={20} />
+            </button>
           </div>
-          <button onClick={onClose} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-1">
-            <X size={20} />
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
-          {isLoading ? (
-            <div className="text-center text-[var(--color-text-secondary)] py-8">Cargando...</div>
-          ) : (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Proveedor de Modelos LLM
-                </label>
-                <select 
-                  name="provider" 
-                  value={settings.provider} 
-                  onChange={handleChange}
-                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
-                >
-                  <option value="gemini">Google Gemini</option>
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic (Claude)</option>
-                  <option value="local">Modelo Local (Ollama / LM Studio)</option>
-                </select>
-                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                  Elige qué proveedor usará el Asistente de Escritura para generar Beats.
-                </p>
+          {/* Body */}
+          <div className="p-6 overflow-y-auto flex-1">
+            {accountSuccess && (
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md text-sm">
+                {accountSuccess}
               </div>
+            )}
+            {accountError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-md text-sm">
+                {accountError}
+              </div>
+            )}
 
-              {settings.provider === 'gemini' && (
+            {activeTab === 'account' && (
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    API Key de Gemini
-                  </label>
-                  <input 
-                    type="password" 
-                    name="gemini_key" 
-                    value={settings.gemini_key || ''} 
-                    onChange={handleChange}
-                    placeholder="AIzaSy..."
-                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
-                  />
+                  <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-4">Actualizar Correo Electrónico</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Correo Electrónico Actual</label>
+                      <input 
+                        type="email" 
+                        value={currentEmail}
+                        disabled
+                        className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-md py-2 px-3 focus:outline-none opacity-70"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Nuevo Correo Electrónico</label>
+                      <input 
+                        type="email" 
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="nuevo@correo.com"
+                        className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {settings.provider === 'openai' && (
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    API Key de OpenAI
-                  </label>
-                  <input 
-                    type="password" 
-                    name="openai_key" 
-                    value={settings.openai_key || ''} 
-                    onChange={handleChange}
-                    placeholder="sk-..."
-                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
-                  />
+                <div className="border-t border-[var(--color-border)] pt-6">
+                  <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-4">Cambiar Contraseña</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Contraseña Actual</label>
+                      <input 
+                        type="password" 
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Nueva Contraseña</label>
+                        <input 
+                          type="password" 
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Confirmar Nueva Contraseña</label>
+                        <input 
+                          type="password" 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
+            {activeTab === 'appearance' && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+                    Tema de la Aplicación
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button 
+                      onClick={() => setLocalTheme('dark')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'dark' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-gray-900 border border-gray-600"></div> Oscuro
+                    </button>
+                    <button 
+                      onClick={() => setLocalTheme('light')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'light' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-white border border-gray-300"></div> Claro
+                    </button>
+                    <button 
+                      onClick={() => setLocalTheme('sepia')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'sepia' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-[#eee8d5] border border-[#d5c8b5]"></div> Sepia
+                    </button>
+                    <button 
+                      onClick={() => setLocalTheme('ocean')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'ocean' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-[#082f49] border border-[#0369a1]"></div> Océano
+                    </button>
+                    <button 
+                      onClick={() => setLocalTheme('forest')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'forest' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-[#064e3b] border border-[#047857]"></div> Bosque
+                    </button>
+                    <button 
+                      onClick={() => setLocalTheme('rose')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'rose' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-[#4c0519] border border-[#be123c]"></div> Vino
+                    </button>
+                    <button 
+                      onClick={() => setLocalTheme('lavender')}
+                      className={`flex-1 py-2 px-3 border rounded-lg flex items-center justify-center gap-2 transition-all min-w-[120px] ${localTheme === 'lavender' ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1]' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-gray-400'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-[#fae8ff] border border-[#e879f9]"></div> Lavanda
+                    </button>
+                  </div>
+                </div>
 
-              {settings.provider === 'anthropic' && (
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    API Key de Anthropic
-                  </label>
-                  <input 
-                    type="password" 
-                    name="anthropic_key" 
-                    value={settings.anthropic_key || ''} 
-                    onChange={handleChange}
-                    placeholder="sk-ant-..."
-                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
-                  />
-                </div>
-              )}
+                <div className="border-t border-[var(--color-border)] pt-6">
+                  <h4 className="text-sm font-medium text-[var(--color-text-secondary)] mb-4 flex items-center gap-2"><Type size={16}/> Tipografía del Editor</h4>
+                  
+                    <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Fuente</label>
+                      <select 
+                        value={FONTS.some(f => f.value === localFontFamily) ? localFontFamily : 'custom'} 
+                        onChange={(e) => {
+                          if (e.target.value === 'custom') {
+                            setLocalFontFamily('Times New Roman, serif'); // default for custom
+                          } else {
+                            setLocalFontFamily(e.target.value);
+                          }
+                        }}
+                        className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1] mb-2"
+                        style={{ fontFamily: FONTS.some(f => f.value === localFontFamily) ? localFontFamily : 'inherit' }}
+                      >
+                        {FONTS.map(f => (
+                          <option key={f.value} value={f.value} style={f.value !== 'custom' ? { fontFamily: f.value } : {}}>{f.label}</option>
+                        ))}
+                      </select>
 
-              {settings.provider === 'local' && (
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    URL del Servidor Local (Compatible con OpenAI)
-                  </label>
-                  <input 
-                    type="text" 
-                    name="local_url" 
-                    value={settings.local_url || ''} 
-                    onChange={handleChange}
-                    placeholder="http://localhost:11434/v1"
-                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
-                  />
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                    Ej. Ollama o LM Studio ejecutándose localmente. Asegúrate de tener el modelo descargado.
-                  </p>
+                      {!FONTS.some(f => f.value === localFontFamily) && (
+                        <div className="mt-2 p-3 bg-[#6366f1]/5 border border-[#6366f1]/20 rounded-md">
+                          <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Nombre de la fuente instalada en tu equipo:</label>
+                          <input 
+                            type="text" 
+                            value={localFontFamily}
+                            onChange={(e) => setLocalFontFamily(e.target.value)}
+                            placeholder="Ej. Arial, Helvetica, sans-serif"
+                            className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-1.5 px-3 focus:outline-none focus:border-[#6366f1] text-sm"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Tamaño: {localFontSize}px</label>
+                        <input 
+                          type="range" min="12" max="32" step="1" 
+                          value={localFontSize} 
+                          onChange={(e) => setLocalFontSize(Number(e.target.value))}
+                          className="w-full accent-[#6366f1]"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs text-[var(--color-text-secondary)] mb-1">Interlineado: {localLineHeight}</label>
+                        <input 
+                          type="range" min="1.0" max="2.5" step="0.1" 
+                          value={localLineHeight} 
+                          onChange={(e) => setLocalLineHeight(Number(e.target.value))}
+                          className="w-full accent-[#6366f1]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preview Box */}
+                    <div className="mt-4 p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-background)]">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-2">Vista Previa:</p>
+                      <div 
+                        className="text-[var(--color-text-primary)]"
+                        style={{ 
+                          fontFamily: localFontFamily, 
+                          fontSize: `${localFontSize}px`, 
+                          lineHeight: localLineHeight 
+                        }}
+                      >
+                        El viento aullaba entre los viejos pinos, llevando consigo el eco de promesas olvidadas. Atrás quedaba la ciudad, adelante solo el misterio.
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
+
+            {activeTab === 'ai' && (
+              <div className="space-y-6">
+                {isLoadingAi ? (
+                  <div className="text-center text-[var(--color-text-secondary)] py-8">Cargando...</div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        Proveedor de Modelos LLM
+                      </label>
+                      <select 
+                        name="provider" 
+                        value={aiSettings.provider} 
+                        onChange={handleAiChange}
+                        className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                      >
+                        <option value="gemini">Google Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="local">Modelo Local (Ollama / LM Studio)</option>
+                      </select>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        Elige qué proveedor usará el Asistente de Escritura.
+                      </p>
+                    </div>
+
+                    {aiSettings.provider === 'gemini' && (
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          API Key de Gemini
+                        </label>
+                        <input 
+                          type="password" 
+                          name="gemini_key" 
+                          value={aiSettings.gemini_key || ''} 
+                          onChange={handleAiChange}
+                          placeholder="AIzaSy..."
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                    )}
+
+                    {aiSettings.provider === 'openai' && (
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          API Key de OpenAI
+                        </label>
+                        <input 
+                          type="password" 
+                          name="openai_key" 
+                          value={aiSettings.openai_key || ''} 
+                          onChange={handleAiChange}
+                          placeholder="sk-..."
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                    )}
+
+                    {aiSettings.provider === 'anthropic' && (
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          API Key de Anthropic
+                        </label>
+                        <input 
+                          type="password" 
+                          name="anthropic_key" 
+                          value={aiSettings.anthropic_key || ''} 
+                          onChange={handleAiChange}
+                          placeholder="sk-ant-..."
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                    )}
+
+                    {aiSettings.provider === 'local' && (
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          URL del Servidor Local (Compatible con OpenAI)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="local_url" 
+                          value={aiSettings.local_url || ''} 
+                          onChange={handleAiChange}
+                          placeholder="http://localhost:11434/v1"
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          Ej. Ollama o LM Studio ejecutándose localmente. Asegúrate de tener el modelo descargado.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-background)] flex justify-between items-center">
+            {activeTab === 'appearance' ? (
+              <button 
+                onClick={handleResetDefaults}
+                className="px-4 py-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+              >
+                Restaurar por Defecto
+              </button>
+            ) : (
+              <div></div>
+            )}
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSaveAll}
+                disabled={isLoadingAi || isSavingAi || isSavingAccount}
+                className="px-4 py-2 text-sm font-medium bg-[#6366f1] text-white rounded-md hover:bg-[#4f46e5] transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <Save size={16} /> {(isSavingAi || isSavingAccount) ? "Guardando..." : "Guardar Todo"}
+              </button>
+            </div>
+          </div>
+
         </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-background)] rounded-b-lg flex justify-end gap-2">
-          <button 
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            Cancelar
-          </button>
-          <button 
-            onClick={handleSave}
-            disabled={isLoading || isSaving}
-            className="px-4 py-2 text-sm font-medium bg-[#6366f1] text-white rounded-md hover:bg-[#4f46e5] transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            <Save size={16} /> {isSaving ? "Guardando..." : "Guardar"}
-          </button>
-        </div>
-
       </div>
     </div>
   );

@@ -90,10 +90,10 @@ export default function Sidebar() {
         <button 
           onClick={() => setIsSettingsOpen(true)}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
-          title="Configuración de IA"
+          title="Configuración"
         >
           <Settings size={20} />
-          {!isCollapsed && <span className="font-medium text-sm">Configuración IA</span>}
+          {!isCollapsed && <span className="font-medium text-sm">Configuración</span>}
         </button>
         <button 
           onClick={handleLogout}

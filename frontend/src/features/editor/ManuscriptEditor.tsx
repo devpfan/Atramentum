@@ -10,10 +10,12 @@ import { Wand2, PenLine, Sparkles, Shrink } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
 import SceneInspector from './SceneInspector';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function ManuscriptEditor() {
   const { entries, fetchEntries } = useCodexStore();
   const { tree, fetchTree, activeSceneId, updateActiveScene } = useManuscriptStore();
+  const { editorFontFamily, editorFontSize, editorLineHeight } = useSettingsStore();
   
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isGeneratingScene, setIsGeneratingScene] = useState(false);
@@ -215,14 +217,18 @@ export default function ManuscriptEditor() {
             </div>
           )}
 
-          {/* Editor Principal */}
           {activeSceneId ? (
             <div 
               className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-10 shadow-xl min-h-[70vh] cursor-text"
+              style={{
+                fontFamily: editorFontFamily,
+                fontSize: `${editorFontSize}px`,
+                lineHeight: editorLineHeight
+              }}
               onMouseMove={handleMouseMove}
               onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
             >
-              <h1 className="text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]">
+              <h1 className="text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]" style={{ fontFamily: 'sans-serif' }}>
                 {activeScene?.title || 'Sin Título'}
               </h1>
               

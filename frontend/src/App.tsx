@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from './store/useAppStore'
+import { useSettingsStore } from './store/useSettingsStore'
 
 import AuthLayout from './features/auth/AuthLayout'
 import LoginView from './features/auth/LoginView'
@@ -11,6 +13,14 @@ import CodexView from './features/codex/CodexView'
 
 function App() {
   const token = useAppStore(state => state.token)
+  const theme = useSettingsStore(state => state.theme)
+
+  useEffect(() => {
+    document.documentElement.classList.remove('dark', 'sepia', 'ocean', 'forest', 'rose', 'lavender');
+    if (theme !== 'light') {
+      document.documentElement.classList.add(theme);
+    }
+  }, [theme]);
 
   return (
     <BrowserRouter>
