@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { codexApi } from '../api/codex'
 import type { CodexEntry } from '../api/codex'
+import { useManuscriptStore } from './useManuscriptStore'
 
 interface CodexState {
   entries: CodexEntry[];
@@ -22,7 +23,12 @@ export const useCodexStore = create<CodexState>((set, get) => ({
   fetchEntries: async () => {
     set({ isLoading: true, error: null })
     try {
-      const data = await codexApi.getAll()
+      const activeBookId = useManuscriptStore.getState().activeBookId;
+      if (!activeBookId) {
+        set({ entries: [], isLoading: false });
+        return;
+      }
+      const data = await codexApi.getAll(activeBookId)
       set({ entries: data, isLoading: false })
     } catch (err: any) {
       set({ error: err.message, isLoading: false })
@@ -32,7 +38,10 @@ export const useCodexStore = create<CodexState>((set, get) => ({
   createEntry: async (data: any) => {
     set({ isLoading: true, error: null })
     try {
-      const newEntry = await codexApi.create(data)
+      const activeBookId = useManuscriptStore.getState().activeBookId;
+      if (!activeBookId) throw new Error("No hay libro seleccionado");
+      
+      const newEntry = await codexApi.create({ ...data, book_id: activeBookId })
       set({ entries: [...get().entries, newEntry], isLoading: false })
     } catch (err: any) {
       set({ error: err.message, isLoading: false })

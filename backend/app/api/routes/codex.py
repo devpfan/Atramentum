@@ -17,7 +17,8 @@ def create_entry(entry: CodexEntryCreate, db: Session = Depends(get_db), current
         name=entry.name,
         category=entry.category,
         description=entry.description,
-        attributes=entry.attributes
+        attributes=entry.attributes,
+        book_id=entry.book_id
     )
     db.add(db_entry)
     db.commit()
@@ -33,8 +34,8 @@ def create_entry(entry: CodexEntryCreate, db: Session = Depends(get_db), current
     return db_entry
 
 @router.get("/", response_model=List[CodexEntrySchema])
-def read_entries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    entries = db.query(CodexEntry).filter(CodexEntry.user_id == current_user.id).offset(skip).limit(limit).all()
+def read_entries(book_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    entries = db.query(CodexEntry).filter(CodexEntry.user_id == current_user.id, CodexEntry.book_id == book_id).offset(skip).limit(limit).all()
     return entries
 
 @router.get("/{entry_id}", response_model=CodexEntrySchema)

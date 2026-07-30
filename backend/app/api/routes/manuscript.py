@@ -6,17 +6,97 @@ from app.db.database import get_db
 from app.models.manuscript import Book, Act, Chapter, Scene
 from app.models.user import User
 from app.schemas.manuscript import ManuscriptTree, Chapter as ChapterSchema, Scene as SceneSchema, ChapterCreate, SceneCreate
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
 from app.api.deps import get_current_user
 
 router = APIRouter()
 
+class BookBase(BaseModel):
+    title: str
+    synopsis: Optional[str] = None
+
+class BookSchema(BookBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+@router.get("/books", response_model=List[BookSchema])
+def get_books(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    books = db.query(Book).filter(Book.user_id == current_user.id).order_by(Book.created_at.desc()).all()
+    if not books:
+        # Create default book if none exists
+        book = Book(title="Proyecto Sin Título", user_id=current_user.id)
+        db.add(book)
+        db.commit()
+        db.refresh(book)
+        
+        act = Act(title="Acto 1", book_id=book.id, user_id=current_user.id)
+        db.add(act)
+        db.commit()
+        db.refresh(act)
+        
+        chapter = Chapter(title="Capítulo 1", act_id=act.id, user_id=current_user.id)
+        db.add(chapter)
+        db.commit()
+        db.refresh(chapter)
+        
+        scene = Scene(
+            title="Escena 1", 
+            chapter_id=chapter.id, 
+            user_id=current_user.id,
+            content="<p>Érase una vez...</p>"
+        )
+        db.add(scene)
+        db.commit()
+        
+        books = [book]
+    return books
+
+@router.post("/books", response_model=BookSchema)
+def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    book = Book(title=book_in.title, synopsis=book_in.synopsis, user_id=current_user.id)
+    db.add(book)
+    db.commit()
+    db.refresh(book)
+    
+    act = Act(title="Acto 1", book_id=book.id, user_id=current_user.id)
+    db.add(act)
+    db.commit()
+    db.refresh(act)
+    
+    chapter = Chapter(title="Capítulo 1", act_id=act.id, user_id=current_user.id)
+    db.add(chapter)
+    db.commit()
+    db.refresh(chapter)
+    
+    scene = Scene(
+        title="Escena 1", 
+        chapter_id=chapter.id, 
+        user_id=current_user.id,
+        content="<p>Érase una vez...</p>"
+    )
+    db.add(scene)
+    db.commit()
+    
+    return book
+
 @router.get("/tree", response_model=ManuscriptTree)
-def get_manuscript_tree(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Devuelve la estructura completa de Capítulos y Escenas.
     Si el usuario no tiene ningún libro, inicializa uno por defecto.
     """
-    book = db.query(Book).filter(Book.user_id == current_user.id).first()
+    if book_id:
+        book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
+        if not book:
+            raise HTTPException(status_code=404, detail="Libro no encontrado")
+    else:
+        book = db.query(Book).filter(Book.user_id == current_user.id).order_by(Book.created_at.desc()).first()
     
     if not book:
         # Inicialización por defecto

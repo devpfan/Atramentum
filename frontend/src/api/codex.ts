@@ -16,8 +16,12 @@ export interface CodexEntry {
 }
 
 export const codexApi = {
-  getAll: async (): Promise<CodexEntry[]> => {
-    const response = await apiClient.get<CodexEntry[]>('/codex/')
+  getAll: async (bookId: number): Promise<CodexEntry[]> => {
+    const response = await apiClient.get<CodexEntry[]>('/codex/', { params: { book_id: bookId } })
+    return response.data
+  },
+  getById: async (id: number): Promise<CodexEntry> => {
+    const response = await apiClient.get<CodexEntry>(`/codex/${id}`)
     return response.data
   },
   create: async (data: any): Promise<CodexEntry> => {

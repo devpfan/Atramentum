@@ -20,6 +20,7 @@ class CodexEntry(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False, index=True, server_default='1') # Referencia al libro
     name = Column(String, index=True, nullable=False)
     category = Column(Enum(CodexCategory), nullable=False)
     description = Column(Text, nullable=True) # Descripción detallada de la entidad

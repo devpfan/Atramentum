@@ -28,7 +28,10 @@ def assemble_context(scene_id: int, user_id: int, db: Session) -> str:
             context_lines.append(scene.content)
         
     # Agregamos la información del Codex al contexto (Lore)
-    entries = db.query(CodexEntry).all()
+    entries = []
+    if scene:
+        entries = db.query(CodexEntry).filter(CodexEntry.book_id == scene.chapter.act.book_id).all()
+    
     if entries:
         context_lines.append("\n--- LORE DEL MUNDO (CODEX) ---")
         for entry in entries:

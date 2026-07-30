@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useCodexStore } from '../../store/useCodexStore';
+import { useManuscriptStore } from '../../store/useManuscriptStore';
 import CodexList from './CodexList';
 import CodexEditor from './CodexEditor';
 import { BookOpen } from 'lucide-react';
 
 export default function CodexView() {
   const { entries, fetchEntries } = useCodexStore();
+  const activeBookId = useManuscriptStore(state => state.activeBookId);
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
 
-  // Cargar las entradas al montar
+  // Cargar las entradas al montar y al cambiar de libro
   useEffect(() => {
     fetchEntries();
-  }, [fetchEntries]);
+    setSelectedEntryId(null);
+  }, [fetchEntries, activeBookId]);
 
   const selectedEntry = entries.find(e => e.id === selectedEntryId) || null;
 

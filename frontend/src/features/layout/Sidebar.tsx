@@ -1,23 +1,36 @@
-import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { useState } from 'react';
+import { useManuscriptStore } from '../../store/useManuscriptStore';
+import { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const setToken = useAppStore(state => state.setToken);
+  const { books, activeBookId, fetchBooks, setActiveBookId, createBook } = useManuscriptStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
 
   const handleLogout = () => {
     setToken(null);
     navigate('/login');
   };
 
+  const handleCreateBook = async () => {
+    const title = prompt("Nombre del nuevo proyecto:");
+    if (title) {
+      await createBook(title);
+    }
+  };
+
   return (
     <div className={`h-screen flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--color-border)]">
-        {!isCollapsed && <span className="font-semibold text-[var(--color-text-primary)]">Atramentum</span>}
+        {!isCollapsed && <span className="font-semibold text-[var(--color-text-primary)] flex items-center gap-2"><Folder size={18} className="text-[#6366f1]" /> Proyectos</span>}
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={`p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors ${isCollapsed ? 'mx-auto' : ''}`}
@@ -25,6 +38,27 @@ export default function Sidebar() {
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
+
+      {/* Project Selector */}
+      {!isCollapsed && (
+        <div className="p-3 border-b border-[var(--color-border)]">
+          <select 
+            value={activeBookId || ''} 
+            onChange={(e) => setActiveBookId(Number(e.target.value))}
+            className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-1.5 px-2 text-sm focus:outline-none focus:border-[#6366f1]"
+          >
+            {books.map(b => (
+              <option key={b.id} value={b.id}>{b.title}</option>
+            ))}
+          </select>
+          <button 
+            onClick={handleCreateBook}
+            className="w-full mt-2 flex items-center justify-center gap-2 py-1.5 px-2 text-xs font-medium text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 rounded-md transition-colors"
+          >
+            <Plus size={14} /> Nuevo Proyecto
+          </button>
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">

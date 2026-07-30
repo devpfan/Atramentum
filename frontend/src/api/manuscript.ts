@@ -19,6 +19,13 @@ export interface Chapter {
   scenes: Scene[];
 }
 
+export interface Book {
+  id: number;
+  title: string;
+  synopsis?: string;
+  user_id: number;
+}
+
 export interface ManuscriptTree {
   book_id: number;
   title: string;
@@ -26,8 +33,20 @@ export interface ManuscriptTree {
 }
 
 export const manuscriptApi = {
-  getTree: async (): Promise<ManuscriptTree> => {
-    const response = await apiClient.get<ManuscriptTree>('/manuscript/tree')
+  getBooks: async (): Promise<Book[]> => {
+    const response = await apiClient.get<Book[]>('/manuscript/books')
+    return response.data
+  },
+
+  createBook: async (title: string, synopsis?: string): Promise<Book> => {
+    const response = await apiClient.post<Book>('/manuscript/books', { title, synopsis })
+    return response.data
+  },
+
+  getTree: async (bookId?: number): Promise<ManuscriptTree> => {
+    const response = await apiClient.get<ManuscriptTree>('/manuscript/tree', {
+      params: bookId ? { book_id: bookId } : {}
+    })
     return response.data
   },
   
