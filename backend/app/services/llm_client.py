@@ -7,7 +7,7 @@ def get_litellm_args(ai_settings: dict):
     provider = ai_settings.get("provider", "gemini")
     args = {}
     if provider == "gemini":
-        args["model"] = "gemini/gemini-1.5-flash-latest"
+        args["model"] = "gemini/gemini-flash-lite-latest"
         args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     elif provider == "openai":
         args["model"] = "gpt-4o-mini"
@@ -20,7 +20,7 @@ def get_litellm_args(ai_settings: dict):
         args["api_base"] = ai_settings.get("local_url", "http://localhost:11434/v1")
         args["api_key"] = "dummy-key"
     else:
-        args["model"] = "gemini/gemini-1.5-flash-latest"
+        args["model"] = "gemini/gemini-flash-lite-latest"
         args["api_key"] = settings.GEMINI_API_KEY
     
     return args
@@ -103,6 +103,8 @@ async def chat_with_assistant(context: str, messages: list, ai_settings: dict):
     for msg in messages:
         role = msg.role if hasattr(msg, 'role') else msg['role']
         content = msg.content if hasattr(msg, 'content') else msg['content']
+        if role == 'model':
+            role = 'assistant'
         formatted_contents.append({"role": role, "content": content})
         
     try:

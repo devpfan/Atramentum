@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'model';
+  role: 'user' | 'assistant';
   content: string;
 }
 

@@ -52,7 +52,7 @@ export default function AssistantChat() {
     setIsLoading(true);
 
     const botMessageId = (Date.now() + 1).toString();
-    addMessage({ id: botMessageId, role: 'model', content: '' });
+    addMessage({ id: botMessageId, role: 'assistant', content: '' });
 
     try {
       const response = await fetch('http://localhost:8000/api/v1/ai/chat', {
