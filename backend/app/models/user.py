@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, JSON
 from app.models.base import Base
 
 class User(Base):
@@ -8,3 +8,4 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    ai_settings = Column(JSON, nullable=True, default=dict)

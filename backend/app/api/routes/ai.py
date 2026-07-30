@@ -15,8 +15,9 @@ router = APIRouter()
 def generate_scene(request: GenerateSceneRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
         context = assemble_context(request.scene_id, current_user.id, db)
+        ai_settings = current_user.ai_settings or {"provider": "gemini"}
         return StreamingResponse(
-            generate_scene_text(context, request.prompt), 
+            generate_scene_text(context, request.prompt, ai_settings), 
             media_type="text/event-stream"
         )
     except ValueError as e:
@@ -24,8 +25,9 @@ def generate_scene(request: GenerateSceneRequest, db: Session = Depends(get_db),
 
 @router.post("/inline-edit")
 def inline_edit(request: EditInlineRequest, current_user: User = Depends(get_current_user)):
+    ai_settings = current_user.ai_settings or {"provider": "gemini"}
     return StreamingResponse(
-        edit_selected_text(request.selected_text, request.instruction),
+        edit_selected_text(request.selected_text, request.instruction, ai_settings),
         media_type="text/event-stream"
     )
 
@@ -78,7 +80,7 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
     db.add(user_msg_db)
     db.commit()
     
-    # Recuperar solo los últimos 10 mensajes para enviar a Gemini y ahorrar tokens
+    # Recuperar solo los últimos 10 mensajes para enviar al LLM y ahorrar tokens
     recent_messages = db.query(ChatMessage).filter(
         ChatMessage.session_id == chat_session.id
     ).order_by(ChatMessage.id.desc()).limit(10).all()
@@ -86,9 +88,11 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
     # Invertir para que queden en orden cronológico correcto
     recent_messages = list(reversed(recent_messages))
     
+    ai_settings = current_user.ai_settings or {"provider": "gemini"}
+    
     async def chat_generator():
         full_response = ""
-        async for chunk in chat_with_assistant(context, recent_messages):
+        async for chunk in chat_with_assistant(context, recent_messages, ai_settings):
             full_response += chunk
             yield chunk
             

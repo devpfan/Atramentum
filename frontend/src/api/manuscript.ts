@@ -43,6 +43,11 @@ export const manuscriptApi = {
     return response.data
   },
 
+  updateBook: async (id: number, data: Partial<Book>): Promise<Book> => {
+    const response = await apiClient.put<Book>(`/manuscript/books/${id}`, data)
+    return response.data
+  },
+
   getTree: async (bookId?: number): Promise<ManuscriptTree> => {
     const response = await apiClient.get<ManuscriptTree>('/manuscript/tree', {
       params: bookId ? { book_id: bookId } : {}
@@ -52,6 +57,11 @@ export const manuscriptApi = {
   
   createChapter: async (actId: number, title: string): Promise<Chapter> => {
     const response = await apiClient.post<Chapter>('/manuscript/chapters', { act_id: actId, title })
+    return response.data
+  },
+
+  updateChapter: async (id: number, data: Partial<Chapter>): Promise<Chapter> => {
+    const response = await apiClient.put<Chapter>(`/manuscript/chapters/${id}`, data)
     return response.data
   },
 

@@ -3,9 +3,11 @@ import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
+import SettingsModal from './SettingsModal';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const setToken = useAppStore(state => state.setToken);
   const { books, activeBookId, fetchBooks, setActiveBookId, createBook } = useManuscriptStore();
   const navigate = useNavigate();
@@ -27,6 +29,7 @@ export default function Sidebar() {
   };
 
   return (
+    <>
     <div className={`h-screen flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--color-border)]">
@@ -42,15 +45,31 @@ export default function Sidebar() {
       {/* Project Selector */}
       {!isCollapsed && (
         <div className="p-3 border-b border-[var(--color-border)]">
-          <select 
-            value={activeBookId || ''} 
-            onChange={(e) => setActiveBookId(Number(e.target.value))}
-            className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-1.5 px-2 text-sm focus:outline-none focus:border-[#6366f1]"
-          >
-            {books.map(b => (
-              <option key={b.id} value={b.id}>{b.title}</option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select 
+              value={activeBookId || ''} 
+              onChange={(e) => setActiveBookId(Number(e.target.value))}
+              className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-1.5 px-2 text-sm focus:outline-none focus:border-[#6366f1]"
+            >
+              {books.map(b => (
+                <option key={b.id} value={b.id}>{b.title}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => {
+                if (!activeBookId) return;
+                const book = books.find(b => b.id === activeBookId);
+                const newTitle = prompt("Renombrar proyecto (El título anterior se guardará en el historial):", book?.title);
+                if (newTitle && newTitle !== book?.title) {
+                  useManuscriptStore.getState().updateBook(activeBookId, { title: newTitle });
+                }
+              }}
+              className="p-1.5 shrink-0 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-background)] hover:text-[#6366f1] transition-colors border border-transparent hover:border-[var(--color-border)]"
+              title="Renombrar Proyecto"
+            >
+              <Settings size={16} />
+            </button>
+          </div>
           <button 
             onClick={handleCreateBook}
             className="w-full mt-2 flex items-center justify-center gap-2 py-1.5 px-2 text-xs font-medium text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 rounded-md transition-colors"
@@ -68,16 +87,26 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-[var(--color-border)] space-y-1">
-        <NavItem to="/app/settings" icon={<Settings size={20} />} label="Configuración" isCollapsed={isCollapsed} />
+        <button 
+          onClick={() => setIsSettingsOpen(true)}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+          title="Configuración de IA"
+        >
+          <Settings size={20} />
+          {!isCollapsed && <span className="font-medium text-sm">Configuración IA</span>}
+        </button>
         <button 
           onClick={handleLogout}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-red-500/10 hover:text-red-400 transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+          title="Cerrar Sesión"
         >
           <LogOut size={20} />
           {!isCollapsed && <span className="font-medium text-sm">Cerrar Sesión</span>}
         </button>
       </div>
     </div>
+    {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
+    </>
   );
 }
 

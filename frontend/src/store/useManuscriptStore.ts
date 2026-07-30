@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { manuscriptApi } from '../api/manuscript'
-import type { ManuscriptTree, Scene, Book } from '../api/manuscript'
+import type { ManuscriptTree, Scene, Book, Chapter } from '../api/manuscript'
 
 interface ManuscriptState {
   books: Book[];
@@ -14,10 +14,13 @@ interface ManuscriptState {
   setActiveBookId: (id: number | null) => void;
   fetchTree: () => Promise<void>;
   createBook: (title: string, synopsis?: string) => Promise<void>;
+  updateBook: (id: number, data: Partial<Book>) => Promise<void>;
   setActiveSceneId: (id: number | null) => void;
   createChapter: () => Promise<void>;
+  updateChapter: (id: number, data: Partial<Chapter>) => Promise<void>;
   createScene: (chapterId: number, title: string) => Promise<void>;
   updateActiveScene: (data: Partial<Scene>) => Promise<void>;
+  updateScene: (id: number, data: Partial<Scene>) => Promise<void>;
 }
 
 export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
@@ -93,6 +96,37 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
       await get().fetchTree(); // Refresh tree
     } catch (err: any) {
       set({ error: err.message })
+    }
+  },
+
+  updateBook: async (id: number, data: Partial<Book>) => {
+    try {
+      const updatedBook = await manuscriptApi.updateBook(id, data);
+      const newBooks = get().books.map(b => b.id === id ? updatedBook : b);
+      set({ books: newBooks });
+      if (get().activeBookId === id && get().tree) {
+        set({ tree: { ...get().tree!, title: updatedBook.title } });
+      }
+    } catch (err: any) {
+      console.error("Error updating book:", err);
+    }
+  },
+
+  updateChapter: async (id: number, data: Partial<Chapter>) => {
+    try {
+      await manuscriptApi.updateChapter(id, data);
+      await get().fetchTree(); // Refresh tree
+    } catch (err: any) {
+      console.error("Error updating chapter:", err);
+    }
+  },
+
+  updateScene: async (id: number, data: Partial<Scene>) => {
+    try {
+      await manuscriptApi.updateScene(id, data);
+      await get().fetchTree(); // Refresh tree
+    } catch (err: any) {
+      console.error("Error updating scene:", err);
     }
   },
 

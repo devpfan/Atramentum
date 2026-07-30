@@ -85,6 +85,32 @@ def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: 
     
     return book
 
+class BookUpdate(BaseModel):
+    title: Optional[str] = None
+    synopsis: Optional[str] = None
+
+@router.put("/books/{book_id}", response_model=BookSchema)
+def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from sqlalchemy.orm.attributes import flag_modified
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+        
+    if book_update.title and book_update.title != book.title:
+        # Añadir el título antiguo al historial si no es nulo
+        if book.previous_titles is None:
+            book.previous_titles = []
+        book.previous_titles.append(book.title)
+        flag_modified(book, "previous_titles")
+        book.title = book_update.title
+        
+    if book_update.synopsis is not None:
+        book.synopsis = book_update.synopsis
+        
+    db.commit()
+    db.refresh(book)
+    return book
+
 @router.get("/tree", response_model=ManuscriptTree)
 def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
@@ -141,6 +167,24 @@ def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get
 def create_chapter(chapter: ChapterCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_chapter = Chapter(**chapter.model_dump(), user_id=current_user.id)
     db.add(db_chapter)
+    db.commit()
+    db.refresh(db_chapter)
+    return db_chapter
+
+class ChapterUpdate(BaseModel):
+    title: Optional[str] = None
+    order: Optional[int] = None
+
+@router.put("/chapters/{chapter_id}", response_model=ChapterSchema)
+def update_chapter(chapter_id: int, chapter_update: ChapterUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_chapter = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.user_id == current_user.id).first()
+    if not db_chapter:
+        raise HTTPException(status_code=404, detail="Capítulo no encontrado")
+    
+    update_data = chapter_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_chapter, key, value)
+        
     db.commit()
     db.refresh(db_chapter)
     return db_chapter
