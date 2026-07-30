@@ -121,6 +121,16 @@ def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get
     db.refresh(book)
     return book
 
+@router.delete("/books/{book_id}")
+def delete_book(book_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+    
+    db.delete(book)
+    db.commit()
+    return {"message": "Libro eliminado con éxito"}
+
 @router.get("/tree", response_model=ManuscriptTree)
 def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
@@ -206,3 +216,153 @@ def create_scene(scene: SceneCreate, db: Session = Depends(get_db), current_user
     db.commit()
     db.refresh(db_scene)
     return db_scene
+
+from fastapi.responses import StreamingResponse
+from io import BytesIO, StringIO
+import io
+
+@router.get("/books/{book_id}/export")
+def export_book(book_id: int, format: str = "md", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+
+    acts = db.query(Act).filter(Act.book_id == book.id).all()
+    act_ids = [a.id for a in acts]
+    chapters = db.query(Chapter).filter(Chapter.act_id.in_(act_ids)).order_by(Chapter.order, Chapter.id).all()
+    
+    # Pre-fetch all scenes
+    from sqlalchemy.orm import joinedload
+    chapters = db.query(Chapter).options(joinedload(Chapter.scenes)).filter(Chapter.act_id.in_(act_ids)).order_by(Chapter.order, Chapter.id).all()
+
+    if format == "md":
+        from markdownify import markdownify as md
+        content = f"# {book.title}\n\n"
+        for ch in chapters:
+            content += f"## {ch.title}\n\n"
+            for sc in sorted(ch.scenes, key=lambda x: (x.order, x.id)):
+                content += f"### {sc.title}\n\n"
+                if sc.content:
+                    content += md(sc.content) + "\n\n"
+        
+        file_stream = StringIO(content)
+        return StreamingResponse(
+            iter([file_stream.getvalue()]), 
+            media_type="text/markdown", 
+            headers={"Content-Disposition": f"attachment; filename=\"{book.title}.md\""}
+        )
+
+    elif format == "docx":
+        from docx import Document
+        from bs4 import BeautifulSoup
+        doc = Document()
+        doc.add_heading(book.title, 0)
+        
+        for ch in chapters:
+            doc.add_heading(ch.title, 1)
+            for sc in sorted(ch.scenes, key=lambda x: (x.order, x.id)):
+                doc.add_heading(sc.title, 2)
+                if sc.content:
+                    soup = BeautifulSoup(sc.content, 'html.parser')
+                    for p in soup.find_all('p'):
+                        doc.add_paragraph(p.get_text())
+        
+        file_stream = BytesIO()
+        doc.save(file_stream)
+        file_stream.seek(0)
+        return StreamingResponse(
+            file_stream, 
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+            headers={"Content-Disposition": f"attachment; filename=\"{book.title}.docx\""}
+        )
+
+    elif format == "pdf":
+        from fpdf import FPDF
+        from bs4 import BeautifulSoup
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('helvetica', 'I', 8)
+                self.cell(0, 10, f'{book.title}', 0, 1, 'C')
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('helvetica', 'I', 8)
+                self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_font("helvetica", "B", 24)
+        pdf.cell(0, 20, book.title, 0, 1, 'C')
+        pdf.ln(20)
+        
+        for ch in chapters:
+            pdf.set_font("helvetica", "B", 18)
+            pdf.cell(0, 15, ch.title, 0, 1, 'L')
+            for sc in sorted(ch.scenes, key=lambda x: (x.order, x.id)):
+                pdf.set_font("helvetica", "B", 14)
+                pdf.cell(0, 10, sc.title, 0, 1, 'L')
+                pdf.set_font("helvetica", "", 12)
+                if sc.content:
+                    soup = BeautifulSoup(sc.content, 'html.parser')
+                    for p in soup.find_all('p'):
+                        text = p.get_text().encode('latin-1', 'replace').decode('latin-1')
+                        pdf.multi_cell(0, 8, text)
+                        pdf.ln(2)
+                pdf.ln(5)
+                
+        file_stream = BytesIO(pdf.output())
+        file_stream.seek(0)
+        return StreamingResponse(
+            file_stream, 
+            media_type="application/pdf", 
+            headers={"Content-Disposition": f"attachment; filename=\"{book.title}.pdf\""}
+        )
+
+    elif format == "epub":
+        from ebooklib import epub
+        from bs4 import BeautifulSoup
+        
+        book_epub = epub.EpubBook()
+        book_epub.set_identifier(f"atramentum-{book.id}")
+        book_epub.set_title(book.title)
+        book_epub.set_language('es')
+        book_epub.add_author("Autor") # Could be current_user.name
+        
+        chapters_epub = []
+        for i, ch in enumerate(chapters):
+            c = epub.EpubHtml(title=ch.title, file_name=f'chap_{i}.xhtml', lang='es')
+            content_html = f"<h1>{ch.title}</h1>"
+            for sc in sorted(ch.scenes, key=lambda x: (x.order, x.id)):
+                content_html += f"<h2>{sc.title}</h2>"
+                if sc.content:
+                    soup = BeautifulSoup(sc.content, 'html.parser')
+                    for p in soup.find_all('p'):
+                        content_html += f"<p>{p.get_text()}</p>"
+            
+            c.content = content_html
+            book_epub.add_item(c)
+            chapters_epub.append(c)
+            
+        book_epub.toc = tuple(chapters_epub)
+        book_epub.add_item(epub.EpubNcx())
+        book_epub.add_item(epub.EpubNav())
+        
+        # Add default style
+        style = 'BODY {color: white;}'
+        nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
+        book_epub.add_item(nav_css)
+        book_epub.spine = ['nav'] + chapters_epub
+        
+        file_stream = BytesIO()
+        epub.write_epub(file_stream, book_epub)
+        file_stream.seek(0)
+        
+        return StreamingResponse(
+            file_stream, 
+            media_type="application/epub+zip", 
+            headers={"Content-Disposition": f"attachment; filename=\"{book.title}.epub\""}
+        )
+
+    else:
+        raise HTTPException(status_code=400, detail="Formato no soportado")
+

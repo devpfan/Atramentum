@@ -15,6 +15,7 @@ interface ManuscriptState {
   fetchTree: () => Promise<void>;
   createBook: (title: string, synopsis?: string) => Promise<void>;
   updateBook: (id: number, data: Partial<Book>) => Promise<void>;
+  deleteBook: (id: number) => Promise<void>;
   setActiveSceneId: (id: number | null) => void;
   createChapter: () => Promise<void>;
   updateChapter: (id: number, data: Partial<Chapter>) => Promise<void>;
@@ -109,6 +110,23 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
       }
     } catch (err: any) {
       console.error("Error updating book:", err);
+    }
+  },
+
+  deleteBook: async (id: number) => {
+    try {
+      await manuscriptApi.deleteBook(id);
+      const newBooks = get().books.filter(b => b.id !== id);
+      set({ books: newBooks });
+      if (get().activeBookId === id) {
+        if (newBooks.length > 0) {
+          get().setActiveBookId(newBooks[0].id);
+        } else {
+          get().setActiveBookId(null);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error deleting book:", err);
     }
   },
 

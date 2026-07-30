@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import SettingsModal from './SettingsModal';
 import { StatisticsModal } from './StatisticsModal';
+import { ProjectManagementModal } from './ProjectManagementModal';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isProjectManagementOpen, setIsProjectManagementOpen] = useState(false);
   const setToken = useAppStore(state => state.setToken);
   const { books, activeBookId, fetchBooks, setActiveBookId, createBook } = useManuscriptStore();
   const navigate = useNavigate();
@@ -78,6 +80,12 @@ export default function Sidebar() {
           >
             <Plus size={14} /> Nuevo Proyecto
           </button>
+          <button 
+            onClick={() => setIsProjectManagementOpen(true)}
+            className="w-full mt-2 flex items-center justify-center gap-2 py-1.5 px-2 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] rounded-md transition-colors border border-transparent hover:border-[var(--color-border)]"
+          >
+            <Folder size={14} /> Gestionar Proyectos
+          </button>
         </div>
       )}
 
@@ -117,6 +125,7 @@ export default function Sidebar() {
     </div>
     {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
     {isStatsOpen && <StatisticsModal onClose={() => setIsStatsOpen(false)} />}
+    {isProjectManagementOpen && <ProjectManagementModal onClose={() => setIsProjectManagementOpen(false)} />}
     </>
   );
 }
