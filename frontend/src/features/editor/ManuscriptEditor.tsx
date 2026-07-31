@@ -44,6 +44,14 @@ export default function ManuscriptEditor() {
     y: number;
   }>({ visible: false, originalText: '', generatedText: '', from: 0, to: 0, x: 0, y: 0 });
 
+  // AI Custom Menu Popover State
+  const [aiMenuPopover, setAiMenuPopover] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    customInstruction: string;
+  }>({ visible: false, x: 0, y: 0, customInstruction: '' });
+
   // Synonyms Popover State
   const [synonymsPopover, setSynonymsPopover] = useState<{
     visible: boolean;
@@ -155,6 +163,8 @@ export default function ManuscriptEditor() {
 
     // Get coordinates for the popover
     const coords = editor.view.coordsAtPos(from);
+
+    setAiMenuPopover(prev => ({ ...prev, visible: false })); // Cerrar menu flotante si estaba abierto
 
     const token = useAppStore.getState().token;
     setIsAiLoading(true);
@@ -287,6 +297,26 @@ export default function ManuscriptEditor() {
     editor.chain().focus().setTextSelection({ from: synonymsPopover.from, to: synonymsPopover.to }).insertContent(syn).run();
     setSynonymsPopover(prev => ({ ...prev, visible: false }));
   };
+
+  const handleOpenAiMenu = () => {
+    if (!editor) return;
+    const { from } = editor.state.selection;
+    const coords = editor.view.coordsAtPos(from);
+    setAiMenuPopover({
+      visible: true,
+      x: coords.left,
+      y: coords.bottom + 10,
+      customInstruction: ''
+    });
+  };
+
+  const AI_PRESETS = [
+    { label: '🎭 Mostrar, no contar', prompt: 'Reescribe este texto usando la técnica de "mostrar, no contar" (show, don\'t tell). Hazlo más inmersivo y sensorial.' },
+    { label: '✨ Más descriptivo', prompt: 'Expande este texto añadiendo más detalles descriptivos sobre el entorno y las sensaciones.' },
+    { label: '✂️ Resumir', prompt: 'Resume este texto en una frase más corta y directa.' },
+    { label: '👁️ 1ra Persona', prompt: 'Reescribe este texto en primera persona (desde el punto de vista del protagonista).' },
+    { label: '👁️ 3ra Persona', prompt: 'Reescribe este texto en tercera persona.' },
+  ];
 
   const selectedTextForMenu = editor ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').trim() : '';
   const isSingleWord = selectedTextForMenu.length > 0 && !selectedTextForMenu.includes(' ');
@@ -435,6 +465,65 @@ export default function ManuscriptEditor() {
             </div>
           )}
 
+          {/* AI Custom Action Menu Popover */}
+          {aiMenuPopover.visible && !aiPreview.visible && (
+            <div 
+              className="fixed z-[60] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl p-0 rounded-xl w-72 flex flex-col overflow-hidden"
+              style={{ left: aiMenuPopover.x, top: aiMenuPopover.y }}
+            >
+              <div className="flex justify-between items-center p-3 border-b border-[var(--color-border)] bg-indigo-500/10">
+                <div className="flex items-center gap-2 text-indigo-400 font-medium text-sm">
+                  <Sparkles size={16} /> 
+                  Acción Mágica
+                </div>
+                <button onClick={() => setAiMenuPopover(prev => ({ ...prev, visible: false }))} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
+                  <CloseIcon size={16} />
+                </button>
+              </div>
+              
+              <div className="p-3 border-b border-[var(--color-border)]">
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (aiMenuPopover.customInstruction.trim()) {
+                      handleAiAction(aiMenuPopover.customInstruction);
+                    }
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Ej. Hazlo sonar más siniestro..."
+                    value={aiMenuPopover.customInstruction}
+                    onChange={(e) => setAiMenuPopover(prev => ({ ...prev, customInstruction: e.target.value }))}
+                    className="flex-1 bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500 text-[var(--color-text-primary)]"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!aiMenuPopover.customInstruction.trim()}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white p-1.5 rounded-md disabled:opacity-50 transition-colors"
+                  >
+                    <Wand2 size={16} />
+                  </button>
+                </form>
+              </div>
+
+              <div className="p-2 flex flex-col gap-1 max-h-[250px] overflow-y-auto">
+                <div className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1 px-2 mt-1">Presets Rápidos</div>
+                {AI_PRESETS.map((preset, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => handleAiAction(preset.prompt)}
+                    className="text-left px-3 py-2 rounded-md hover:bg-[var(--color-surface-hover)] text-[var(--color-text-primary)] text-sm transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {activeSceneId ? (
             <div 
               className={isFocusMode ? 'min-h-[100vh] w-full max-w-[900px] mx-auto cursor-text flex flex-col pt-12' : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col'}
@@ -456,27 +545,11 @@ export default function ManuscriptEditor() {
               {editor && (
                 <BubbleMenu editor={editor} className="flex overflow-hidden rounded-xl shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md">
                   <button 
-                    onClick={() => handleAiAction("Reescribe este texto de forma más profesional y literaria.")}
+                    onClick={handleOpenAiMenu}
                     disabled={isAiLoading || isGeneratingScene}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#6366f1]/20 hover:text-[#6366f1] transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-indigo-500/20 hover:text-indigo-400 transition-colors disabled:opacity-50"
                   >
-                    <PenLine size={16} /> Reescribir
-                  </button>
-                  <div className="w-px bg-[var(--color-border)]"></div>
-                  <button 
-                    onClick={() => handleAiAction("Expande este texto añadiendo más detalles descriptivos.")}
-                    disabled={isAiLoading || isGeneratingScene}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-emerald-500/20 hover:text-emerald-400 transition-colors disabled:opacity-50"
-                  >
-                    <Sparkles size={16} /> Expandir
-                  </button>
-                  <div className="w-px bg-[var(--color-border)]"></div>
-                  <button 
-                    onClick={() => handleAiAction("Resume este texto en una frase más corta y directa.")}
-                    disabled={isAiLoading || isGeneratingScene}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-amber-500/20 hover:text-amber-400 transition-colors disabled:opacity-50"
-                  >
-                    <Shrink size={16} /> Resumir
+                    <Wand2 size={16} /> IA...
                   </button>
                   
                   {isSingleWord && (
