@@ -192,7 +192,8 @@ export default function ManuscriptEditor() {
     });
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/v1/ai/inline-edit', {
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const res = await fetch(`${baseUrl}/ai/inline-edit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -245,7 +246,8 @@ export default function ManuscriptEditor() {
     try {
       const prompt = `Escribe la prosa para esta escena detalladamente siguiendo estos beats (eventos clave):\n${beatsText}`;
       
-      const res = await fetch('http://127.0.0.1:8000/api/v1/ai/generate-scene', {
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const res = await fetch(`${baseUrl}/ai/generate-scene`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -305,7 +307,8 @@ export default function ManuscriptEditor() {
     });
     
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/ai/synonyms?word=${encodeURIComponent(word)}`);
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const res = await fetch(`${baseUrl}/ai/synonyms?word=${encodeURIComponent(word)}`);
       const data = await res.json();
       setSynonymsPopover(prev => ({ ...prev, isLoading: false, synonyms: data.synonyms || [] }));
     } catch (err) {

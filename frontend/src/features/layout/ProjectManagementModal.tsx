@@ -38,7 +38,8 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
     // We can use a direct window.open or fetch to trigger download
     // Direct window.open requires token in query string or cookie. 
     // Since we use Bearer token, we need to fetch and trigger download.
-    fetch(`http://localhost:8000/api/v1/manuscript/books/${bookId}/export?format=${format}`, {
+    const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+    fetch(`${baseUrl}/manuscript/books/${bookId}/export?format=${format}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

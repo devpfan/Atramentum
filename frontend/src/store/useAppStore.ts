@@ -42,7 +42,8 @@ export const useAppStore = create<AppState>((set) => ({
   
   fetchUser: async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/auth/me', {
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const response = await fetch(`${baseUrl}/auth/me`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {

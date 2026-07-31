@@ -70,7 +70,8 @@ export default function AssistantChat() {
     addMessage({ id: botMessageId, role: 'assistant', content: '' });
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/ai/chat', {
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const response = await fetch(`${baseUrl}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

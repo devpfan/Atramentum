@@ -58,7 +58,8 @@ export const useChatStore = create<ChatState>((set) => ({
 
   fetchChatHistory: async (sceneId: number, token: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/ai/chat/${sceneId}`, {
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const response = await fetch(`${baseUrl}/ai/chat/${sceneId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -77,7 +78,8 @@ export const useChatStore = create<ChatState>((set) => ({
 
   clearChatHistory: async (sceneId: number, token: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/ai/chat/${sceneId}`, {
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+      const response = await fetch(`${baseUrl}/ai/chat/${sceneId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

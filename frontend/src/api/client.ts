@@ -1,8 +1,10 @@
 import axios from 'axios'
 import { useAppStore } from '../store/useAppStore'
 
+export const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+
 export const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/v1',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
