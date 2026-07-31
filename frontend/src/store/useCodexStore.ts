@@ -11,6 +11,7 @@ interface CodexState {
   createEntry: (data: any) => Promise<void>;
   updateEntry: (id: number, data: any) => Promise<void>;
   deleteEntry: (id: number) => Promise<void>;
+  uploadImage: (id: number, file: File) => Promise<void>;
   // Helper to extract all names/aliases mapping back to entries
   getAliasMap: () => Record<string, CodexEntry>;
 }
@@ -58,6 +59,20 @@ export const useCodexStore = create<CodexState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const updatedEntry = await codexApi.update(id, data)
+      set({ 
+        entries: get().entries.map(e => e.id === id ? updatedEntry : e), 
+        isLoading: false 
+      })
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false })
+      throw err;
+    }
+  },
+
+  uploadImage: async (id: number, file: File) => {
+    set({ isLoading: true, error: null })
+    try {
+      const updatedEntry = await codexApi.uploadImage(id, file);
       set({ 
         entries: get().entries.map(e => e.id === id ? updatedEntry : e), 
         isLoading: false 

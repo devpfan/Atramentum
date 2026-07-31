@@ -11,6 +11,8 @@ from app.api.deps import get_current_user
 from app.services.llm_client import extract_characters, get_merged_ai_settings
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
+from fastapi import UploadFile, File
+import base64
 
 router = APIRouter()
 
@@ -179,3 +181,27 @@ async def scan_document(request: ScanRequest, db: Session = Depends(get_db), cur
         
     db.commit()
     return {"inserted": inserted_count}
+
+@router.post("/{entry_id}/image", response_model=CodexEntrySchema)
+async def upload_image(
+    entry_id: int, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    db_entry = db.query(CodexEntry).filter(CodexEntry.id == entry_id, CodexEntry.user_id == current_user.id).first()
+    if not db_entry:
+        raise HTTPException(status_code=404, detail="Entrada no encontrada")
+        
+    data = await file.read()
+    if len(data) > 500 * 1024:
+        raise HTTPException(status_code=400, detail="La imagen supera el límite de 500KB")
+        
+    base64_str = base64.b64encode(data).decode('utf-8')
+    content_type = file.content_type or "image/jpeg"
+    data_url = f"data:{content_type};base64,{base64_str}"
+        
+    db_entry.image_url = data_url
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry

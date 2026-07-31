@@ -393,6 +393,13 @@ export default function ManuscriptEditor() {
                   {tooltip.entry.category}
                 </span>
               </div>
+              
+              {tooltip.entry.image_url && (
+                <div className="w-full h-32 mb-3 rounded-lg overflow-hidden border border-[var(--color-border)]">
+                  <img src={tooltip.entry.image_url} alt={tooltip.entry.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+
               {tooltip.entry.description && (
                 <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
                   {tooltip.entry.description}

@@ -15,6 +15,7 @@ export interface CodexEntry {
   aliases: CodexAlias[];
   series_id: number | null;
   book_id: number | null;
+  image_url: string | null;
 }
 
 export const codexApi = {
@@ -40,5 +41,15 @@ export const codexApi = {
   scanDocument: async (bookId: number): Promise<{ inserted: number }> => {
     const response = await apiClient.post<{ inserted: number }>('/codex/scan', { book_id: bookId })
     return response.data
+  },
+  uploadImage: async (id: number, file: File): Promise<CodexEntry> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<CodexEntry>(`/codex/${id}/image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 }

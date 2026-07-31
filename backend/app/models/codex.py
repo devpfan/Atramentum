@@ -26,6 +26,7 @@ class CodexEntry(Base):
     category = Column(Enum(CodexCategory), nullable=False)
     description = Column(Text, nullable=True) # Descripción detallada de la entidad
     attributes = Column(JSONB, nullable=True) # Atributos adicionales como JSON
+    image_url = Column(String, nullable=True) # Retrato o imagen de referencia
     
     # Campo vectorial para búsqueda semántica (768 dimensiones es el estándar para Gemini embeddings)
     embedding = Column(Vector(768), nullable=True) 

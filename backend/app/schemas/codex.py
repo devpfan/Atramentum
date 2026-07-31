@@ -23,6 +23,7 @@ class CodexEntryBase(BaseModel):
     attributes: Optional[Dict[str, Any]] = None
     book_id: Optional[int] = None
     series_id: Optional[int] = None
+    image_url: Optional[str] = None
 
 class CodexEntryCreate(CodexEntryBase):
     aliases: Optional[List[str]] = []

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import type { CodexEntry } from '../../api/codex';
-import { Save, Trash2, X, Plus, Globe, Book } from 'lucide-react';
+import { Save, Trash2, X, Plus, Globe, Book, Image as ImageIcon, UploadCloud } from 'lucide-react';
 
 interface CodexEditorProps {
   entry: CodexEntry | null;
@@ -10,7 +10,7 @@ interface CodexEditorProps {
 }
 
 export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
-  const { createEntry, updateEntry, deleteEntry, isLoading } = useCodexStore();
+  const { createEntry, updateEntry, deleteEntry, uploadImage, isLoading } = useCodexStore();
   const { activeBookId, books } = useManuscriptStore();
   
   const activeBook = books.find(b => b.id === activeBookId);
@@ -144,6 +144,19 @@ export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
     setFormData(prev => ({ ...prev, attributes: newAttrs }));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    if (entry) {
+      try {
+        await uploadImage(entry.id, file);
+      } catch (err) {
+        console.error(err);
+        alert('Error subiendo la imagen');
+      }
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-[var(--color-background)]">
       {/* Header */}
@@ -174,8 +187,30 @@ export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
       {/* Form Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
+        {/* Imagen de Perfil */}
+        <div className="flex items-center gap-6">
+          <div className="w-24 h-24 rounded-lg bg-[var(--color-surface-hover)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden relative group">
+            {entry?.image_url ? (
+              <>
+                <img src={entry.image_url} alt="Perfil" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <label className="cursor-pointer p-2 bg-white/20 rounded-full hover:bg-white/40 text-white transition-colors">
+                    <UploadCloud size={20} />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </div>
+              </>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors">
+                <ImageIcon size={24} className="mb-1 opacity-50" />
+                <span className="text-[10px] font-medium text-center px-1">
+                  {isNew ? "Guarda primero" : "Subir Imagen"}
+                </span>
+                {!isNew && <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />}
+              </label>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
             <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Nombre Principal</label>
             <input 
               type="text" 
@@ -185,6 +220,9 @@ export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
               placeholder="Ej: Gandalf"
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Categoría</label>
