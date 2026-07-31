@@ -6,7 +6,7 @@ import { AutoTagExtension } from './extensions/AutoTagExtension';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { Wand2, PenLine, Sparkles, Shrink, PanelRightOpen, Check, X as CloseIcon } from 'lucide-react';
+import { Wand2, Sparkles, Shrink, PanelRightOpen, Check, X as CloseIcon } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
 import SceneInspector from './SceneInspector';
@@ -169,14 +169,26 @@ export default function ManuscriptEditor() {
     const token = useAppStore.getState().token;
     setIsAiLoading(true);
 
+    let xPos = coords.left;
+    let yPos = coords.bottom + 10;
+    
+    // Adjust if too close to bottom (assuming modal max height ~400px)
+    if (yPos + 400 > window.innerHeight) {
+      yPos = coords.top - 410;
+    }
+    // Adjust if too far right
+    if (xPos + 384 > window.innerWidth) { // 384px = w-96
+      xPos = window.innerWidth - 400;
+    }
+
     setAiPreview({
       visible: true,
       originalText: selectedText,
       generatedText: '',
       from,
       to,
-      x: coords.left,
-      y: coords.bottom + 10
+      x: xPos,
+      y: yPos
     });
 
     try {
@@ -278,8 +290,18 @@ export default function ManuscriptEditor() {
     if (!word || word.includes(' ')) return;
     
     const coords = editor.view.coordsAtPos(from);
+    let xPos = coords.left;
+    let yPos = coords.bottom + 10;
+    
+    if (yPos + 300 > window.innerHeight) {
+      yPos = coords.top - 310;
+    }
+    if (xPos + 256 > window.innerWidth) { // 256px = w-64
+      xPos = window.innerWidth - 270;
+    }
+
     setSynonymsPopover({
-      visible: true, word, synonyms: [], isLoading: true, x: coords.left, y: coords.bottom + 10, from, to
+      visible: true, word, synonyms: [], isLoading: true, x: xPos, y: yPos, from, to
     });
     
     try {
@@ -302,10 +324,21 @@ export default function ManuscriptEditor() {
     if (!editor) return;
     const { from } = editor.state.selection;
     const coords = editor.view.coordsAtPos(from);
+    
+    let xPos = coords.left;
+    let yPos = coords.bottom + 10;
+    
+    if (yPos + 350 > window.innerHeight) {
+      yPos = coords.top - 360;
+    }
+    if (xPos + 288 > window.innerWidth) { // 288px = w-72
+      xPos = window.innerWidth - 300;
+    }
+
     setAiMenuPopover({
       visible: true,
-      x: coords.left,
-      y: coords.bottom + 10,
+      x: xPos,
+      y: yPos,
       customInstruction: ''
     });
   };

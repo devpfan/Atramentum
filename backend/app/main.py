@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import codex, scenes, analyze, ai, auth, manuscript, series, chat, admin
+from app.api.routes import codex, scenes, analyze, ai, auth, manuscript, series, admin
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -24,7 +24,6 @@ app.include_router(manuscript.router, prefix=f"{settings.API_V1_STR}/manuscript"
 app.include_router(analyze.router, prefix=f"{settings.API_V1_STR}/analyze", tags=["analyze"])
 app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
 app.include_router(series.router, prefix=f"{settings.API_V1_STR}/series", tags=["series"])
-app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 
 @app.get("/")

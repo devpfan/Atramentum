@@ -125,7 +125,7 @@ export default function CommandPalette() {
                 <div className="flex-1">
                   <div className="font-medium">{item.title}</div>
                   <div className="text-xs opacity-60">
-                    {item.type === 'scene' ? `Escena • ${item.chapterTitle}` : `Archivum • ${item.category}`}
+                    {item.type === 'scene' ? `Escena • ${(item as any).chapterTitle}` : `Archivum • ${(item as any).category}`}
                   </div>
                 </div>
               </div>

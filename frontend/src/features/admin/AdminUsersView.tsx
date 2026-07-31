@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../api/admin';
-import { User } from '../../store/useAppStore';
-import { UserPlus, Shield, ShieldOff, Trash2 } from 'lucide-react';
+import type { User } from '../../store/useAppStore';
+import { UserPlus, Shield } from 'lucide-react';
 
 export default function AdminUsersView() {
   const [users, setUsers] = useState<User[]>([]);

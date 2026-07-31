@@ -1,5 +1,5 @@
-import { fetchAPI } from './base';
-import { User } from '../store/useAppStore';
+import { apiClient } from './client';
+import type { User } from '../store/useAppStore';
 
 export interface GlobalSetting {
   key: string;
@@ -9,19 +9,26 @@ export interface GlobalSetting {
 
 export const adminService = {
   // Users
-  getUsers: () => fetchAPI<User[]>('/admin/users'),
-  createUser: (data: any) => fetchAPI<User>('/admin/users', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  toggleUserStatus: (userId: number) => fetchAPI<User>(`/admin/users/${userId}/status`, {
-    method: 'PATCH'
-  }),
+  getUsers: async () => {
+    const res = await apiClient.get<User[]>('/admin/users');
+    return res.data;
+  },
+  createUser: async (data: any) => {
+    const res = await apiClient.post<User>('/admin/users', data);
+    return res.data;
+  },
+  toggleUserStatus: async (userId: number) => {
+    const res = await apiClient.patch<User>(`/admin/users/${userId}/status`);
+    return res.data;
+  },
   
   // Settings
-  getSettings: () => fetchAPI<GlobalSetting[]>('/admin/settings'),
-  updateSetting: (data: Partial<GlobalSetting>) => fetchAPI<GlobalSetting>('/admin/settings', {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  })
+  getSettings: async () => {
+    const res = await apiClient.get<GlobalSetting[]>('/admin/settings');
+    return res.data;
+  },
+  updateSetting: async (data: Partial<GlobalSetting>) => {
+    const res = await apiClient.put<GlobalSetting>('/admin/settings', data);
+    return res.data;
+  }
 };

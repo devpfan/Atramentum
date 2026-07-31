@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { adminService, GlobalSetting } from '../../api/admin';
+import { adminService } from '../../api/admin';
 import { Save, Server, ShieldCheck } from 'lucide-react';
 
 export default function AdminSettingsView() {

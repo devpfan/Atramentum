@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, Edit3, Library, Bot, Download, ChevronDown, ChevronRight, Zap, Target } from 'lucide-react';
+import { Book, Edit3, Library, Bot, ChevronDown, ChevronRight, Zap, Target } from 'lucide-react';
 
 interface FAQItem {
   id: string;
