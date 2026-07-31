@@ -1,4 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { useAppStore } from '../../store/useAppStore';
 import AssistantChat from '../ai/AssistantChat';
@@ -7,7 +8,45 @@ import { useChatStore } from '../../store/useChatStore';
 
 export default function AppLayout() {
   const token = useAppStore(state => state.token);
+  const isFocusMode = useAppStore(state => state.isFocusMode);
   const toggleChat = useChatStore(state => state.toggleChat);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        const currentFocus = useAppStore.getState().isFocusMode;
+        if (!currentFocus) {
+          document.documentElement.requestFullscreen().catch(err => console.error(err));
+          useAppStore.getState().toggleFocusMode(true);
+        } else {
+          if (document.fullscreenElement) document.exitFullscreen();
+          useAppStore.getState().toggleFocusMode(false);
+        }
+      }
+    };
+    
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+         useAppStore.getState().toggleFocusMode(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isFocusMode) {
+      document.body.classList.add('focus-mode-retro');
+    } else {
+      document.body.classList.remove('focus-mode-retro');
+    }
+  }, [isFocusMode]);
 
   // Si no hay token, lo devolvemos al login
   if (!token) {
@@ -15,29 +54,31 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-[var(--color-background)] overflow-hidden text-[var(--color-text-primary)]">
-      <Sidebar />
+    <div className={`flex h-screen bg-[var(--color-background)] overflow-hidden text-[var(--color-text-primary)] ${isFocusMode ? 'focus-mode-active' : ''}`}>
+      {!isFocusMode && <Sidebar />}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Aquí va el header superior del área de trabajo */}
-        <header className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-6 bg-[var(--color-background)]/95 backdrop-blur z-10">
-          <h2 className="text-sm font-medium text-[var(--color-text-secondary)]">Proyecto Activo / <span className="text-[var(--color-text-primary)]">Capítulo 1</span></h2>
-          <button
-            onClick={toggleChat}
-            className="flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg"
-          >
-            <Bot size={16} />
-            Chat AtrIA
-          </button>
-        </header>
+        {!isFocusMode && (
+          <header className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-6 bg-[var(--color-background)]/95 backdrop-blur z-10">
+            <h2 className="text-sm font-medium text-[var(--color-text-secondary)]">Proyecto Activo / <span className="text-[var(--color-text-primary)]">Capítulo 1</span></h2>
+            <button
+              onClick={toggleChat}
+              className="flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg"
+            >
+              <Bot size={16} />
+              Chat AtrIA
+            </button>
+          </header>
+        )}
 
         {/* Aquí se renderiza la vista activa (Manuscrito, Codex, etc) */}
-        <div className="flex-1 overflow-auto p-6 relative">
+        <div className={`flex-1 overflow-auto relative ${isFocusMode ? 'p-0 flex justify-center bg-blue-900' : 'p-6'}`}>
           <Outlet />
         </div>
       </main>
 
       {/* Panel Asistente Lateral */}
-      <AssistantChat />
+      {!isFocusMode && <AssistantChat />}
     </div>
   );
 }

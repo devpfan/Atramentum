@@ -23,6 +23,8 @@ export default function ManuscriptEditor() {
   const [isGeneratingScene, setIsGeneratingScene] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const isFocusMode = useAppStore(state => state.isFocusMode);
+  const toggleFocusMode = useAppStore(state => state.toggleFocusMode);
 
   // Tooltip State
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; entry: CodexEntry | null }>({
@@ -202,9 +204,23 @@ export default function ManuscriptEditor() {
 
   return (
     <div className="flex h-full w-full bg-[var(--color-background)]">
-      <ManuscriptSidebar />
+      {!isFocusMode && <ManuscriptSidebar />}
 
-      <div className="flex-1 overflow-y-auto relative p-8">
+      <div className={`flex-1 overflow-y-auto relative ${isFocusMode ? 'p-0 w-full' : 'p-8'}`}>
+        {/* Botón flotante para salir del modo focus */}
+        {isFocusMode && (
+          <button 
+            onClick={() => {
+              if (document.fullscreenElement) document.exitFullscreen();
+              toggleFocusMode(false);
+            }}
+            className="fixed top-4 right-4 z-50 p-2 text-indigo-400 hover:text-white bg-black/30 hover:bg-black/50 rounded-lg transition-colors opacity-0 hover:opacity-100 focus-mode-exit-btn"
+            title="Salir del Modo Concentración (ESC)"
+          >
+            <Shrink size={20} />
+          </button>
+        )}
+
         {/* Indicador de Autoguardado */}
         <div className="absolute top-4 right-8 text-xs text-[var(--color-text-secondary)] font-medium">
           {saveStatus === 'saving' && <span className="animate-pulse">Guardando...</span>}
@@ -234,19 +250,19 @@ export default function ManuscriptEditor() {
 
           {activeSceneId ? (
             <div 
-              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col"
+              className={isFocusMode ? 'min-h-[100vh] w-full max-w-[900px] mx-auto cursor-text flex flex-col pt-12' : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col'}
               style={{
-                fontFamily: editorFontFamily,
-                fontSize: `${editorFontSize}px`,
-                lineHeight: editorLineHeight
+                fontFamily: isFocusMode ? undefined : editorFontFamily,
+                fontSize: isFocusMode ? undefined : `${editorFontSize}px`,
+                lineHeight: isFocusMode ? undefined : editorLineHeight
               }}
               onMouseMove={handleMouseMove}
               onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
             >
-              <EditorToolbar editor={editor} />
+              {!isFocusMode && <EditorToolbar editor={editor} />}
               
-              <div className="px-10 pb-10 flex-1">
-                <h1 className="text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]" style={{ fontFamily: 'sans-serif' }}>
+              <div className={`flex-1 ${isFocusMode ? 'px-8 pt-8' : 'px-10 pb-10'}`}>
+                <h1 className={`text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]`} style={{ fontFamily: isFocusMode ? 'inherit' : 'sans-serif' }}>
                   {activeScene?.title || 'Sin Título'}
                 </h1>
               
@@ -298,14 +314,16 @@ export default function ManuscriptEditor() {
         </div>
       </div>
 
-      <SceneInspector 
-        onGenerate={handleGenerateScene} 
-        isGenerating={isGeneratingScene} 
-        isOpen={isInspectorOpen}
-        onToggle={() => setIsInspectorOpen(!isInspectorOpen)}
-      />
+      {!isFocusMode && (
+        <SceneInspector 
+          onGenerate={handleGenerateScene} 
+          isGenerating={isGeneratingScene} 
+          isOpen={isInspectorOpen}
+          onToggle={() => setIsInspectorOpen(!isInspectorOpen)}
+        />
+      )}
 
-      {!isInspectorOpen && activeSceneId && (
+      {!isFocusMode && !isInspectorOpen && activeSceneId && (
         <button
           onClick={() => setIsInspectorOpen(true)}
           className="fixed right-4 top-24 z-20 p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-l-lg shadow-lg text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"

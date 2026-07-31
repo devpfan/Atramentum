@@ -137,3 +137,46 @@ body {
 .tiptap h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2em; margin-bottom: 1em; color: var(--color-text-primary); }  
 .codex-tag { border-bottom: 2px solid var(--color-primary); cursor: pointer; transition: all 0.2s ease; }  
 .codex-tag:hover { background-color: var(--color-primary); color: white; border-radius: 4px; }
+
+/* FOCUS MODE RETRO (DOS/WordStar Aesthetic) */
+body.focus-mode-retro {
+  background-color: #000084 !important; /* Retro Dark Blue */
+  color: #ffb000 !important; /* Amber text */
+  font-family: "Courier New", Courier, monospace !important;
+}
+
+body.focus-mode-retro * {
+  border-color: transparent !important;
+}
+
+body.focus-mode-retro .tiptap p {
+  color: #ffb000 !important;
+  font-size: 1.25rem !important;
+  line-height: 1.6 !important;
+}
+
+body.focus-mode-retro .tiptap p:focus-within {
+  color: #ffb000 !important;
+}
+
+body.focus-mode-retro .tiptap h2 {
+  color: #ffffff !important;
+  font-family: "Courier New", Courier, monospace !important;
+  text-transform: uppercase;
+}
+
+body.focus-mode-retro .tiptap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+body.focus-mode-retro .focus-mode-active {
+  background-color: #000084 !important;
+}
+
+/* Ocultar botones flotantes extraños en focus mode */
+body.focus-mode-retro .bubble-menu,
+body.focus-mode-retro .floating-menu {
+  display: none !important;
+}

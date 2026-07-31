@@ -1,5 +1,6 @@
 import { Editor } from '@tiptap/react';
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3 } from 'lucide-react';
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, Maximize } from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -67,6 +68,22 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
         title="Título 3"
       >
         <Heading3 size={18} />
+      </button>
+
+      <div className="flex-1" />
+
+      <button
+        onClick={() => {
+          const isFocus = useAppStore.getState().isFocusMode;
+          if (!isFocus) {
+            document.documentElement.requestFullscreen().catch(err => console.error(err));
+            useAppStore.getState().toggleFocusMode(true);
+          }
+        }}
+        className="p-1.5 rounded-md transition-colors text-[var(--color-text-secondary)] hover:bg-[var(--color-primary)] hover:text-white"
+        title="Modo Concentración (F11)"
+      >
+        <Maximize size={18} />
       </button>
     </div>
   );
