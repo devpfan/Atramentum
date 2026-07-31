@@ -10,6 +10,7 @@ import AppLayout from './features/layout/AppLayout'
 
 import ManuscriptEditor from './features/editor/ManuscriptEditor'
 import CodexView from './features/codex/CodexView'
+import HelpView from './features/help/HelpView'
 
 function App() {
   const token = useAppStore(state => state.token)
@@ -38,6 +39,7 @@ function App() {
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<ManuscriptEditor />} />
           <Route path="codex" element={<CodexView />} />
+          <Route path="help" element={<HelpView />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

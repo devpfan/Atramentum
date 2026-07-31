@@ -1,4 +1,4 @@
-import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2 } from 'lucide-react';
+import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2, HelpCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { useState, useEffect } from 'react';
@@ -95,6 +95,7 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         <NavItem to="/app" icon={<Book size={20} />} label="Manuscrito" isCollapsed={isCollapsed} end />
         <NavItem to="/app/codex" icon={<Library size={20} />} label="Archivum" isCollapsed={isCollapsed} />
+        <NavItem to="/app/help" icon={<HelpCircle size={20} />} label="Guía de Uso" isCollapsed={isCollapsed} />
       </div>
 
       {/* Footer */}
