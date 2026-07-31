@@ -321,9 +321,17 @@ export default function ManuscriptEditor() {
                 </div>
                 <div>
                   <span className="text-xs font-bold text-[#6366f1] uppercase tracking-wider mb-1 block">Sugerencia</span>
-                  <div className="text-emerald-400 p-2 bg-emerald-500/10 rounded-md border border-emerald-500/20">
-                    {aiPreview.generatedText || "..."}
-                  </div>
+                  {isAiLoading ? (
+                    <div className="text-emerald-400 p-2 bg-emerald-500/10 rounded-md border border-emerald-500/20 whitespace-pre-wrap">
+                      {aiPreview.generatedText || "..."}
+                    </div>
+                  ) : (
+                    <textarea 
+                      className="w-full text-emerald-400 p-2 bg-emerald-500/10 rounded-md border border-emerald-500/30 focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1] outline-none whitespace-pre-wrap resize-y min-h-[100px]"
+                      value={aiPreview.generatedText}
+                      onChange={(e) => setAiPreview(prev => ({ ...prev, generatedText: e.target.value }))}
+                    />
+                  )}
                 </div>
               </div>
 
