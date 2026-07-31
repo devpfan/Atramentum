@@ -50,5 +50,10 @@ export const authApi = {
   updatePassword: async (current_password: string, new_password: string) => {
     const response = await apiClient.put('/auth/me/password', { current_password, new_password })
     return response.data
+  },
+
+  getPublicSettings: async () => {
+    const response = await apiClient.get('/auth/public-settings')
+    return response.data
   }
 }

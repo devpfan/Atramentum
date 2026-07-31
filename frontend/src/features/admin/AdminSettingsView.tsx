@@ -55,10 +55,10 @@ export default function AdminSettingsView() {
         <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <ShieldCheck className="text-green-500" size={20} />
-            <h2 className="text-lg font-bold">Seguridad y Acceso</h2>
+            <h2 className="text-lg font-bold">Seguridad y Apariencia Pública</h2>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             <label className="flex items-center gap-3">
               <input 
                 type="checkbox" 
@@ -71,6 +71,21 @@ export default function AdminSettingsView() {
                 <div className="text-sm text-[var(--color-text-secondary)]">Si se desactiva, solo los administradores podrán crear nuevas cuentas.</div>
               </div>
             </label>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Tema del Inicio de Sesión (Global)</label>
+              <select 
+                value={settings['login_theme'] || 'parchment'} 
+                onChange={(e) => handleChange('login_theme', e.target.value)}
+                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
+              >
+                <option value="modern">Moderno (Cristal Índigo)</option>
+                <option value="parchment">Clásico (Papiro Oscuro)</option>
+                <option value="grimoire">Fantasía (Libro de Hechizos)</option>
+                <option value="neon">Sci-Fi (Cristal de Neón)</option>
+              </select>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Este tema se aplicará automáticamente a todos los usuarios en la pantalla de login.</p>
+            </div>
           </div>
         </div>
 

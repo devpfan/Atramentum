@@ -13,6 +13,18 @@ from app.schemas.user import UserCreate, UserResponse, Token, UserEmailUpdate, U
 
 router = APIRouter()
 
+@router.get("/public-settings")
+def get_public_settings(db: Session = Depends(get_db)):
+    settings = db.query(GlobalSettings).filter(
+        GlobalSettings.key.in_(["allow_public_registration", "login_theme"])
+    ).all()
+    
+    settings_dict = {s.key: s.value for s in settings}
+    return {
+        "allow_public_registration": settings_dict.get("allow_public_registration", "true"),
+        "login_theme": settings_dict.get("login_theme", "parchment")
+    }
+
 @router.put("/me/email", response_model=UserResponse)
 def update_email(email_data: UserEmailUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.email == email_data.new_email).first()
