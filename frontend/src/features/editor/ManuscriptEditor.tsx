@@ -14,6 +14,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import EditorToolbar from './EditorToolbar';
+import { BookOpen } from 'lucide-react';
 
 export default function ManuscriptEditor() {
   const { entries, fetchEntries } = useCodexStore();
@@ -42,6 +43,18 @@ export default function ManuscriptEditor() {
     x: number;
     y: number;
   }>({ visible: false, originalText: '', generatedText: '', from: 0, to: 0, x: 0, y: 0 });
+
+  // Synonyms Popover State
+  const [synonymsPopover, setSynonymsPopover] = useState<{
+    visible: boolean;
+    word: string;
+    synonyms: string[];
+    isLoading: boolean;
+    x: number;
+    y: number;
+    from: number;
+    to: number;
+  }>({ visible: false, word: '', synonyms: [], isLoading: false, x: 0, y: 0, from: 0, to: 0 });
 
   // Cargar datos
   useEffect(() => {
@@ -248,6 +261,36 @@ export default function ManuscriptEditor() {
     }
   };
 
+  const handleFetchSynonyms = async () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const word = editor.state.doc.textBetween(from, to, ' ').trim();
+    if (!word || word.includes(' ')) return;
+    
+    const coords = editor.view.coordsAtPos(from);
+    setSynonymsPopover({
+      visible: true, word, synonyms: [], isLoading: true, x: coords.left, y: coords.bottom + 10, from, to
+    });
+    
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/v1/ai/synonyms?word=${encodeURIComponent(word)}`);
+      const data = await res.json();
+      setSynonymsPopover(prev => ({ ...prev, isLoading: false, synonyms: data.synonyms || [] }));
+    } catch (err) {
+      console.error(err);
+      setSynonymsPopover(prev => ({ ...prev, isLoading: false, synonyms: [] }));
+    }
+  };
+  
+  const handleApplySynonym = (syn: string) => {
+    if (!editor) return;
+    editor.chain().focus().setTextSelection({ from: synonymsPopover.from, to: synonymsPopover.to }).insertContent(syn).run();
+    setSynonymsPopover(prev => ({ ...prev, visible: false }));
+  };
+
+  const selectedTextForMenu = editor ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').trim() : '';
+  const isSingleWord = selectedTextForMenu.length > 0 && !selectedTextForMenu.includes(' ');
+
   return (
     <div className="flex h-full w-full bg-[var(--color-background)]">
       {!isFocusMode && <ManuscriptSidebar />}
@@ -354,6 +397,44 @@ export default function ManuscriptEditor() {
             </div>
           )}
 
+          {/* Synonyms Popover */}
+          {synonymsPopover.visible && (
+            <div 
+              className="fixed z-50 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl p-0 rounded-xl w-64 flex flex-col overflow-hidden max-h-[300px]"
+              style={{ left: synonymsPopover.x, top: synonymsPopover.y }}
+            >
+              <div className="flex justify-between items-center p-3 border-b border-[var(--color-border)] bg-blue-500/10">
+                <div className="flex items-center gap-2 text-blue-400 font-medium text-sm">
+                  <BookOpen size={16} className={synonymsPopover.isLoading ? "animate-pulse" : ""} /> 
+                  Sinónimos
+                </div>
+                <button onClick={() => setSynonymsPopover(prev => ({ ...prev, visible: false }))} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
+                  <CloseIcon size={16} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-2">
+                {synonymsPopover.isLoading ? (
+                  <div className="p-4 text-center text-sm text-[var(--color-text-secondary)]">Buscando...</div>
+                ) : synonymsPopover.synonyms.length > 0 ? (
+                  <div className="flex flex-col gap-1">
+                    {synonymsPopover.synonyms.map(syn => (
+                      <button 
+                        key={syn}
+                        onClick={() => handleApplySynonym(syn)}
+                        className="text-left px-3 py-2 rounded-md hover:bg-[var(--color-surface-hover)] text-[var(--color-text-primary)] text-sm transition-colors"
+                      >
+                        {syn}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-sm text-[var(--color-text-secondary)]">No se encontraron sinónimos.</div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeSceneId ? (
             <div 
               className={isFocusMode ? 'min-h-[100vh] w-full max-w-[900px] mx-auto cursor-text flex flex-col pt-12' : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col'}
@@ -397,6 +478,19 @@ export default function ManuscriptEditor() {
                   >
                     <Shrink size={16} /> Resumir
                   </button>
+                  
+                  {isSingleWord && (
+                    <>
+                      <div className="w-px bg-[var(--color-border)]"></div>
+                      <button 
+                        onClick={handleFetchSynonyms}
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-blue-500/20 hover:text-blue-400 transition-colors"
+                      >
+                        <BookOpen size={16} /> Sinónimos
+                      </button>
+                    </>
+                  )}
+
                   <div className="w-px bg-[var(--color-border)]"></div>
                   <button 
                     onClick={() => editor.chain().focus().toggleHighlight({ color: '#fbbf24' }).run()}

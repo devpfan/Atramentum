@@ -8,8 +8,24 @@ from app.services.llm_client import generate_scene_text, edit_selected_text
 from app.schemas.ai import GenerateSceneRequest, EditInlineRequest, ChatRequest
 from app.api.deps import get_current_user
 from app.models.user import User
+import nltk
 
 router = APIRouter()
+
+@router.get("/synonyms")
+def get_synonyms(word: str):
+    nltk.download('wordnet', quiet=True)
+    nltk.download('omw-2.0', quiet=True)
+    from nltk.corpus import wordnet as wn
+    
+    synsets = wn.synsets(word, lang='spa')
+    synonyms = set()
+    for s in synsets:
+        for lemma in s.lemmas('spa'):
+            name = lemma.name().replace('_', ' ').lower()
+            if name != word.lower():
+                synonyms.add(name)
+    return {"synonyms": list(synonyms)}
 
 @router.post("/generate-scene")
 def generate_scene(request: GenerateSceneRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
