@@ -71,6 +71,7 @@ export default function HelpView() {
             <div>
               <p>Atramentum utiliza una estructura de árbol tradicional para organizar tu obra:</p>
               <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li><strong>Series o Sagas:</strong> Si escribes varios libros en un mismo universo, puedes agruparlos en una Serie desde el menú "Gestionar Proyectos". Esto permite compartir el "Lore" entre todos los libros de la saga.</li>
                 <li><strong>Proyectos:</strong> Son los libros individuales. Puedes crear múltiples proyectos desde la barra lateral izquierda seleccionando "Nuevo Proyecto".</li>
                 <li><strong>Actos:</strong> Las grandes divisiones de tu historia (Ej. Planteamiento, Nudo, Desenlace).</li>
                 <li><strong>Capítulos:</strong> Las subdivisiones principales de cada Acto.</li>
@@ -110,7 +111,12 @@ export default function HelpView() {
         {
           id: 'arch-1',
           question: '¿Qué es el Archivum y cómo lo uso?',
-          answer: <p>El Archivum es la enciclopedia personal de tu libro. Aquí puedes crear fichas para Personajes, Lugares, Objetos y Conceptos (Lore). Lo importante es que <strong>la IA (AtrIA) lee tu Archivum</strong> para entender de qué estás hablando cuando mencionas a un personaje en el chat o pides ayuda para redactar.</p>
+          answer: (
+            <div>
+              <p>El Archivum es la enciclopedia personal de tu libro. Aquí puedes crear fichas para Personajes, Lugares, Objetos y Conceptos (Lore). Lo importante es que <strong>la IA (AtrIA) lee tu Archivum</strong> para entender de qué estás hablando cuando mencionas a un personaje en el chat o pides ayuda para redactar.</p>
+              <p className="mt-2"><strong>Entradas Globales vs Locales:</strong> Si tu libro pertenece a una <em>Serie</em>, puedes crear entradas en el Archivum marcadas como "Globales" (icono del mundo) para que todos los libros de la saga compartan ese personaje o lugar. Si la marcas como "Local" (icono de libro), solo existirá en el proyecto actual.</p>
+            </div>
+          )
         },
         {
           id: 'arch-2',
