@@ -103,11 +103,22 @@ export default function HelpView() {
           answer: (
             <div>
               <p>Selecciona cualquier fragmento de texto que hayas escrito y haz clic en el botón <strong>"✨ IA..."</strong> del menú flotante. Se abrirá una ventana con un enfoque híbrido:</p>
-              <ul className="list-disc pl-5 mt-2 space-y-1">
-                <li><strong>Instrucción Personalizada:</strong> En la barra superior puedes escribir exactamente qué quieres que haga la IA con el texto (Ej. <em>"Hazlo sonar más siniestro"</em>).</li>
-                <li><strong>Presets Rápidos:</strong> Botones para acciones comunes a un solo clic: <em>Mostrar no contar</em>, <em>Expansión descriptiva</em>, <em>Resumir</em>, y <em>Cambiar a 1ra o 3ra persona</em>.</li>
+              <ul className="list-disc pl-5 mt-4 space-y-3">
+                <li>
+                  <strong>Instrucción Personalizada (Barra superior):</strong> Si ninguno de los botones rápidos hace lo que quieres, puedes escribir aquí cualquier instrucción. Por ejemplo: <em>"Reescribe esto usando el estilo de terror cósmico de Lovecraft"</em> o <em>"Cambia los verbos al tiempo pasado"</em>. La IA seguirá tus órdenes al pie de la letra.
+                </li>
+                <li>
+                  <strong>Presets Rápidos (Botones inferiores):</strong>
+                  <ul className="list-disc pl-5 mt-2 space-y-2 text-sm text-[var(--color-text-secondary)]">
+                    <li><strong>🎭 Mostrar, no contar:</strong> Toma una frase plana (ej. "Juan estaba triste") y la reescribe con detalles sensoriales (ej. "A Juan le tembló el labio y desvió la mirada hacia el suelo").</li>
+                    <li><strong>✨ Más descriptivo:</strong> Expande el fragmento original inyectando más detalles sobre el entorno, el ambiente y las sensaciones físicas.</li>
+                    <li><strong>✂️ Resumir:</strong> Hace lo opuesto; toma un texto largo y lo condensa en una sola frase directa y al grano.</li>
+                    <li><strong>👁️ 1ra Persona:</strong> Cambia la narración para que se cuente desde el punto de vista del protagonista (Yo).</li>
+                    <li><strong>👁️ 3ra Persona:</strong> Cambia la narración a un narrador externo (Él / Ella).</li>
+                  </ul>
+                </li>
               </ul>
-              <p className="mt-2">La IA te mostrará una sugerencia en un panel donde podrás editarla libremente antes de darle a "Aplicar".</p>
+              <p className="mt-4">Sea cual sea la opción que elijas, la IA te mostrará el resultado en un panel donde podrás <strong>editar libremente el texto generado</strong> antes de darle al botón "Aplicar".</p>
             </div>
           )
         },
