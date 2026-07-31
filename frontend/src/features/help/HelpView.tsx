@@ -99,11 +99,25 @@ export default function HelpView() {
         },
         {
           id: 'edit-3',
-          question: 'Edición y reescritura asistida (Varita Mágica)',
-          answer: <p>Selecciona cualquier fragmento de texto que hayas escrito y haz clic en el icono de la varita mágica que aparecerá sobre el texto. Escribe una instrucción (Ej. "Haz que suene más tenebroso") y la IA te mostrará una sugerencia en un panel flotante. Podrás editar libremente esa sugerencia antes de darle a "Aplicar".</p>
+          question: 'Acción Mágica (Edición Asistida con IA)',
+          answer: (
+            <div>
+              <p>Selecciona cualquier fragmento de texto que hayas escrito y haz clic en el botón <strong>"✨ IA..."</strong> del menú flotante. Se abrirá una ventana con un enfoque híbrido:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li><strong>Instrucción Personalizada:</strong> En la barra superior puedes escribir exactamente qué quieres que haga la IA con el texto (Ej. <em>"Hazlo sonar más siniestro"</em>).</li>
+                <li><strong>Presets Rápidos:</strong> Botones para acciones comunes a un solo clic: <em>Mostrar no contar</em>, <em>Expansión descriptiva</em>, <em>Resumir</em>, y <em>Cambiar a 1ra o 3ra persona</em>.</li>
+              </ul>
+              <p className="mt-2">La IA te mostrará una sugerencia en un panel donde podrás editarla libremente antes de darle a "Aplicar".</p>
+            </div>
+          )
         },
         {
           id: 'edit-4',
+          question: 'Sinónimos sin conexión',
+          answer: <p>Si haces doble clic en una <strong>única palabra</strong>, verás un botón azul de <strong>Sinónimos</strong> en el menú flotante. Al hacer clic, buscará alternativas usando un diccionario local en tu computadora, sin consumir internet ni créditos de IA. Solo elige la palabra que más te guste de la lista y se reemplazará sola.</p>
+        },
+        {
+          id: 'edit-5',
           question: '¿Puedo dejar notas o resaltar texto?',
           answer: <p>Sí. Selecciona un fragmento de texto y elige la opción "Resaltar" en el menú flotante. El texto quedará marcado en amarillo brillante. Lo mejor es que al exportar tu libro a PDF o Word, estos resaltados serán ignorados para que tu manuscrito final quede limpio.</p>
         }
