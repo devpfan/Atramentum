@@ -1,4 +1,4 @@
-import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2, HelpCircle } from 'lucide-react';
+import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2, HelpCircle, Shield } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { useState, useEffect } from 'react';
@@ -14,6 +14,7 @@ export default function Sidebar() {
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isProjectManagementOpen, setIsProjectManagementOpen] = useState(false);
   const setToken = useAppStore(state => state.setToken);
+  const user = useAppStore(state => state.user);
   const { books, activeBookId, fetchBooks, setActiveBookId, createBook } = useManuscriptStore();
   const navigate = useNavigate();
 
@@ -118,6 +119,19 @@ export default function Sidebar() {
             {!isCollapsed && <span className="font-medium text-sm">Configuración</span>}
           </button>
         </Tooltip>
+        
+        {user?.is_superuser && (
+          <Tooltip content="Panel de Administración" position="right">
+            <button 
+              onClick={() => navigate('/admin')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+            >
+              <Shield size={20} />
+              {!isCollapsed && <span className="font-medium text-sm">Administración</span>}
+            </button>
+          </Tooltip>
+        )}
+
         <Tooltip content="Cerrar Sesión" position="right">
           <button 
             onClick={handleLogout}

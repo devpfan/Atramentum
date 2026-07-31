@@ -8,6 +8,7 @@ from app.db.database import get_db
 from app.core.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.models.settings import GlobalSettings
 from app.schemas.user import UserCreate, UserResponse, Token, UserEmailUpdate, UserPasswordUpdate
 
 router = APIRouter()
@@ -35,6 +36,14 @@ def update_password(password_data: UserPasswordUpdate, db: Session = Depends(get
 
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
+    # Verificar si el registro está permitido
+    allow_reg_setting = db.query(GlobalSettings).filter(GlobalSettings.key == "allow_public_registration").first()
+    if allow_reg_setting and allow_reg_setting.value == "false":
+        # Check if there are no users at all (allow first user to register anyway)
+        total_users = db.query(User).count()
+        if total_users > 0:
+            raise HTTPException(status_code=403, detail="El registro público está deshabilitado por el administrador.")
+
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
         raise HTTPException(

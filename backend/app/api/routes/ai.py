@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 
 from app.db.database import get_db
 from app.services.rag_assembler import assemble_context
-from app.services.llm_client import generate_scene_text, edit_selected_text
+from app.services.llm_client import generate_scene_text, edit_selected_text, get_merged_ai_settings
 from app.schemas.ai import GenerateSceneRequest, EditInlineRequest, ChatRequest
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -31,7 +31,7 @@ def get_synonyms(word: str):
 def generate_scene(request: GenerateSceneRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
         context = assemble_context(request.scene_id, current_user.id, db)
-        ai_settings = current_user.ai_settings or {"provider": "gemini"}
+        ai_settings = get_merged_ai_settings(current_user.ai_settings, db)
         return StreamingResponse(
             generate_scene_text(context, request.prompt, ai_settings), 
             media_type="text/event-stream"
@@ -40,8 +40,8 @@ def generate_scene(request: GenerateSceneRequest, db: Session = Depends(get_db),
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/inline-edit")
-def inline_edit(request: EditInlineRequest, current_user: User = Depends(get_current_user)):
-    ai_settings = current_user.ai_settings or {"provider": "gemini"}
+def inline_edit(request: EditInlineRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ai_settings = get_merged_ai_settings(current_user.ai_settings, db)
     return StreamingResponse(
         edit_selected_text(request.selected_text, request.instruction, ai_settings),
         media_type="text/event-stream"
@@ -128,7 +128,7 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
     # Invertir para que queden en orden cronológico correcto
     recent_messages = list(reversed(recent_messages))
     
-    ai_settings = current_user.ai_settings or {"provider": "gemini"}
+    ai_settings = get_merged_ai_settings(current_user.ai_settings, db)
     
     async def chat_generator():
         full_response = ""

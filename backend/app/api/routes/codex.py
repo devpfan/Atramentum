@@ -8,7 +8,7 @@ from app.models.manuscript import Book, Act, Chapter, Scene
 from app.models.user import User
 from app.schemas.codex import CodexEntry as CodexEntrySchema, CodexEntryCreate, CodexEntryUpdate
 from app.api.deps import get_current_user
-from app.services.llm_client import extract_characters
+from app.services.llm_client import extract_characters, get_merged_ai_settings
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
@@ -135,8 +135,8 @@ async def scan_document(request: ScanRequest, db: Session = Depends(get_db), cur
         
     # Llama al LLM
     try:
-        # Pasa un ai_settings vacío para que use los valores por defecto (ej. gemini configurado en env)
-        characters = await extract_characters(full_text, {})
+        ai_settings = get_merged_ai_settings(current_user.ai_settings, db)
+        characters = await extract_characters(full_text, ai_settings)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         

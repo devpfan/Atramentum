@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from app.models.manuscript import Scene, SceneChunk
 from app.models.user import User
-from app.services.llm_client import get_embedding
+from app.services.llm_client import get_embedding, get_merged_ai_settings
 
 def chunk_html_text(html_content: str, max_words_per_chunk: int = 200) -> list[str]:
     """
@@ -58,7 +58,7 @@ async def sync_scene_embeddings(scene_id: int, user_id: int, db: Session):
         return
         
     user = db.query(User).filter(User.id == user_id).first()
-    ai_settings = user.ai_settings or {"provider": "gemini"}
+    ai_settings = get_merged_ai_settings(user.ai_settings, db)
 
     # 1. Extraer nuevos chunks
     text_chunks = chunk_html_text(scene.content)
@@ -86,7 +86,7 @@ async def search_semantic_context(query: str, book_id: int, user_id: int, db: Se
     Busca semánticamente en las escenas del libro y en el Codex.
     """
     user = db.query(User).filter(User.id == user_id).first()
-    ai_settings = user.ai_settings or {"provider": "gemini"}
+    ai_settings = get_merged_ai_settings(user.ai_settings, db)
     
     query_vector = await get_embedding(query, ai_settings)
     if not query_vector:

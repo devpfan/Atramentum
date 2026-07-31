@@ -12,8 +12,13 @@ import ManuscriptEditor from './features/editor/ManuscriptEditor'
 import CodexView from './features/codex/CodexView'
 import HelpView from './features/help/HelpView'
 
+import AdminLayout from './features/admin/AdminLayout'
+import AdminUsersView from './features/admin/AdminUsersView'
+import AdminSettingsView from './features/admin/AdminSettingsView'
+
 function App() {
   const token = useAppStore(state => state.token)
+  const fetchUser = useAppStore(state => state.fetchUser)
   const theme = useSettingsStore(state => state.theme)
 
   useEffect(() => {
@@ -22,6 +27,12 @@ function App() {
       document.documentElement.classList.add(theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (token) {
+      fetchUser();
+    }
+  }, [token, fetchUser]);
 
   return (
     <BrowserRouter>
@@ -40,6 +51,13 @@ function App() {
           <Route index element={<ManuscriptEditor />} />
           <Route path="codex" element={<CodexView />} />
           <Route path="help" element={<HelpView />} />
+        </Route>
+
+        {/* Rutas del Administrador */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="users" replace />} />
+          <Route path="users" element={<AdminUsersView />} />
+          <Route path="settings" element={<AdminSettingsView />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

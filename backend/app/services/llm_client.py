@@ -2,6 +2,35 @@ import json
 import litellm
 from litellm import acompletion, aembedding
 from app.core.config import settings
+from sqlalchemy.orm import Session
+from app.models.settings import GlobalSettings
+
+def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
+    """Merges user AI settings with Global settings. User settings take precedence."""
+    merged = dict(user_settings) if user_settings else {}
+    
+    # Check global settings
+    global_provider = db.query(GlobalSettings).filter(GlobalSettings.key == "global_ai_provider").first()
+    global_gemini_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_gemini_key").first()
+    global_openai_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openai_key").first()
+    global_anthropic_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_anthropic_key").first()
+    global_local_url = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_url").first()
+    
+    # Si el usuario NO tiene un provider seteado con llaves validas, usamos el global como fallback
+    has_user_keys = bool(merged.get("gemini_key") or merged.get("openai_key") or merged.get("anthropic_key") or merged.get("local_url"))
+    
+    if not has_user_keys and global_provider:
+        merged["provider"] = global_provider.value
+        if global_gemini_key:
+            merged["gemini_key"] = global_gemini_key.value
+        if global_openai_key:
+            merged["openai_key"] = global_openai_key.value
+        if global_anthropic_key:
+            merged["anthropic_key"] = global_anthropic_key.value
+        if global_local_url:
+            merged["local_url"] = global_local_url.value
+            
+    return merged
 
 def get_litellm_args(ai_settings: dict):
     provider = ai_settings.get("provider", "gemini")
