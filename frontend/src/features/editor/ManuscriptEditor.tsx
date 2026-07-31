@@ -319,7 +319,8 @@ export default function ManuscriptEditor() {
   ];
 
   const selectedTextForMenu = editor ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').trim() : '';
-  const isSingleWord = selectedTextForMenu.length > 0 && !selectedTextForMenu.includes(' ');
+  const wordCount = selectedTextForMenu.split(/\s+/).filter(w => w.length > 0).length;
+  const isSingleWord = wordCount === 1;
 
   return (
     <div className="flex h-full w-full bg-[var(--color-background)]">
