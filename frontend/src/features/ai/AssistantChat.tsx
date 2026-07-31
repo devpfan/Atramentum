@@ -3,6 +3,8 @@ import { useChatStore, type ChatMessage } from '../../store/useChatStore';
 import { useAppStore } from '../../store/useAppStore';
 import { Send, X, Bot, User, Trash2, Settings } from 'lucide-react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
+import { aiApi, type AiSettings } from '../../api/ai';
+import AiSettingsModal from './AiSettingsModal';
 
 export default function AssistantChat() {
   const isOpen = useChatStore(state => state.isOpen);
@@ -14,14 +16,26 @@ export default function AssistantChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPersonaModal, setShowPersonaModal] = useState(false);
+  const [aiSettings, setAiSettings] = useState<AiSettings | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const SCENE_ID = activeSceneId || 0; // Si no hay escena activa, usamos la 0 (global)
+
+  const loadSettings = async () => {
+    try {
+      const data = await aiApi.getSettings();
+      setAiSettings(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Cargar historial al abrir o cambiar de escena
   useEffect(() => {
     if (isOpen && token) {
       fetchChatHistory(SCENE_ID, token);
+      loadSettings();
     }
   }, [isOpen, SCENE_ID, token, fetchChatHistory]);
 
@@ -128,11 +142,26 @@ export default function AssistantChat() {
               onChange={(e) => setPersona(e.target.value)}
               className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
             >
-              <option value="cowriter">Co-Escritor (Ayuda Creativa)</option>
-              <option value="critic">El Crítico (Analítico y Severo)</option>
-              <option value="reader">Lector de Prueba (Fan / Reacciones)</option>
-              <option value="editor">Editor (Estilo, Gramática y Tono)</option>
+              <optgroup label="Roles Nativos">
+                <option value="cowriter">Co-Escritor (Ayuda Creativa)</option>
+                <option value="critic">El Crítico (Analítico y Severo)</option>
+                <option value="reader">Lector de Prueba (Fan / Reacciones)</option>
+                <option value="editor">Editor (Estilo, Gramática y Tono)</option>
+              </optgroup>
+              {aiSettings?.custom_personas && aiSettings.custom_personas.length > 0 && (
+                <optgroup label="Mis Roles (Personales)">
+                  {aiSettings.custom_personas.map(p => (
+                    <option key={p.id} value={p.id}>🤖 {p.name}</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
+            <button 
+              onClick={() => setShowPersonaModal(true)} 
+              className="mt-2 text-xs text-blue-400 hover:text-blue-300 hover:underline transition-colors block text-right w-full"
+            >
+              Gestionar Mis Roles...
+            </button>
           </div>
           <div>
             <label className="block text-xs text-[var(--color-text-secondary)] mb-2 uppercase tracking-wider">Contexto a incluir</label>
@@ -211,6 +240,10 @@ export default function AssistantChat() {
           </button>
         </form>
       </div>
+      
+      {showPersonaModal && (
+        <AiSettingsModal onClose={() => setShowPersonaModal(false)} onSaved={loadSettings} />
+      )}
     </div>
   );
 }

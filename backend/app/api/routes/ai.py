@@ -12,6 +12,19 @@ import nltk
 
 router = APIRouter()
 
+@router.get("/settings")
+def get_ai_settings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return current_user.ai_settings or {}
+
+@router.put("/settings")
+def update_ai_settings(settings: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    current_user.ai_settings = settings
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(current_user, "ai_settings")
+    db.commit()
+    db.refresh(current_user)
+    return current_user.ai_settings
+
 @router.get("/synonyms")
 def get_synonyms(word: str):
     nltk.download('wordnet', quiet=True)

@@ -6,16 +6,36 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 
 *   **Gestión Multi-Proyecto:** Organiza múltiples libros o proyectos literarios de forma independiente en una sola cuenta.
 *   **Gestión de Manuscritos Estructurada:** Divide tu obra en Actos, Capítulos y Escenas con un árbol de navegación intuitivo.
-*   **El Archivum (Bíblia de la Historia):** Un repositorio dedicado para el *lore* de tu historia. Crea entradas detalladas para Personajes, Lugares, Objetos y Conceptos. El Archivum es independiente para cada proyecto, manteniendo universos separados.
+*   **El Archivum (Biblia de la Historia):** Un repositorio multimedia dedicado para el *lore* de tu historia. Crea entradas para Personajes, Lugares, Objetos y Conceptos, e ilustra sus perfiles con retratos e imágenes (soporte integrado).
 *   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Archivum (RAG - *Retrieval-Augmented Generation*).
-*   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado, resaltado de notas y autocompletado inteligente de etiquetas del Archivum.
-*   **Edición Asistida con Vista Previa (Inline Preview):** Reescribe, expande o resume fragmentos de tu texto con IA, y revisa/edita la sugerencia en una ventana flotante antes de aplicarla a tu manuscrito.
-*   **Reordenamiento Drag & Drop:** Arrastra y suelta escenas en la barra lateral para reestructurar fácilmente los capítulos de tu libro.
-*   **Buscador Global (Command Palette):** Presiona `Cmd + P` o `Ctrl + P` para saltar de inmediato a cualquier escena o ficha del Archivum.
+*   **Escáner Inteligente:** Atramentum puede leer tus capítulos y poblar el Archivum automáticamente detectando personajes que aún no tengas registrados.
+*   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, con autoguardado y autocompletado inteligente de etiquetas. Al pasar el ratón por los personajes etiquetados, verás su información e imagen en una ventana flotante.
+*   **Asistente Inteligente (AtrIA):** Un panel de chat integrado donde puedes hablar con la IA sobre tu novela. Puedes crear "Roles de IA" o "Personas" totalmente personalizables (Ej: crea un crítico literario despiadado o un co-escritor entusiasta) definiendo sus instrucciones del sistema (System Prompts).
+*   **Edición Asistida con Vista Previa (Inline Preview):** Reescribe, expande o resume fragmentos de tu texto con IA, y revisa la sugerencia antes de aplicarla.
+*   **Sistema de Administración y Multiusuario:** Soporte multi-cuenta con control de acceso basado en roles (RBAC). El Superusuario puede configurar los modelos de IA globales y gestionar las cuentas.
 *   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias (Gemini, OpenAI, Ollama).
 *   **Exportación Universal:** Compila tu manuscrito en cuestión de segundos a múltiples formatos listos para publicar o revisar: Markdown, Word (.docx), PDF y EPUB (100% compatible con Amazon Kindle).
 *   **Estadísticas y Metas:** Mantén la motivación visualizando tu progreso en tiempo real con barras de progreso y conteo de palabras inteligente.
 *   **Personalización Visual:** Interfaz de usuario altamente estética y adaptable con 7 modos de color distintos (Oscuro, Claro, Sepia, Océano, Bosque, Vino y Lavanda).
+
+## Guía de Uso Rápido 🚀
+
+### 1. Panel de Administración y Configuración Global
+- Inicia sesión con la cuenta de superusuario (la primera cuenta registrada o la que configures en la base de datos).
+- Dirígete a la URL `/admin` para acceder al panel de control.
+- En la pestaña **Ajustes de IA**, configura las claves globales de tus proveedores de LLM preferidos (Gemini, OpenAI, Anthropic o Ollama Local). Esto actuará como *fallback* para todos los usuarios.
+
+### 2. Creación de Roles de IA (Personas) Personalizados
+- Dentro del proyecto, abre el panel de **AtrIA** (Asistente Chat) ubicado en el Inspector de Escenas o en la barra lateral.
+- Haz clic en el ícono del engranaje ⚙️ para abrir los ajustes del chat.
+- Haz clic en **"Gestionar Mis Roles..."**.
+- Añade un nombre y unas **Instrucciones del Sistema (Prompt)** muy detalladas para tu nueva persona (Ej: "Eres un lector sarcástico que detesta los clichés de fantasía").
+- Una vez guardado, selecciónalo en el menú desplegable "Roles" para que la IA actúe como tu creación.
+
+### 3. Imágenes en el Archivum
+- Navega a la pestaña del **Codex** y crea una entrada (ej: personaje o lugar).
+- Haz clic en el área punteada de "Subir Imagen" o arrastra tu archivo (máx 500KB) para añadirle un retrato visual.
+- Cuando escribas su nombre en el **Editor de Manuscrito** y pases el ratón sobre el texto resaltado, aparecerá su retrato flotando junto a su descripción.
 
 ## Arquitectura Técnica 
 

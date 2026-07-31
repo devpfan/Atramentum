@@ -145,6 +145,7 @@ export default function HelpView() {
             <div>
               <p>El Archivum es la enciclopedia personal de tu libro. Aquí puedes crear fichas para Personajes, Lugares, Objetos y Conceptos (Lore). Lo importante es que <strong>la IA (AtrIA) lee tu Archivum</strong> para entender de qué estás hablando cuando mencionas a un personaje en el chat o pides ayuda para redactar.</p>
               <p className="mt-2"><strong>Entradas Globales vs Locales:</strong> Si tu libro pertenece a una <em>Serie</em>, puedes crear entradas en el Archivum marcadas como "Globales" (icono del mundo) para que todos los libros de la saga compartan ese personaje o lugar. Si la marcas como "Local" (icono de libro), solo existirá en el proyecto actual.</p>
+              <p className="mt-2"><strong>Retratos e Imágenes (Nuevo):</strong> Haz clic en el recuadro punteado de una entrada para subir su imagen o retrato (máximo 500KB). Esta imagen aparecerá flotando en el editor cuando menciones el nombre de esa entidad en tu historia.</p>
             </div>
           )
         },
@@ -189,6 +190,7 @@ export default function HelpView() {
                 <li><strong>Crítico:</strong> Estricto. Buscará fallos en tu ritmo, prosa y agujeros en la trama (Plot Holes).</li>
                 <li><strong>Lector de Prueba:</strong> Reacciona como un fan entusiasta de tu historia.</li>
                 <li><strong>Editor:</strong> Se enfoca únicamente en el tono, la gramática y el estilo técnico.</li>
+                <li className="text-[#6366f1]"><strong>Roles Personalizados (Nuevo):</strong> Haz clic en el ícono de engranaje ⚙️ y selecciona "Gestionar Mis Roles..." para crear tus propias "Personas IA" con instrucciones del sistema (prompts) completamente a tu medida.</li>
               </ul>
             </div>
           )

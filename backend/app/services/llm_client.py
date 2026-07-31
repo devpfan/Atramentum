@@ -129,7 +129,17 @@ async def chat_with_assistant(context: str, messages: list, ai_settings: dict, p
         "editor": "Eres un editor profesional. Te enfocas rigurosamente en la gramática, sintaxis, estructura de oraciones, tono y estilo. Tu retroalimentación debe ser precisa y orientada a pulir el manuscrito final."
     }
     
-    base_persona_prompt = persona_prompts.get(persona, persona_prompts["cowriter"])
+    base_persona_prompt = persona_prompts.get(persona)
+    
+    if not base_persona_prompt:
+        custom_personas = ai_settings.get("custom_personas", [])
+        for cp in custom_personas:
+            if cp.get("id") == persona:
+                base_persona_prompt = cp.get("prompt")
+                break
+                
+    if not base_persona_prompt:
+        base_persona_prompt = persona_prompts["cowriter"]
     
     system_prompt = (
         f"{base_persona_prompt}\n\n"
