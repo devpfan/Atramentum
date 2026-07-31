@@ -135,6 +135,18 @@ body {
 .tiptap p { margin-bottom: 1.2em; color: var(--color-text-secondary); transition: color 0.3s; }  
 .tiptap p:focus-within { color: var(--color-text-primary); }  
 .tiptap h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2em; margin-bottom: 1em; color: var(--color-text-primary); }  
+.ProseMirror a {
+  color: #6366f1;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror mark {
+  background-color: rgba(251, 191, 36, 0.3); /* yellow-500 with opacity */
+  color: inherit;
+  border-radius: 0.25rem;
+  padding: 0 0.125rem;
+}
 .codex-tag { border-bottom: 2px solid var(--color-primary); cursor: pointer; transition: all 0.2s ease; }  
 .codex-tag:hover { background-color: var(--color-primary); color: white; border-radius: 4px; }
 

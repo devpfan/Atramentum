@@ -75,6 +75,10 @@ export const manuscriptApi = {
     await apiClient.delete(`/manuscript/books/${id}`)
   },
 
+  reorderTree: async (bookId: number, items: { id: number, type: string, order: number, parent_id?: number }[]): Promise<void> => {
+    await apiClient.put(`/manuscript/books/${bookId}/reorder`, { items })
+  },
+
   getTree: async (bookId?: number): Promise<ManuscriptTree> => {
     const response = await apiClient.get<ManuscriptTree>('/manuscript/tree', {
       params: bookId ? { book_id: bookId } : {}

@@ -6,12 +6,13 @@ import { AutoTagExtension } from './extensions/AutoTagExtension';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { Wand2, PenLine, Sparkles, Shrink, PanelRightOpen } from 'lucide-react';
+import { Wand2, PenLine, Sparkles, Shrink, PanelRightOpen, Check, X as CloseIcon } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
 import SceneInspector from './SceneInspector';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import Underline from '@tiptap/extension-underline';
+import Highlight from '@tiptap/extension-highlight';
 import EditorToolbar from './EditorToolbar';
 
 export default function ManuscriptEditor() {
@@ -30,6 +31,17 @@ export default function ManuscriptEditor() {
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; entry: CodexEntry | null }>({
     visible: false, x: 0, y: 0, entry: null
   });
+
+  // AI Preview State
+  const [aiPreview, setAiPreview] = useState<{
+    visible: boolean;
+    originalText: string;
+    generatedText: string;
+    from: number;
+    to: number;
+    x: number;
+    y: number;
+  }>({ visible: false, originalText: '', generatedText: '', from: 0, to: 0, x: 0, y: 0 });
 
   // Cargar datos
   useEffect(() => {
@@ -62,7 +74,7 @@ export default function ManuscriptEditor() {
   }, [updateActiveScene]);
 
   const editor = useEditor({
-    extensions: [StarterKit, AutoTagExtension, Underline],
+    extensions: [StarterKit, AutoTagExtension, Underline, Highlight.configure({ multicolor: true })],
     content: activeScene?.content || '<p>Comienza a escribir aquí...</p>',
     editorProps: {
       attributes: {
@@ -128,8 +140,21 @@ export default function ManuscriptEditor() {
     const selectedText = editor.state.doc.textBetween(from, to, ' ');
     if (!selectedText.trim()) return;
 
+    // Get coordinates for the popover
+    const coords = editor.view.coordsAtPos(from);
+
     const token = useAppStore.getState().token;
     setIsAiLoading(true);
+
+    setAiPreview({
+      visible: true,
+      originalText: selectedText,
+      generatedText: '',
+      from,
+      to,
+      x: coords.left,
+      y: coords.bottom + 10
+    });
 
     try {
       const res = await fetch('http://127.0.0.1:8000/api/v1/ai/inline-edit', {
@@ -148,15 +173,13 @@ export default function ManuscriptEditor() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
-      editor.chain().focus().deleteSelection().run();
-
       let done = false;
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
           const chunk = decoder.decode(value, { stream: !done });
-          editor.commands.insertContent(chunk);
+          setAiPreview(prev => ({ ...prev, generatedText: prev.generatedText + chunk }));
         }
       }
     } catch (err) {
@@ -164,6 +187,16 @@ export default function ManuscriptEditor() {
     } finally {
       setIsAiLoading(false);
     }
+  };
+
+  const handleAcceptAi = () => {
+    if (!editor || !aiPreview.visible) return;
+    editor.chain().focus().setTextSelection({ from: aiPreview.from, to: aiPreview.to }).insertContent(aiPreview.generatedText).run();
+    setAiPreview(prev => ({ ...prev, visible: false }));
+  };
+
+  const handleRejectAi = () => {
+    setAiPreview(prev => ({ ...prev, visible: false }));
   };
 
   const handleGenerateScene = async (beatsText: string) => {
@@ -261,6 +294,58 @@ export default function ManuscriptEditor() {
             </div>
           )}
 
+          {/* AI Inline Preview Modal */}
+          {aiPreview.visible && (
+            <div 
+              className="fixed z-50 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl p-0 rounded-xl w-96 flex flex-col overflow-hidden max-h-[400px]"
+              style={{ left: aiPreview.x, top: aiPreview.y }}
+            >
+              <div className="flex justify-between items-center p-3 border-b border-[var(--color-border)] bg-[#6366f1]/5">
+                <div className="flex items-center gap-2 text-[#6366f1] font-medium text-sm">
+                  <Wand2 size={16} className={isAiLoading ? "animate-pulse" : ""} /> 
+                  {isAiLoading ? "AtrIA está escribiendo..." : "Sugerencia de AtrIA"}
+                </div>
+                {!isAiLoading && (
+                  <button onClick={handleRejectAi} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
+                    <CloseIcon size={16} />
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 text-sm">
+                <div className="mb-4">
+                  <span className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1 block">Original</span>
+                  <div className="line-through text-red-400 opacity-70 p-2 bg-red-500/10 rounded-md border border-red-500/20">
+                    {aiPreview.originalText}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[#6366f1] uppercase tracking-wider mb-1 block">Sugerencia</span>
+                  <div className="text-emerald-400 p-2 bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                    {aiPreview.generatedText || "..."}
+                  </div>
+                </div>
+              </div>
+
+              {!isAiLoading && (
+                <div className="p-3 border-t border-[var(--color-border)] bg-[var(--color-background)] flex gap-2 justify-end">
+                  <button 
+                    onClick={handleRejectAi}
+                    className="px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-red-400 transition-colors"
+                  >
+                    Descartar
+                  </button>
+                  <button 
+                    onClick={handleAcceptAi}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium bg-[#6366f1] text-white rounded-md hover:bg-[#4f46e5] transition-colors"
+                  >
+                    <Check size={16} /> Aplicar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeSceneId ? (
             <div 
               className={isFocusMode ? 'min-h-[100vh] w-full max-w-[900px] mx-auto cursor-text flex flex-col pt-12' : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col'}
@@ -303,6 +388,18 @@ export default function ManuscriptEditor() {
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-amber-500/20 hover:text-amber-400 transition-colors disabled:opacity-50"
                   >
                     <Shrink size={16} /> Resumir
+                  </button>
+                  <div className="w-px bg-[var(--color-border)]"></div>
+                  <button 
+                    onClick={() => editor.chain().focus().toggleHighlight({ color: '#fbbf24' }).run()}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                      editor.isActive('highlight') 
+                        ? 'bg-yellow-500/30 text-yellow-500' 
+                        : 'text-[var(--color-text-primary)] hover:bg-yellow-500/20 hover:text-yellow-500'
+                    }`}
+                    title="Marcar nota / Resaltar"
+                  >
+                    Resaltar
                   </button>
                   
                   {isAiLoading && (

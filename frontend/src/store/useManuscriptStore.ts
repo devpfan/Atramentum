@@ -29,6 +29,7 @@ interface ManuscriptState {
   createScene: (chapterId: number, title: string) => Promise<void>;
   updateActiveScene: (data: Partial<Scene>) => Promise<void>;
   updateScene: (id: number, data: Partial<Scene>) => Promise<void>;
+  reorderTree: (items: { id: number, type: string, order: number, parent_id?: number }[]) => Promise<void>;
 }
 
 export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
@@ -213,6 +214,17 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
       await manuscriptApi.updateScene(activeSceneId, data);
     } catch (err: any) {
       console.error("Error saving scene:", err);
+    }
+  },
+
+  reorderTree: async (items) => {
+    const { activeBookId } = get();
+    if (!activeBookId) return;
+    try {
+      await manuscriptApi.reorderTree(activeBookId, items);
+      await get().fetchTree();
+    } catch (err: any) {
+      console.error("Error reordering:", err);
     }
   }
 }))

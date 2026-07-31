@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import AssistantChat from '../ai/AssistantChat';
 import { Bot } from 'lucide-react';
 import { useChatStore } from '../../store/useChatStore';
+import CommandPalette from './CommandPalette';
 
 export default function AppLayout() {
   const token = useAppStore(state => state.token);
@@ -55,6 +56,7 @@ export default function AppLayout() {
 
   return (
     <div className={`flex h-screen bg-[var(--color-background)] overflow-hidden text-[var(--color-text-primary)] ${isFocusMode ? 'focus-mode-active' : ''}`}>
+      <CommandPalette />
       {!isFocusMode && <Sidebar />}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Aquí va el header superior del área de trabajo */}

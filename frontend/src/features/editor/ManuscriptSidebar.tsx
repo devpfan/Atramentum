@@ -3,8 +3,12 @@ import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { ChevronDown, ChevronRight, FileText, Plus, Folder } from 'lucide-react';
 
 export default function ManuscriptSidebar() {
-  const { tree, activeSceneId, setActiveSceneId, createScene, updateChapter, updateScene } = useManuscriptStore();
+  const { tree, activeSceneId, setActiveSceneId, createScene, updateChapter, updateScene, reorderTree } = useManuscriptStore();
   const [expandedChapters, setExpandedChapters] = useState<Record<number, boolean>>({});
+  
+  // DnD State
+  const [draggedScene, setDraggedScene] = useState<{ id: number, chapterId: number } | null>(null);
+  const [dragOverSceneId, setDragOverSceneId] = useState<number | null>(null);
 
   const toggleChapter = (chapterId: number) => {
     setExpandedChapters(prev => ({
@@ -21,6 +25,88 @@ export default function ManuscriptSidebar() {
       // Ensure chapter is expanded
       setExpandedChapters(prev => ({ ...prev, [chapterId]: true }));
     }
+  };
+
+  const handleDropScene = async (targetSceneId: number, targetChapterId: number) => {
+    if (!draggedScene || draggedScene.id === targetSceneId) {
+      setDragOverSceneId(null);
+      return;
+    }
+
+    if (!tree) return;
+
+    // Create a copy of the chapters
+    const chaptersCopy = JSON.parse(JSON.stringify(tree.chapters));
+    
+    // Find source and target chapters
+    const sourceChapter = chaptersCopy.find((c: any) => c.id === draggedScene.chapterId);
+    const targetChapter = chaptersCopy.find((c: any) => c.id === targetChapterId);
+    
+    if (!sourceChapter || !targetChapter) return;
+
+    // Find and remove the dragged scene
+    const sceneIndex = sourceChapter.scenes.findIndex((s: any) => s.id === draggedScene.id);
+    const [scene] = sourceChapter.scenes.splice(sceneIndex, 1);
+    
+    // Find insert index
+    const insertIndex = targetChapter.scenes.findIndex((s: any) => s.id === targetSceneId);
+    
+    // Insert scene
+    targetChapter.scenes.splice(insertIndex, 0, scene);
+    
+    // Prepare items for API: update order and parent_id for all affected scenes
+    const itemsToUpdate: { id: number, type: string, order: number, parent_id: number }[] = [];
+    
+    // We update orders for both chapters (if they are different) or just the one (if same)
+    sourceChapter.scenes.forEach((s: any, idx: number) => {
+      itemsToUpdate.push({ id: s.id, type: 'scene', order: idx + 1, parent_id: sourceChapter.id });
+    });
+    
+    if (sourceChapter.id !== targetChapter.id) {
+      targetChapter.scenes.forEach((s: any, idx: number) => {
+        // avoid pushing twice if chapter is same (already handled above)
+        if (!itemsToUpdate.find(i => i.id === s.id)) {
+          itemsToUpdate.push({ id: s.id, type: 'scene', order: idx + 1, parent_id: targetChapter.id });
+        }
+      });
+    }
+
+    setDragOverSceneId(null);
+    setDraggedScene(null);
+    
+    // Call API (this will also optimistically or eventually update the store)
+    await reorderTree(itemsToUpdate);
+  };
+
+  const handleDropOnChapter = async (targetChapterId: number) => {
+    if (!draggedScene || draggedScene.chapterId === targetChapterId) {
+       return;
+    }
+    // Drop at the end of the chapter
+    if (!tree) return;
+    const chaptersCopy = JSON.parse(JSON.stringify(tree.chapters));
+    const sourceChapter = chaptersCopy.find((c: any) => c.id === draggedScene.chapterId);
+    const targetChapter = chaptersCopy.find((c: any) => c.id === targetChapterId);
+    
+    if (!sourceChapter || !targetChapter) return;
+
+    const sceneIndex = sourceChapter.scenes.findIndex((s: any) => s.id === draggedScene.id);
+    const [scene] = sourceChapter.scenes.splice(sceneIndex, 1);
+    targetChapter.scenes.push(scene);
+
+    const itemsToUpdate: any[] = [];
+    sourceChapter.scenes.forEach((s: any, idx: number) => {
+      itemsToUpdate.push({ id: s.id, type: 'scene', order: idx + 1, parent_id: sourceChapter.id });
+    });
+    targetChapter.scenes.forEach((s: any, idx: number) => {
+      if (!itemsToUpdate.find(i => i.id === s.id)) {
+        itemsToUpdate.push({ id: s.id, type: 'scene', order: idx + 1, parent_id: targetChapter.id });
+      }
+    });
+
+    setDragOverSceneId(null);
+    setDraggedScene(null);
+    await reorderTree(itemsToUpdate);
   };
 
   if (!tree) return null;
@@ -63,16 +149,38 @@ export default function ManuscriptSidebar() {
 
               {/* Scenes List */}
               {isExpanded && (
-                <div className="pl-6 space-y-1">
+                <div 
+                  className="pl-6 space-y-1 min-h-[20px]"
+                  onDragOver={(e) => { e.preventDefault(); }}
+                  onDrop={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     if (chapter.scenes.length === 0) {
+                        handleDropOnChapter(chapter.id);
+                     }
+                  }}
+                >
                   {chapter.scenes.map(scene => (
                     <div
                       key={scene.id}
+                      draggable
+                      onDragStart={() => setDraggedScene({ id: scene.id, chapterId: chapter.id })}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverSceneId(scene.id);
+                      }}
+                      onDragLeave={() => setDragOverSceneId(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDropScene(scene.id, chapter.id);
+                      }}
                       onClick={() => setActiveSceneId(scene.id)}
                       className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors cursor-pointer ${
                         activeSceneId === scene.id 
                           ? 'bg-[#6366f1]/20 text-[#6366f1] font-medium' 
                           : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]'
-                      }`}
+                      } ${dragOverSceneId === scene.id ? 'border-t-2 border-[#6366f1]' : ''} ${draggedScene?.id === scene.id ? 'opacity-50' : ''}`}
                     >
                       <FileText size={14} className="shrink-0" />
                       <EditableTitle 

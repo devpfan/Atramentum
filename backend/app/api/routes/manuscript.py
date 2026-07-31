@@ -310,6 +310,34 @@ def create_scene(scene: SceneCreate, db: Session = Depends(get_db), current_user
     db.refresh(db_scene)
     return db_scene
 
+class ReorderItem(BaseModel):
+    id: int
+    type: str # "act", "chapter", "scene"
+    order: int
+    parent_id: Optional[int] = None # act_id for chapter, chapter_id for scene
+
+class BulkReorderRequest(BaseModel):
+    items: List[ReorderItem]
+
+@router.put("/books/{book_id}/reorder")
+def bulk_reorder(book_id: int, req: BulkReorderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Very simple bulk reorder
+    for item in req.items:
+        if item.type == "chapter":
+            db_item = db.query(Chapter).filter(Chapter.id == item.id, Chapter.user_id == current_user.id).first()
+            if db_item:
+                db_item.order = item.order
+                if item.parent_id is not None:
+                    db_item.act_id = item.parent_id
+        elif item.type == "scene":
+            db_item = db.query(Scene).filter(Scene.id == item.id, Scene.user_id == current_user.id).first()
+            if db_item:
+                db_item.order = item.order
+                if item.parent_id is not None:
+                    db_item.chapter_id = item.parent_id
+    db.commit()
+    return {"message": "Reordered successfully"}
+
 from fastapi.responses import StreamingResponse
 from io import BytesIO, StringIO
 import io
