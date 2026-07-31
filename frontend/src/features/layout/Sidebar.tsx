@@ -6,6 +6,7 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import SettingsModal from './SettingsModal';
 import { StatisticsModal } from './StatisticsModal';
 import { ProjectManagementModal } from './ProjectManagementModal';
+import { Tooltip } from '../../components/Tooltip';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -59,20 +60,21 @@ export default function Sidebar() {
                 <option key={b.id} value={b.id}>{b.title}</option>
               ))}
             </select>
-            <button
-              onClick={() => {
-                if (!activeBookId) return;
-                const book = books.find(b => b.id === activeBookId);
-                const newTitle = prompt("Renombrar proyecto (El título anterior se guardará en el historial):", book?.title);
-                if (newTitle && newTitle !== book?.title) {
-                  useManuscriptStore.getState().updateBook(activeBookId, { title: newTitle });
-                }
-              }}
-              className="p-1.5 shrink-0 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-background)] hover:text-[#6366f1] transition-colors border border-transparent hover:border-[var(--color-border)]"
-              title="Renombrar Proyecto"
-            >
-              <Settings size={16} />
-            </button>
+            <Tooltip content="Renombrar Proyecto" position="right">
+              <button
+                onClick={() => {
+                  if (!activeBookId) return;
+                  const book = books.find(b => b.id === activeBookId);
+                  const newTitle = prompt("Renombrar proyecto (El título anterior se guardará en el historial):", book?.title);
+                  if (newTitle && newTitle !== book?.title) {
+                    useManuscriptStore.getState().updateBook(activeBookId, { title: newTitle });
+                  }
+                }}
+                className="p-1.5 shrink-0 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-background)] hover:text-[#6366f1] transition-colors border border-transparent hover:border-[var(--color-border)]"
+              >
+                <Settings size={16} />
+              </button>
+            </Tooltip>
           </div>
           <button 
             onClick={handleCreateBook}
@@ -97,30 +99,33 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-[var(--color-border)] space-y-1">
-        <button 
-          onClick={() => setIsStatsOpen(true)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
-          title="Estadísticas y Metas"
-        >
-          <BarChart2 size={20} />
-          {!isCollapsed && <span className="font-medium text-sm">Estadísticas</span>}
-        </button>
-        <button 
-          onClick={() => setIsSettingsOpen(true)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
-          title="Configuración"
-        >
-          <Settings size={20} />
-          {!isCollapsed && <span className="font-medium text-sm">Configuración</span>}
-        </button>
-        <button 
-          onClick={handleLogout}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-red-500/10 hover:text-red-400 transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
-          title="Cerrar Sesión"
-        >
-          <LogOut size={20} />
-          {!isCollapsed && <span className="font-medium text-sm">Cerrar Sesión</span>}
-        </button>
+        <Tooltip content="Estadísticas y Metas" position="right">
+          <button 
+            onClick={() => setIsStatsOpen(true)}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+          >
+            <BarChart2 size={20} />
+            {!isCollapsed && <span className="font-medium text-sm">Estadísticas</span>}
+          </button>
+        </Tooltip>
+        <Tooltip content="Configuración" position="right">
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[#6366f1]/10 hover:text-[#6366f1] transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+          >
+            <Settings size={20} />
+            {!isCollapsed && <span className="font-medium text-sm">Configuración</span>}
+          </button>
+        </Tooltip>
+        <Tooltip content="Cerrar Sesión" position="right">
+          <button 
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-red-500/10 hover:text-red-400 transition-colors group ${isCollapsed ? 'justify-center' : ''}`}
+          >
+            <LogOut size={20} />
+            {!isCollapsed && <span className="font-medium text-sm">Cerrar Sesión</span>}
+          </button>
+        </Tooltip>
       </div>
     </div>
     {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}

@@ -36,5 +36,9 @@ export const codexApi = {
   },
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/codex/${id}`)
+  },
+  scanDocument: async (bookId: number): Promise<{ inserted: number }> => {
+    const response = await apiClient.post<{ inserted: number }>('/codex/scan', { book_id: bookId })
+    return response.data
   }
 }

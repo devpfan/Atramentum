@@ -11,9 +11,9 @@ interface SceneInspectorProps {
 
 export default function SceneInspector({ onGenerate, isGenerating, isOpen, onToggle }: SceneInspectorProps) {
   const { tree, activeSceneId, updateActiveScene } = useManuscriptStore();
-  
-  const activeScene = activeSceneId && tree 
-    ? tree.chapters.flatMap(c => c.scenes).find(s => s.id === activeSceneId) 
+
+  const activeScene = activeSceneId && tree
+    ? tree.chapters.flatMap(c => c.scenes).find(s => s.id === activeSceneId)
     : null;
 
   const [beatsInput, setBeatsInput] = useState('');
@@ -33,10 +33,10 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
   const handleSaveBeats = async () => {
     if (!activeSceneId) return;
     setSaveStatus('saving');
-    
+
     // Split by newline and remove empty lines
     const beatsArray = beatsInput.split('\n').map(b => b.trim()).filter(b => b.length > 0);
-    
+
     try {
       await updateActiveScene({ beats: beatsArray });
       setSaveStatus('saved');
@@ -75,7 +75,7 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        
+
         {/* Beats Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -83,11 +83,11 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
             {saveStatus === 'saving' && <span className="text-xs text-[var(--color-text-secondary)]">Guardando...</span>}
             {saveStatus === 'saved' && <span className="text-xs text-emerald-400">Guardado ✓</span>}
           </div>
-          
+
           <p className="text-xs text-[var(--color-text-secondary)]">
             Escribe un beat por línea. La IA los usará como esqueleto para redactar la prosa.
           </p>
-          
+
           <textarea
             value={beatsInput}
             onChange={(e) => setBeatsInput(e.target.value)}
@@ -105,7 +105,7 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-medium rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Sparkles size={18} />
-            {isGenerating ? 'Generando...' : 'Generar Prosa'}
+            {isGenerating ? 'Generando...' : 'Generar Magia'}
           </button>
           <p className="text-xs text-[var(--color-text-secondary)] text-center mt-3">
             Atención: Esto reemplazará el texto actual del editor.

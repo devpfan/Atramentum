@@ -118,3 +118,51 @@ async def chat_with_assistant(context: str, messages: list, ai_settings: dict):
                 yield chunk.choices[0].delta.content
     except Exception as e:
         yield f"Error en el chat con {ai_settings.get('provider')}: {str(e)}"
+
+async def extract_characters(text: str, ai_settings: dict) -> list:
+    """
+    Extrae personajes de un bloque de texto y devuelve una lista de diccionarios.
+    """
+    args = get_litellm_args(ai_settings)
+    if not args.get("api_key") and not args.get("api_base"):
+         raise ValueError(f"Error: API Key no configurada para el proveedor {ai_settings.get('provider')}.")
+         
+    system_prompt = (
+        "Eres un experto analista literario. Tu trabajo es leer un texto y extraer TODOS los personajes mencionados. "
+        "Devuelve EXCLUSIVAMENTE un arreglo JSON válido sin formato markdown ni explicaciones adicionales, "
+        "con la siguiente estructura estricta:\n"
+        "[\n"
+        "  {\n"
+        "    \"name\": \"Nombre del personaje\",\n"
+        "    \"description\": \"Breve descripción física y psicológica o su rol (1 o 2 frases).\",\n"
+        "    \"aliases\": [\"Apodo1\", \"Solo el nombre\", \"Título\"]\n"
+        "  }\n"
+        "]"
+    )
+    
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"TEXTO DEL LIBRO:\n\n{text}"}
+    ]
+    
+    try:
+        response = await acompletion(
+            messages=messages,
+            **args
+        )
+        content = response.choices[0].message.content.strip()
+        # Clean potential markdown formatting
+        if content.startswith('```json'):
+            content = content[7:]
+        if content.startswith('```'):
+            content = content[3:]
+        if content.endswith('```'):
+            content = content[:-3]
+        
+        parsed = json.loads(content.strip())
+        if isinstance(parsed, list):
+            return parsed
+        return []
+    except Exception as e:
+        print(f"Error extrayendo personajes: {str(e)}")
+        return []

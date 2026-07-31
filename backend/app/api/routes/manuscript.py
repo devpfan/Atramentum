@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from app.api.deps import get_current_user
+from app.services.importer import import_document
 
 router = APIRouter()
 
@@ -93,6 +94,61 @@ def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: 
     db.commit()
     
     return book
+
+@router.post("/import", response_model=ManuscriptTree)
+async def import_book(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        content = await file.read()
+        parsed_chapters = import_document(content, file.filename)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    title = file.filename.rsplit('.', 1)[0]
+    
+    book = Book(
+        title=title,
+        user_id=current_user.id
+    )
+    db.add(book)
+    db.commit()
+    db.refresh(book)
+    
+    act = Act(title="Acto 1", book_id=book.id, user_id=current_user.id)
+    db.add(act)
+    db.commit()
+    db.refresh(act)
+    
+    for i, ch_data in enumerate(parsed_chapters, start=1):
+        chapter = Chapter(
+            title=ch_data["title"],
+            order=i,
+            act_id=act.id,
+            user_id=current_user.id
+        )
+        db.add(chapter)
+        db.flush()  # To get chapter.id without committing yet
+        
+        scene = Scene(
+            title="Escena 1",
+            order=1,
+            content=ch_data["html_content"],
+            chapter_id=chapter.id,
+            user_id=current_user.id
+        )
+        db.add(scene)
+        
+    db.commit()
+    
+    # Reload tree
+    acts = db.query(Act).filter(Act.book_id == book.id).all()
+    act_ids = [a.id for a in acts]
+    chapters = db.query(Chapter).filter(Chapter.act_id.in_(act_ids)).order_by(Chapter.order, Chapter.id).all()
+    
+    return ManuscriptTree(
+        book_id=book.id,
+        title=book.title,
+        chapters=chapters
+    )
 
 class BookUpdate(BaseModel):
     title: Optional[str] = None

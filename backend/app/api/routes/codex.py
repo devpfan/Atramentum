@@ -4,10 +4,13 @@ from typing import List
 
 from app.db.database import get_db
 from app.models.codex import CodexEntry, CodexAlias
-from app.models.manuscript import Book
+from app.models.manuscript import Book, Act, Chapter, Scene
 from app.models.user import User
 from app.schemas.codex import CodexEntry as CodexEntrySchema, CodexEntryCreate, CodexEntryUpdate
 from app.api.deps import get_current_user
+from app.services.llm_client import extract_characters
+from bs4 import BeautifulSoup
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -99,3 +102,80 @@ def delete_entry(entry_id: int, db: Session = Depends(get_db), current_user: Use
     db.delete(db_entry)
     db.commit()
     return {"ok": True}
+
+class ScanRequest(BaseModel):
+    book_id: int
+
+@router.post("/scan")
+async def scan_document(request: ScanRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    book = db.query(Book).filter(Book.id == request.book_id, Book.user_id == current_user.id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+        
+    acts = db.query(Act).filter(Act.book_id == book.id).all()
+    act_ids = [a.id for a in acts]
+    chapters = db.query(Chapter).filter(Chapter.act_id.in_(act_ids)).order_by(Chapter.order, Chapter.id).all()
+    chapter_ids = [c.id for c in chapters]
+    scenes = db.query(Scene).filter(Scene.chapter_id.in_(chapter_ids)).order_by(Scene.order, Scene.id).all()
+    
+    # Extract text from HTML content
+    full_text = ""
+    for sc in scenes:
+        if sc.content:
+            soup = BeautifulSoup(sc.content, 'html.parser')
+            full_text += soup.get_text(separator=' ') + "\n\n"
+            
+        # Limit to roughly 50,000 characters to keep it fast and avoid token limits
+        if len(full_text) > 50000:
+            full_text = full_text[:50000]
+            break
+            
+    if not full_text.strip():
+        raise HTTPException(status_code=400, detail="El documento no tiene contenido para escanear")
+        
+    # Llama al LLM
+    try:
+        # Pasa un ai_settings vacío para que use los valores por defecto (ej. gemini configurado en env)
+        characters = await extract_characters(full_text, {})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    # Obtener nombres existentes para evitar duplicados
+    existing_entries = db.query(CodexEntry).filter(
+        CodexEntry.user_id == current_user.id,
+        CodexEntry.book_id == book.id,
+        CodexEntry.category == "Character"
+    ).all()
+    existing_names = {e.name.lower() for e in existing_entries}
+    
+    inserted_count = 0
+    for char in characters:
+        name = char.get("name")
+        if not name or name.lower() in existing_names:
+            continue
+            
+        description = char.get("description", "")
+        aliases = char.get("aliases", [])
+        
+        db_entry = CodexEntry(
+            user_id=current_user.id,
+            name=name,
+            category="Character",
+            description=description,
+            attributes={},
+            book_id=book.id,
+            series_id=book.series_id
+        )
+        db.add(db_entry)
+        db.flush() # To get ID for aliases
+        
+        for alias in aliases:
+            if alias.strip() and alias.strip().lower() != name.lower():
+                db_alias = CodexAlias(alias_name=alias.strip(), entry_id=db_entry.id)
+                db.add(db_alias)
+                
+        existing_names.add(name.lower())
+        inserted_count += 1
+        
+    db.commit()
+    return {"inserted": inserted_count}

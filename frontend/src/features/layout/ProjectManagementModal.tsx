@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File, BookOpen, Folder, Plus } from 'lucide-react';
+import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File as FileIcon, BookOpen, Folder, Plus, Upload } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { manuscriptApi } from '../../api/manuscript';
+import { Tooltip } from '../../components/Tooltip';
 
 interface ProjectManagementModalProps {
   onClose: () => void;
@@ -16,6 +18,9 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
   
   const [isCreatingSeries, setIsCreatingSeries] = useState(false);
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
+  
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     fetchSeries();
@@ -61,6 +66,23 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
     });
   };
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsImporting(true);
+    try {
+      await manuscriptApi.importBook(file);
+      await useManuscriptStore.getState().fetchBooks();
+    } catch (err) {
+      console.error("Error importando libro:", err);
+      alert("Hubo un error al importar el documento. Asegúrate de que es un formato soportado.");
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = ''; // reset input
+    }
+  };
+
   const handleDelete = async () => {
     if (bookToDelete && deleteConfirmation === bookToDelete.title) {
       await deleteBook(bookToDelete.id);
@@ -96,13 +118,30 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
           
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">Tus Series y Libros</h3>
-            <button 
-              onClick={() => setIsCreatingSeries(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors text-sm font-medium"
-            >
-              <Plus size={16} />
-              Nueva Serie
-            </button>
+            <div className="flex gap-2">
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                className="hidden" 
+                accept=".txt,.md,.docx,.doc,.odt"
+                onChange={handleImport} 
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+                className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-surface-hover)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-background)] rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                {isImporting ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div> : <Upload size={16} />}
+                Importar Libro
+              </button>
+              <button 
+                onClick={() => setIsCreatingSeries(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors text-sm font-medium"
+              >
+                <Plus size={16} />
+                Nueva Serie
+              </button>
+            </div>
           </div>
           
           {isCreatingSeries && (
@@ -261,10 +300,12 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
             <td className="py-4 pl-4">
               <div className="font-semibold text-[var(--color-text-primary)]">{book.title}</div>
               {book.previous_titles && book.previous_titles.length > 0 && (
-                <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center gap-1" title="Títulos Anteriores (Historial)">
-                  <FileType2 className="w-3 h-3" />
-                  {book.previous_titles.join(' → ')}
-                </div>
+                <Tooltip content="Títulos Anteriores (Historial)" position="top">
+                  <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center gap-1">
+                    <FileType2 className="w-3 h-3" />
+                    {book.previous_titles.join(' → ')}
+                  </div>
+                </Tooltip>
               )}
               {/* Selector de Serie */}
               <select 
@@ -289,32 +330,29 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
             </td>
             <td className="py-4">
               <div className="flex items-center justify-center gap-2">
-                <div className="relative group/btn">
+                <Tooltip content="Markdown" position="top">
                   <button onClick={() => onExport(book.id, 'md')} className="p-1.5 bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 rounded transition-colors"><FileText className="w-4 h-4" /></button>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">Markdown</div>
-                </div>
-                <div className="relative group/btn">
-                  <button onClick={() => onExport(book.id, 'docx')} className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded transition-colors"><File className="w-4 h-4" /></button>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">Word (.docx)</div>
-                </div>
-                <div className="relative group/btn">
-                  <button onClick={() => onExport(book.id, 'pdf')} className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded transition-colors"><File className="w-4 h-4" /></button>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">PDF</div>
-                </div>
-                <div className="relative group/btn">
+                </Tooltip>
+                <Tooltip content="Word (.docx)" position="top">
+                  <button onClick={() => onExport(book.id, 'docx')} className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded transition-colors"><FileIcon className="w-4 h-4" /></button>
+                </Tooltip>
+                <Tooltip content="PDF" position="top">
+                  <button onClick={() => onExport(book.id, 'pdf')} className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded transition-colors"><FileIcon className="w-4 h-4" /></button>
+                </Tooltip>
+                <Tooltip content="EPUB" position="top">
                   <button onClick={() => onExport(book.id, 'epub')} className="p-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-500 rounded transition-colors"><BookOpen className="w-4 h-4" /></button>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">EPUB</div>
-                </div>
+                </Tooltip>
               </div>
             </td>
             <td className="py-4 pr-4 text-right">
-              <button 
-                onClick={() => onDelete(book)}
-                className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                title="Eliminar Proyecto"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <Tooltip content="Eliminar Proyecto" position="left">
+                <button 
+                  onClick={() => onDelete(book)}
+                  className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </Tooltip>
             </td>
           </tr>
         ))}

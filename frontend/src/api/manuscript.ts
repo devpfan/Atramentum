@@ -47,6 +47,25 @@ export const manuscriptApi = {
     return response.data
   },
 
+  exportBook: async (id: number, format: 'md' | 'docx' | 'pdf' | 'epub'): Promise<Blob> => {
+    const response = await apiClient.get(`/manuscript/books/${id}/export`, {
+      params: { format },
+      responseType: 'blob'
+    })
+    return response.data
+  },
+  
+  importBook: async (file: File): Promise<ManuscriptTree> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await apiClient.post<ManuscriptTree>('/manuscript/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  },
+
   updateBook: async (id: number, data: Partial<Book>): Promise<Book> => {
     const response = await apiClient.put<Book>(`/manuscript/books/${id}`, data)
     return response.data
