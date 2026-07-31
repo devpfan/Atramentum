@@ -8,8 +8,11 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 *   **Gestión de Manuscritos Estructurada:** Divide tu obra en Actos, Capítulos y Escenas con un árbol de navegación intuitivo.
 *   **El Archivum (Bíblia de la Historia):** Un repositorio dedicado para el *lore* de tu historia. Crea entradas detalladas para Personajes, Lugares, Objetos y Conceptos. El Archivum es independiente para cada proyecto, manteniendo universos separados.
 *   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Archivum (RAG - *Retrieval-Augmented Generation*).
-*   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado y autocompletado inteligente de etiquetas del Archivum.
-*   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias.
+*   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado, resaltado de notas y autocompletado inteligente de etiquetas del Archivum.
+*   **Edición Asistida con Vista Previa (Inline Preview):** Reescribe, expande o resume fragmentos de tu texto con IA, y revisa/edita la sugerencia en una ventana flotante antes de aplicarla a tu manuscrito.
+*   **Reordenamiento Drag & Drop:** Arrastra y suelta escenas en la barra lateral para reestructurar fácilmente los capítulos de tu libro.
+*   **Buscador Global (Command Palette):** Presiona `Cmd + P` o `Ctrl + P` para saltar de inmediato a cualquier escena o ficha del Archivum.
+*   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias (Gemini, OpenAI, Ollama).
 *   **Exportación Universal:** Compila tu manuscrito en cuestión de segundos a múltiples formatos listos para publicar o revisar: Markdown, Word (.docx), PDF y EPUB (100% compatible con Amazon Kindle).
 *   **Estadísticas y Metas:** Mantén la motivación visualizando tu progreso en tiempo real con barras de progreso y conteo de palabras inteligente.
 *   **Personalización Visual:** Interfaz de usuario altamente estética y adaptable con 7 modos de color distintos (Oscuro, Claro, Sepia, Océano, Bosque, Vino y Lavanda).

@@ -77,7 +77,7 @@ export default function HelpView() {
                 <li><strong>Capítulos:</strong> Las subdivisiones principales de cada Acto.</li>
                 <li><strong>Escenas:</strong> La unidad mínima donde escribes. Cada escena puede tener su propio título y objetivo.</li>
               </ul>
-              <p className="mt-2">Puedes renombrar cualquier elemento haciendo doble clic sobre su nombre en la barra lateral del Editor.</p>
+              <p className="mt-2">Puedes renombrar cualquier elemento haciendo doble clic sobre su nombre en la barra lateral del Editor. Además, puedes arrastrar y soltar las escenas (Drag & Drop) para reorganizarlas libremente.</p>
             </div>
           )
         }
@@ -100,7 +100,12 @@ export default function HelpView() {
         {
           id: 'edit-3',
           question: 'Edición y reescritura asistida (Varita Mágica)',
-          answer: <p>Selecciona cualquier fragmento de texto que hayas escrito y haz clic en el icono de la varita mágica que aparecerá sobre el texto. Escribe una instrucción (Ej. "Haz que suene más tenebroso" o "Corrige la ortografía") y la IA reescribirá exactamente esa porción.</p>
+          answer: <p>Selecciona cualquier fragmento de texto que hayas escrito y haz clic en el icono de la varita mágica que aparecerá sobre el texto. Escribe una instrucción (Ej. "Haz que suene más tenebroso") y la IA te mostrará una sugerencia en un panel flotante. Podrás editar libremente esa sugerencia antes de darle a "Aplicar".</p>
+        },
+        {
+          id: 'edit-4',
+          question: '¿Puedo dejar notas o resaltar texto?',
+          answer: <p>Sí. Selecciona un fragmento de texto y elige la opción "Resaltar" en el menú flotante. El texto quedará marcado en amarillo brillante. Lo mejor es que al exportar tu libro a PDF o Word, estos resaltados serán ignorados para que tu manuscrito final quede limpio.</p>
         }
       ]
     },
@@ -185,6 +190,11 @@ export default function HelpView() {
           answer: (
             <p>Desde la sección de "Gestionar Proyectos" (o desde la pantalla de bienvenida), puedes hacer clic en el botón de Exportar de un proyecto. Atramentum unirá todos tus Actos, Capítulos y Escenas ordenadamente en un único archivo. Soporta: <strong>Markdown (.md)</strong>, <strong>Word (.docx)</strong>, <strong>PDF</strong> y <strong>EPUB</strong> (Listo para leer en Kindle).</p>
           )
+        },
+        {
+          id: 'exp-3',
+          question: 'Buscador Global Rápido (Command Palette)',
+          answer: <p>Para navegar ultra-rápido por tu novela, presiona <strong>Cmd + P</strong> (en Mac) o <strong>Ctrl + P</strong> (en Windows). Se abrirá un buscador donde puedes teclear el nombre de cualquier escena o entrada del Archivum y saltar directamente hacia allá con un "Enter".</p>
         }
       ]
     }
