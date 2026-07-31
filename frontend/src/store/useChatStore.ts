@@ -15,11 +15,32 @@ interface ChatState {
   clearChat: () => void;
   fetchChatHistory: (sceneId: number, token: string) => Promise<void>;
   clearChatHistory: (sceneId: number, token: string) => Promise<void>;
+  
+  // Phase 21 settings
+  persona: string;
+  setPersona: (persona: string) => void;
+  contextSettings: {
+    include_archivum: boolean;
+    include_manuscript: boolean;
+    include_beats: boolean;
+  };
+  setContextSetting: (key: 'include_archivum' | 'include_manuscript' | 'include_beats', value: boolean) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isOpen: false,
+  persona: 'cowriter',
+  contextSettings: {
+    include_archivum: true,
+    include_manuscript: true,
+    include_beats: true
+  },
+  
+  setPersona: (persona) => set({ persona }),
+  setContextSetting: (key, value) => set((state) => ({
+    contextSettings: { ...state.contextSettings, [key]: value }
+  })),
   
   addMessage: (msg) => set((state) => ({
     messages: [...state.messages, msg]

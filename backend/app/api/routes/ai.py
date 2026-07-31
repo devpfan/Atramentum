@@ -69,13 +69,19 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
     # Guardar el mensaje del usuario (es el último del array request.messages)
     user_msg_content = request.messages[-1].content
     
+    context_settings = request.context_settings or {
+        "include_archivum": True,
+        "include_manuscript": True,
+        "include_beats": True
+    }
+    
     context = ""
     try:
-        # Recuperar lore básico
-        context = assemble_context(real_scene_id, current_user.id, db)
+        # Recuperar lore básico y beats según settings
+        context = assemble_context(real_scene_id, current_user.id, db, context_settings)
         
-        # Recuperar fragmentos semánticamente relevantes del libro
-        if book_id:
+        # Recuperar fragmentos semánticamente relevantes del libro si está habilitado
+        if book_id and context_settings.get("include_manuscript", True):
             semantic_context = await search_semantic_context(user_msg_content, book_id, current_user.id, db)
             context += "\n" + semantic_context
             
@@ -110,7 +116,7 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
     
     async def chat_generator():
         full_response = ""
-        async for chunk in chat_with_assistant(context, recent_messages, ai_settings):
+        async for chunk in chat_with_assistant(context, recent_messages, ai_settings, persona=request.persona):
             full_response += chunk
             yield chunk
             

@@ -83,20 +83,30 @@ async def edit_selected_text(selected_text: str, instruction: str, ai_settings: 
     except Exception as e:
         yield f"Error al editar con {ai_settings.get('provider')}: {str(e)}"
 
-async def chat_with_assistant(context: str, messages: list, ai_settings: dict):
+async def chat_with_assistant(context: str, messages: list, ai_settings: dict, persona: str = "cowriter"):
     """
-    Maneja el chat interactivo usando el historial de mensajes.
+    Maneja el chat interactivo usando el historial de mensajes y una 'persona' específica.
     """
     args = get_litellm_args(ai_settings)
     if not args.get("api_key") and not args.get("api_base"):
          yield f"Error: API Key no configurada para el proveedor {ai_settings.get('provider')}."
          return
          
+    # Definir los prompts según la persona seleccionada
+    persona_prompts = {
+        "cowriter": "Eres un asistente de escritura e IA integrado en una aplicación estilo Novelcrafter. Tu objetivo es ayudar al autor de forma amigable a desarrollar su historia, dar ideas creativas y asistir en la prosa.",
+        "critic": "Eres un crítico literario estricto y analítico. Tu objetivo es encontrar fallos en el ritmo, agujeros de guion (plot holes), inconsistencias y debilidades en la prosa del autor. Sé directo y constructivo.",
+        "reader": "Eres un Lector de Prueba (Beta Reader) y fan apasionado. Reaccionas al texto como lo haría un lector: te emocionas, te asustas y das feedback sobre qué partes te atraparon más o te aburrieron.",
+        "editor": "Eres un editor profesional. Te enfocas rigurosamente en la gramática, sintaxis, estructura de oraciones, tono y estilo. Tu retroalimentación debe ser precisa y orientada a pulir el manuscrito final."
+    }
+    
+    base_persona_prompt = persona_prompts.get(persona, persona_prompts["cowriter"])
+    
     system_prompt = (
-        "Eres un asistente de escritura e IA integrado en una aplicación estilo Novelcrafter. "
-        "Tu objetivo es ayudar al autor a desarrollar su historia, personajes y escenas. "
-        f"CONTEXTO ACTUAL DE LA HISTORIA:\n{context}\n\n"
-        "Responde de forma concisa y útil."
+        f"{base_persona_prompt}\n\n"
+        f"Utiliza el siguiente contexto si es relevante para responder:\n"
+        f"{context}\n\n"
+        "Responde de forma útil usando formato Markdown si es necesario."
     )
     
     formatted_contents = [{"role": "system", "content": system_prompt}]

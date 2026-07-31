@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 class GenerateSceneRequest(BaseModel):
@@ -25,3 +25,5 @@ class ChatRequest(BaseModel):
     # Only need to send the current message, but if we send history it's fine.
     messages: list[ChatMessage]
     scene_id: int | None = None
+    persona: Optional[str] = "cowriter"
+    context_settings: Optional[Dict[str, bool]] = None

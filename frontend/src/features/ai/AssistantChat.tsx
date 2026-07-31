@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore, type ChatMessage } from '../../store/useChatStore';
 import { useAppStore } from '../../store/useAppStore';
-import { Send, X, Bot, User, Trash2 } from 'lucide-react';
+import { Send, X, Bot, User, Trash2, Settings } from 'lucide-react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 
 export default function AssistantChat() {
   const isOpen = useChatStore(state => state.isOpen);
   const toggleChat = useChatStore(state => state.toggleChat);
-  const { messages, fetchChatHistory, clearChatHistory, addMessage, updateMessage } = useChatStore();
+  const { messages, fetchChatHistory, clearChatHistory, addMessage, updateMessage, persona, setPersona, contextSettings, setContextSetting } = useChatStore();
   const token = useAppStore(state => state.token);
   const activeSceneId = useManuscriptStore(state => state.activeSceneId);
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const SCENE_ID = activeSceneId || 0; // Si no hay escena activa, usamos la 0 (global)
@@ -63,7 +64,9 @@ export default function AssistantChat() {
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          scene_id: SCENE_ID
+          scene_id: SCENE_ID,
+          persona: persona,
+          context_settings: contextSettings
         })
       });
 
@@ -100,17 +103,71 @@ export default function AssistantChat() {
       <div className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-4 bg-[var(--color-background)]/95 backdrop-blur shrink-0">
         <div className="flex items-center gap-2">
           <Bot size={18} className="text-blue-400" />
-          <h3 className="text-sm font-medium text-[var(--color-text-primary)]">Asistente IA</h3>
+          <h3 className="text-sm font-medium text-[var(--color-text-primary)]">AtrIA</h3>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleClear} title="Vaciar chat" className="text-[var(--color-text-secondary)] hover:text-red-400 transition-colors">
+        <div className="flex items-center gap-1">
+          <button onClick={() => setShowSettings(!showSettings)} title="Ajustes de IA" className={`p-1.5 rounded text-[var(--color-text-secondary)] hover:text-blue-400 hover:bg-blue-500/10 transition-colors ${showSettings ? 'text-blue-400 bg-blue-500/10' : ''}`}>
+            <Settings size={16} />
+          </button>
+          <button onClick={handleClear} title="Vaciar chat" className="p-1.5 rounded text-[var(--color-text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-colors">
             <Trash2 size={16} />
           </button>
-          <button onClick={toggleChat} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors ml-2">
+          <button onClick={toggleChat} className="p-1.5 rounded text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors ml-1">
             <X size={18} />
           </button>
         </div>
       </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)] p-4 text-sm flex flex-col gap-4">
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">Rol (Personalidad)</label>
+            <select 
+              value={persona}
+              onChange={(e) => setPersona(e.target.value)}
+              className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
+            >
+              <option value="cowriter">Co-Escritor (Ayuda Creativa)</option>
+              <option value="critic">El Crítico (Analítico y Severo)</option>
+              <option value="reader">Lector de Prueba (Fan / Reacciones)</option>
+              <option value="editor">Editor (Estilo, Gramática y Tono)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-[var(--color-text-secondary)] mb-2 uppercase tracking-wider">Contexto a incluir</label>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={contextSettings.include_archivum}
+                  onChange={(e) => setContextSetting('include_archivum', e.target.checked)}
+                  className="rounded border-[var(--color-border)] bg-[var(--color-background)] text-blue-500"
+                />
+                <span className="text-[var(--color-text-primary)] text-sm">Archivum (Personajes, Lugares)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={contextSettings.include_manuscript}
+                  onChange={(e) => setContextSetting('include_manuscript', e.target.checked)}
+                  className="rounded border-[var(--color-border)] bg-[var(--color-background)] text-blue-500"
+                />
+                <span className="text-[var(--color-text-primary)] text-sm">Escenas Relevantes (RAG)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={contextSettings.include_beats}
+                  onChange={(e) => setContextSetting('include_beats', e.target.checked)}
+                  className="rounded border-[var(--color-border)] bg-[var(--color-background)] text-blue-500"
+                />
+                <span className="text-[var(--color-text-primary)] text-sm">Beats (Escena actual)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
