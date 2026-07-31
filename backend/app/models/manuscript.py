@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, JSON, DateTime, func
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 from .base import Base
 
 class Series(Base):
@@ -82,3 +83,19 @@ class Scene(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     chapter = relationship("Chapter", back_populates="scenes")
+    chunks = relationship("SceneChunk", back_populates="scene", cascade="all, delete-orphan")
+
+class SceneChunk(Base):
+    """
+    Fragmentos de texto de una escena (chunking) para búsqueda vectorial.
+    """
+    __tablename__ = "scene_chunks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    scene_id = Column(Integer, ForeignKey("scenes.id", ondelete="CASCADE"), nullable=False, index=True)
+    chunk_index = Column(Integer, default=0)
+    
+    content = Column(Text, nullable=False) # Texto limpio del chunk
+    embedding = Column(Vector(768), nullable=True) # Vector de Gemini
+    
+    scene = relationship("Scene", back_populates="chunks")

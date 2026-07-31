@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
-from typing import List
-
+from typing import List, Optional
 from app.db.database import get_db
 from app.models.manuscript import Book, Act, Chapter, Scene
 from app.models.user import User
-from app.schemas.manuscript import ManuscriptTree, Chapter as ChapterSchema, Scene as SceneSchema, ChapterCreate, SceneCreate
+from app.schemas.manuscript import ManuscriptTree, Chapter as ChapterSchema, Scene as SceneSchema, ChapterCreate, SceneCreate, SceneUpdate
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
 from app.api.deps import get_current_user
 from app.services.importer import import_document
+from app.services.vector_store import sync_scene_embeddings
 
 router = APIRouter()
 
@@ -271,6 +270,37 @@ def update_chapter(chapter_id: int, chapter_update: ChapterUpdate, db: Session =
     db.commit()
     db.refresh(db_chapter)
     return db_chapter
+
+@router.put("/scenes/{scene_id}", response_model=SceneSchema)
+def update_scene(
+    scene_id: int, 
+    scene_in: SceneUpdate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    scene = db.query(Scene).filter(Scene.id == scene_id, Scene.user_id == current_user.id).first()
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scene not found")
+        
+    # Validar que si intentamos cambiar de chapter, este nos pertenezca
+    if scene_in.chapter_id is not None:
+        new_chap = db.query(Chapter).filter(Chapter.id == scene_in.chapter_id, Chapter.user_id == current_user.id).first()
+        if not new_chap:
+            raise HTTPException(status_code=404, detail="Target Chapter not found")
+            
+    update_data = scene_in.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(scene, field, value)
+        
+    db.commit()
+    db.refresh(scene)
+    
+    # Si se actualizó el contenido, regeneramos los embeddings en background
+    if "content" in update_data:
+        background_tasks.add_task(sync_scene_embeddings, scene.id, current_user.id, db)
+        
+    return scene
 
 @router.post("/scenes", response_model=SceneSchema)
 def create_scene(scene: SceneCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

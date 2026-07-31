@@ -54,13 +54,33 @@ def clear_chat_history(scene_id: int, db: Session = Depends(get_db), current_use
 async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     from app.services.llm_client import chat_with_assistant
     from app.models.chat import ChatSession, ChatMessage
+    from app.services.vector_store import search_semantic_context
+    from app.models.manuscript import Scene
     
     real_scene_id = request.scene_id if request.scene_id and request.scene_id > 0 else None
+    
+    # 1. Obtener a qué libro pertenece la escena actual para buscar en todo el libro
+    book_id = None
+    if real_scene_id:
+        scene = db.query(Scene).filter(Scene.id == real_scene_id).first()
+        if scene and scene.chapter and scene.chapter.act:
+            book_id = scene.chapter.act.book_id
+            
+    # Guardar el mensaje del usuario (es el último del array request.messages)
+    user_msg_content = request.messages[-1].content
+    
     context = ""
     try:
+        # Recuperar lore básico
         context = assemble_context(real_scene_id, current_user.id, db)
-    except ValueError:
-        pass
+        
+        # Recuperar fragmentos semánticamente relevantes del libro
+        if book_id:
+            semantic_context = await search_semantic_context(user_msg_content, book_id, current_user.id, db)
+            context += "\n" + semantic_context
+            
+    except Exception as e:
+        print(f"Error fetching semantic context: {e}")
             
     # Manejo de Sesión en BD
     chat_session = db.query(ChatSession).filter(
@@ -74,8 +94,6 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
         db.commit()
         db.refresh(chat_session)
         
-    # Guardar el mensaje del usuario (es el último del array request.messages)
-    user_msg_content = request.messages[-1].content
     user_msg_db = ChatMessage(session_id=chat_session.id, role="user", content=user_msg_content)
     db.add(user_msg_db)
     db.commit()

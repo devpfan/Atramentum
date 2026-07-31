@@ -6,9 +6,9 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 
 *   **Gestión Multi-Proyecto:** Organiza múltiples libros o proyectos literarios de forma independiente en una sola cuenta.
 *   **Gestión de Manuscritos Estructurada:** Divide tu obra en Actos, Capítulos y Escenas con un árbol de navegación intuitivo.
-*   **El Archivum (Bíblia de la Historia):** Un repositorio dedicado para el *lore* de tu historia. Crea entradas detalladas para Personajes, Lugares, Objetos y Conceptos. El Codex es independiente para cada proyecto, manteniendo universos separados.
-*   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Codex (RAG - *Retrieval-Augmented Generation*).
-*   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado y autocompletado inteligente de etiquetas del Codex.
+*   **El Archivum (Bíblia de la Historia):** Un repositorio dedicado para el *lore* de tu historia. Crea entradas detalladas para Personajes, Lugares, Objetos y Conceptos. El Archivum es independiente para cada proyecto, manteniendo universos separados.
+*   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Archivum (RAG - *Retrieval-Augmented Generation*).
+*   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, potenciado por Tiptap, con soporte de autoguardado y autocompletado inteligente de etiquetas del Archivum.
 *   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias.
 *   **Exportación Universal:** Compila tu manuscrito en cuestión de segundos a múltiples formatos listos para publicar o revisar: Markdown, Word (.docx), PDF y EPUB (100% compatible con Amazon Kindle).
 *   **Estadísticas y Metas:** Mantén la motivación visualizando tu progreso en tiempo real con barras de progreso y conteo de palabras inteligente.

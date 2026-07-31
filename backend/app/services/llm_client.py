@@ -1,6 +1,6 @@
 import json
 import litellm
-from litellm import acompletion
+from litellm import acompletion, aembedding
 from app.core.config import settings
 
 def get_litellm_args(ai_settings: dict):
@@ -165,4 +165,39 @@ async def extract_characters(text: str, ai_settings: dict) -> list:
         return []
     except Exception as e:
         print(f"Error extrayendo personajes: {str(e)}")
+        return []
+
+async def get_embedding(text: str, ai_settings: dict) -> list[float]:
+    """
+    Genera un vector matemático (embedding) a partir de un texto.
+    Por defecto usa models/text-embedding-004 de Gemini, que produce 768 dimensiones.
+    """
+    provider = ai_settings.get("provider", "gemini")
+    
+    # Configuramos los parámetros según el proveedor
+    args = {}
+    if provider == "gemini":
+        args["model"] = "gemini/text-embedding-004"
+        args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
+    elif provider == "openai":
+        args["model"] = "text-embedding-3-small"
+        args["api_key"] = ai_settings.get("openai_key")
+    elif provider == "local":
+        args["model"] = "openai/nomic-embed-text" # Ejemplo de modelo de embeddings local (requiere 768 dim si usamos pgvector 768)
+        args["api_base"] = ai_settings.get("local_url", "http://localhost:11434/v1")
+        args["api_key"] = "dummy"
+    else:
+        args["model"] = "gemini/text-embedding-004"
+        args["api_key"] = settings.GEMINI_API_KEY
+        
+    try:
+        response = await aembedding(
+            input=[text],
+            **args
+        )
+        # Retorna la lista de floats (el vector)
+        return response.data[0]["embedding"]
+    except Exception as e:
+        print(f"Error generando embedding: {str(e)}")
+        # Devuelve vector nulo si falla
         return []
