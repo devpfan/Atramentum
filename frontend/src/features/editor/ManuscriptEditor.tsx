@@ -96,10 +96,23 @@ export default function ManuscriptEditor() {
       if (codexId) {
         const entry = entries.find(e => e.id.toString() === codexId);
         if (entry) {
+          let yPos = e.clientY + 20;
+          let xPos = e.clientX;
+          
+          // Ajuste si está muy abajo en la pantalla (evita que se corte)
+          if (e.clientY + 250 > window.innerHeight) {
+            yPos = e.clientY - 200; // Lo mostramos hacia arriba
+          }
+          
+          // Ajuste si está muy a la derecha
+          if (e.clientX + 320 > window.innerWidth) {
+            xPos = e.clientX - 320;
+          }
+
           setTooltip({
             visible: true,
-            x: e.clientX,
-            y: e.clientY + 20,
+            x: xPos,
+            y: yPos,
             entry
           });
           return;
