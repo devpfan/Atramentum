@@ -153,7 +153,7 @@ export default function AssistantChat() {
                   onChange={(e) => setContextSetting('include_manuscript', e.target.checked)}
                   className="rounded border-[var(--color-border)] bg-[var(--color-background)] text-blue-500"
                 />
-                <span className="text-[var(--color-text-primary)] text-sm">Escenas Relevantes (RAG)</span>
+                <span className="text-[var(--color-text-primary)] text-sm">Escenas Relevantes</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 

@@ -136,7 +136,7 @@ export default function HelpView() {
               <p>Si quieres que la IA se enfoque o que ignore cierta información, puedes apagar/encender módulos:</p>
               <ul className="list-disc pl-5 mt-2 space-y-1">
                 <li><strong>Archivum:</strong> Desactívalo si no quieres que la IA use el lore de la historia.</li>
-                <li><strong>Escenas Relevantes (RAG):</strong> Apágalo si quieres una charla general que no rastree todo tu libro (ahorra memoria).</li>
+                <li><strong>Escenas Relevantes:</strong> Apágalo si quieres una charla general que no rastree todo tu libro (ahorra memoria).</li>
                 <li><strong>Beats:</strong> Apágalo si no quieres que considere la lista de cosas "por hacer" en la escena actual.</li>
               </ul>
             </div>
