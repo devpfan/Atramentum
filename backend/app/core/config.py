@@ -18,6 +18,8 @@ class Settings(BaseSettings):
 
     # Inteligencia Artificial (LLM)
     GEMINI_API_KEY: str | None = None
+    OPENAI_API_KEY: str | None = None
+    ANTHROPIC_API_KEY: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

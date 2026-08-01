@@ -82,6 +82,7 @@ class AISettingsSchema(BaseModel):
     openai_key: str | None = None
     anthropic_key: str | None = None
     local_url: str | None = None
+    local_model: str | None = None
 
 @router.get("/me/ai-settings", response_model=AISettingsSchema)
 def get_ai_settings(current_user: User = Depends(get_current_user)):

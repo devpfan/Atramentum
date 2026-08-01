@@ -25,6 +25,36 @@ def update_ai_settings(settings: dict, db: Session = Depends(get_db), current_us
     db.refresh(current_user)
     return current_user.ai_settings
 
+@router.get("/local-models")
+async def list_local_models(url: str = "http://localhost:11434"):
+    import httpx
+    clean_url = url.strip().rstrip("/")
+    # Try Ollama native endpoint first: /api/tags
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            base_url = clean_url[:-3] if clean_url.endswith("/v1") else clean_url
+            try:
+                res = await client.get(f"{base_url}/api/tags")
+                if res.status_code == 200:
+                    data = res.json()
+                    models = [m.get("name") for m in data.get("models", []) if m.get("name")]
+                    if models:
+                        return {"models": models}
+            except Exception:
+                pass
+            
+            # Fallback to OpenAI /v1/models or /models
+            target_url = f"{clean_url}/models" if clean_url.endswith("/v1") else f"{clean_url}/v1/models"
+            res = await client.get(target_url)
+            if res.status_code == 200:
+                data = res.json()
+                models = [m.get("id") for m in data.get("data", []) if m.get("id")]
+                return {"models": models}
+    except Exception as e:
+        return {"models": [], "error": str(e)}
+    
+    return {"models": []}
+
 @router.get("/synonyms")
 def get_synonyms(word: str):
     nltk.download('wordnet', quiet=True)

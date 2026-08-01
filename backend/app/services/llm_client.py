@@ -15,6 +15,7 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
     global_openai_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openai_key").first()
     global_anthropic_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_anthropic_key").first()
     global_local_url = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_url").first()
+    global_local_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_model").first()
     
     # Si el usuario NO tiene un provider seteado con llaves validas, usamos el global como fallback
     has_user_keys = bool(merged.get("gemini_key") or merged.get("openai_key") or merged.get("anthropic_key") or merged.get("local_url"))
@@ -29,6 +30,8 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
             merged["anthropic_key"] = global_anthropic_key.value
         if global_local_url:
             merged["local_url"] = global_local_url.value
+        if global_local_model:
+            merged["local_model"] = global_local_model.value
             
     return merged
 
@@ -40,14 +43,25 @@ def get_litellm_args(ai_settings: dict):
         args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     elif provider == "openai":
         args["model"] = "gpt-4o-mini"
-        args["api_key"] = ai_settings.get("openai_key")
+        args["api_key"] = ai_settings.get("openai_key") or settings.OPENAI_API_KEY
     elif provider == "anthropic":
         args["model"] = "claude-3-5-haiku-latest"
-        args["api_key"] = ai_settings.get("anthropic_key")
+        args["api_key"] = ai_settings.get("anthropic_key") or settings.ANTHROPIC_API_KEY
     elif provider == "local":
-        args["model"] = "openai/local-model" # uses openai provider format for local servers
-        args["api_base"] = ai_settings.get("local_url", "http://localhost:11434/v1")
-        args["api_key"] = "dummy-key"
+        local_url = ai_settings.get("local_url") or "http://localhost:11434"
+        local_model = ai_settings.get("local_model") or "llama3:8b"
+        clean_url = local_url.strip().rstrip("/")
+        
+        # Si es Ollama (puerto 11434 por defecto), usamos el provider nativo de litellm 'ollama/'
+        if "11434" in clean_url or not clean_url.endswith("/v1"):
+            if clean_url.endswith("/v1"):
+                clean_url = clean_url[:-3]
+            args["model"] = f"ollama/{local_model}"
+            args["api_base"] = clean_url
+        else:
+            args["model"] = f"openai/{local_model}"
+            args["api_base"] = clean_url
+            args["api_key"] = "dummy-key"
     else:
         args["model"] = "gemini/gemini-flash-lite-latest"
         args["api_key"] = settings.GEMINI_API_KEY

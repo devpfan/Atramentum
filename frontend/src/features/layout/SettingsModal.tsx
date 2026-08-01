@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Bot, Palette, Type, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Save, Bot, Palette, Type, User, RefreshCw, Check } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import type { AISettings } from '../../api/auth';
+import { aiApi } from '../../api/ai';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface Props {
@@ -31,6 +32,10 @@ export default function SettingsModal({ onClose }: Props) {
   const [aiSettings, setAiSettings] = useState<AISettings>({ provider: 'gemini' });
   const [isLoadingAi, setIsLoadingAi] = useState(true);
   const [isSavingAi, setIsSavingAi] = useState(false);
+  const [localModels, setLocalModels] = useState<string[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [isCustomModel, setIsCustomModel] = useState(false);
 
   // Account State
   const [currentEmail, setCurrentEmail] = useState('');
@@ -56,6 +61,9 @@ export default function SettingsModal({ onClose }: Props) {
       .then(data => {
         setAiSettings(data);
         setIsLoadingAi(false);
+        if (data.provider === 'local') {
+          fetchLocalModels(data.local_url, data.local_model);
+        }
       })
       .catch(err => {
         console.error("Error loading AI settings", err);
@@ -72,6 +80,30 @@ export default function SettingsModal({ onClose }: Props) {
         console.error("Error loading user info", err);
       });
   }, []);
+
+  const fetchLocalModels = async (url?: string, currentSelectedModel?: string) => {
+    setIsLoadingModels(true);
+    setModelsError(null);
+    try {
+      const targetUrl = url || aiSettings.local_url || 'http://localhost:11434';
+      const res = await aiApi.getLocalModels(targetUrl);
+      if (res.models && res.models.length > 0) {
+        setLocalModels(res.models);
+        const selected = currentSelectedModel || aiSettings.local_model;
+        if (!selected || !res.models.includes(selected)) {
+          setAiSettings(prev => ({ ...prev, local_model: res.models[0] }));
+        }
+      } else {
+        setLocalModels([]);
+        setModelsError(res.error || 'No se detectaron modelos descargados en Ollama.');
+      }
+    } catch (err) {
+      setLocalModels([]);
+      setModelsError('No se pudo conectar con Ollama. Verifica que esté activo.');
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
 
   const handleSaveAll = async () => {
     // Save AI Settings to Backend
@@ -141,7 +173,11 @@ export default function SettingsModal({ onClose }: Props) {
   };
 
   const handleAiChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setAiSettings({ ...aiSettings, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setAiSettings(prev => ({ ...prev, [name]: value }));
+    if (name === 'provider' && value === 'local') {
+      fetchLocalModels(aiSettings.local_url);
+    }
   };
 
   const handleResetDefaults = () => {
@@ -414,6 +450,13 @@ export default function SettingsModal({ onClose }: Props) {
                   <div className="text-center text-[var(--color-text-secondary)] py-8">Cargando...</div>
                 ) : (
                   <>
+                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 text-xs text-indigo-300 flex items-start gap-2.5">
+                      <Bot className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-indigo-200">Respaldo Global del Servidor:</span> Si dejas los campos de clave vacíos, Atramentum utilizará automáticamente la Inteligencia Artificial por defecto configurada en el servidor. Solo ingresa una clave si deseas usar tu propia cuenta personal.
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         Proveedor de Modelos LLM
@@ -424,10 +467,10 @@ export default function SettingsModal({ onClose }: Props) {
                         onChange={handleAiChange}
                         className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
                       >
-                        <option value="gemini">Google Gemini</option>
-                        <option value="openai">OpenAI</option>
+                        <option value="gemini">Google Gemini (Por defecto global)</option>
+                        <option value="openai">OpenAI (ChatGPT)</option>
                         <option value="anthropic">Anthropic (Claude)</option>
-                        <option value="local">Modelo Local (Ollama / LM Studio)</option>
+                        <option value="local">Modelo Local (Ollama / Offline)</option>
                       </select>
                       <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                         Elige qué proveedor usará el Asistente de Escritura.
@@ -444,7 +487,7 @@ export default function SettingsModal({ onClose }: Props) {
                           name="gemini_key" 
                           value={aiSettings.gemini_key || ''} 
                           onChange={handleAiChange}
-                          placeholder="AIzaSy..."
+                          placeholder="Dejar vacío para usar clave del servidor (o ingresar propia AIzaSy...)"
                           className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
                         />
                       </div>
@@ -460,7 +503,7 @@ export default function SettingsModal({ onClose }: Props) {
                           name="openai_key" 
                           value={aiSettings.openai_key || ''} 
                           onChange={handleAiChange}
-                          placeholder="sk-..."
+                          placeholder="Dejar vacío para usar clave del servidor (o ingresar propia sk-...)"
                           className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
                         />
                       </div>
@@ -476,28 +519,100 @@ export default function SettingsModal({ onClose }: Props) {
                           name="anthropic_key" 
                           value={aiSettings.anthropic_key || ''} 
                           onChange={handleAiChange}
-                          placeholder="sk-ant-..."
+                          placeholder="Dejar vacío para usar clave del servidor (o ingresar propia sk-ant-...)"
                           className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
                         />
                       </div>
                     )}
 
                     {aiSettings.provider === 'local' && (
-                      <div>
-                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                          URL del Servidor Local (Compatible con OpenAI)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="local_url" 
-                          value={aiSettings.local_url || ''} 
-                          onChange={handleAiChange}
-                          placeholder="http://localhost:11434/v1"
-                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
-                        />
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                          Ej. Ollama o LM Studio ejecutándose localmente. Asegúrate de tener el modelo descargado.
-                        </p>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                            URL del Servidor Local
+                          </label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              name="local_url" 
+                              value={aiSettings.local_url || ''} 
+                              onChange={handleAiChange}
+                              placeholder="http://localhost:11434"
+                              className="flex-1 bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => fetchLocalModels(aiSettings.local_url)}
+                              disabled={isLoadingModels}
+                              className="px-3 py-2 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded-md border border-[var(--color-border)] flex items-center gap-2 text-sm transition-colors disabled:opacity-50"
+                              title="Buscar modelos disponibles"
+                            >
+                              <RefreshCw className={`w-4 h-4 ${isLoadingModels ? 'animate-spin text-[#6366f1]' : ''}`} />
+                              <span>{isLoadingModels ? 'Buscando...' : 'Detectar'}</span>
+                            </button>
+                          </div>
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                            Por defecto: http://localhost:11434 (Ollama)
+                          </p>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">
+                              Modelo Local
+                            </label>
+                            {localModels.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setIsCustomModel(!isCustomModel)}
+                                className="text-xs text-[#6366f1] hover:underline"
+                              >
+                                {isCustomModel ? 'Usar lista detectada' : 'Escribir a mano...'}
+                              </button>
+                            )}
+                          </div>
+
+                          {localModels.length > 0 && !isCustomModel ? (
+                            <div className="relative">
+                              <select
+                                name="local_model"
+                                value={aiSettings.local_model || localModels[0]}
+                                onChange={handleAiChange}
+                                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1] appearance-none cursor-pointer"
+                              >
+                                {localModels.map((m) => (
+                                  <option key={m} value={m} className="bg-[var(--color-surface)] text-[var(--color-text-primary)]">
+                                    {m} (instalado en Ollama)
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)] text-xs">
+                                ▼
+                              </div>
+                            </div>
+                          ) : (
+                            <input 
+                              type="text" 
+                              name="local_model" 
+                              value={aiSettings.local_model || ''} 
+                              onChange={handleAiChange}
+                              placeholder="llama3:8b"
+                              className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                            />
+                          )}
+
+                          {localModels.length > 0 && (
+                            <p className="text-xs text-emerald-400 mt-1.5 flex items-center gap-1">
+                              <Check className="w-3.5 h-3.5" /> {localModels.length} modelo(s) detectado(s) en Ollama
+                            </p>
+                          )}
+
+                          {modelsError && (
+                            <p className="text-xs text-amber-400 mt-1.5">
+                              ⚠️ {modelsError}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </>

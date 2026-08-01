@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { aiApi, type AiSettings, type AiPersona } from '../../api/ai';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 
@@ -113,7 +113,7 @@ export default function AiSettingsModal({ onClose, onSaved }: AiSettingsModalPro
                 No has creado ninguna Persona personalizada.
               </div>
             )}
-            {settings?.custom_personas?.map((persona, index) => (
+            {settings?.custom_personas?.map((persona) => (
               <div key={persona.id} className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg p-4 space-y-3 relative group">
                 <button 
                   onClick={() => handleRemovePersona(persona.id)}

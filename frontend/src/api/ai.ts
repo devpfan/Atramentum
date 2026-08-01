@@ -11,6 +11,7 @@ export interface AiSettings {
   openai_api_key?: string;
   gemini_api_key?: string;
   local_url?: string;
+  local_model?: string;
   custom_personas?: AiPersona[];
 }
 
@@ -21,6 +22,12 @@ export const aiApi = {
   },
   updateSettings: async (settings: AiSettings): Promise<AiSettings> => {
     const response = await apiClient.put<AiSettings>('/ai/settings', settings);
+    return response.data;
+  },
+  getLocalModels: async (url?: string): Promise<{ models: string[]; error?: string }> => {
+    const response = await apiClient.get<{ models: string[]; error?: string }>(`/ai/local-models`, {
+      params: url ? { url } : undefined
+    });
     return response.data;
   }
 }

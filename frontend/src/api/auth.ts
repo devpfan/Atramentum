@@ -7,6 +7,7 @@ export interface AISettings {
   openai_key?: string;
   anthropic_key?: string;
   local_url?: string;
+  local_model?: string;
 }
 
 export const authApi = {

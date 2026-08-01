@@ -7,6 +7,35 @@ export interface GlobalSetting {
   description: string;
 }
 
+export interface AIProviderStatus {
+  name: string;
+  configured: boolean;
+  source: 'db' | 'env' | 'none';
+  masked_key?: string | null;
+  model?: string;
+  url?: string;
+}
+
+export interface AIStatusResponse {
+  active_provider: string;
+  active_model: string;
+  providers: {
+    gemini: AIProviderStatus;
+    openai: AIProviderStatus;
+    anthropic: AIProviderStatus;
+    local: AIProviderStatus;
+  };
+}
+
+export interface AITestResponse {
+  ok: boolean;
+  provider: string;
+  model: string;
+  latency_ms: number;
+  message?: string;
+  error?: string;
+}
+
 export const adminService = {
   // Users
   getUsers: async () => {
@@ -29,6 +58,16 @@ export const adminService = {
   },
   updateSetting: async (data: Partial<GlobalSetting>) => {
     const res = await apiClient.put<GlobalSetting>('/admin/settings', data);
+    return res.data;
+  },
+
+  // AI Status & Test
+  getAiStatus: async () => {
+    const res = await apiClient.get<AIStatusResponse>('/admin/ai-status');
+    return res.data;
+  },
+  testAiConnection: async (data?: { provider?: string; api_key?: string; local_url?: string; local_model?: string }) => {
+    const res = await apiClient.post<AITestResponse>('/admin/ai-test', data || {});
     return res.data;
   }
 };
