@@ -24,11 +24,13 @@ interface ManuscriptState {
   updateBook: (id: number, data: Partial<Book>) => Promise<void>;
   deleteBook: (id: number) => Promise<void>;
   setActiveSceneId: (id: number | null) => void;
-  createChapter: () => Promise<void>;
+  createChapter: (title?: string) => Promise<any>;
   updateChapter: (id: number, data: Partial<Chapter>) => Promise<void>;
-  createScene: (chapterId: number, title: string) => Promise<void>;
+  deleteChapter: (id: number) => Promise<void>;
+  createScene: (chapterId: number, title?: string) => Promise<any>;
   updateActiveScene: (data: Partial<Scene>) => Promise<void>;
   updateScene: (id: number, data: Partial<Scene>) => Promise<void>;
+  deleteScene: (id: number) => Promise<void>;
   reorderTree: (items: { id: number, type: string, order: number, parent_id?: number }[]) => Promise<void>;
 }
 
@@ -123,22 +125,75 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
     set({ activeSceneId: id });
   },
 
-  createChapter: async () => {
+  createChapter: async (title?: string) => {
     const { tree } = get();
     if (!tree) return;
     try {
-      console.warn("Chapter creation not fully implemented without act_id");
+      const actId = tree.chapters.length > 0 ? tree.chapters[0].act_id : undefined;
+      const chapterNumber = tree.chapters.length + 1;
+      const chapterTitle = title || `Capítulo ${chapterNumber}`;
+      
+      const newChap = await manuscriptApi.createChapter({
+        actId,
+        bookId: tree.book_id,
+        title: chapterTitle
+      });
+      await get().fetchTree();
+      return newChap;
     } catch (err: any) {
-      set({ error: err.message })
+      set({ error: err.message });
     }
   },
 
-  createScene: async (chapterId: number, title: string) => {
+  deleteChapter: async (id: number) => {
     try {
-      await manuscriptApi.createScene(chapterId, title);
-      await get().fetchTree(); // Refresh tree
+      const { activeSceneId, tree } = get();
+      const chapterToDelete = tree?.chapters.find(c => c.id === id);
+      const hasActiveScene = chapterToDelete?.scenes.some(s => s.id === activeSceneId);
+
+      await manuscriptApi.deleteChapter(id);
+      await get().fetchTree();
+
+      if (hasActiveScene) {
+        const updatedTree = get().tree;
+        const firstScene = updatedTree?.chapters.flatMap(c => c.scenes)[0];
+        set({ activeSceneId: firstScene ? firstScene.id : null });
+      }
     } catch (err: any) {
-      set({ error: err.message })
+      console.error("Error deleting chapter:", err);
+      set({ error: err.message });
+    }
+  },
+
+  createScene: async (chapterId: number, title?: string) => {
+    try {
+      const { tree } = get();
+      const chapter = tree?.chapters.find(c => c.id === chapterId);
+      const sceneNumber = (chapter?.scenes.length || 0) + 1;
+      const sceneTitle = title || `Escena ${sceneNumber}`;
+      const newScene = await manuscriptApi.createScene(chapterId, sceneTitle);
+      await get().fetchTree();
+      set({ activeSceneId: newScene.id });
+      return newScene;
+    } catch (err: any) {
+      set({ error: err.message });
+    }
+  },
+
+  deleteScene: async (id: number) => {
+    try {
+      const { activeSceneId } = get();
+      await manuscriptApi.deleteScene(id);
+      await get().fetchTree();
+
+      if (activeSceneId === id) {
+        const updatedTree = get().tree;
+        const firstScene = updatedTree?.chapters.flatMap(c => c.scenes)[0];
+        set({ activeSceneId: firstScene ? firstScene.id : null });
+      }
+    } catch (err: any) {
+      console.error("Error deleting scene:", err);
+      set({ error: err.message });
     }
   },
 

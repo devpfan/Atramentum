@@ -74,7 +74,7 @@ export default function AppLayout() {
         )}
 
         {/* Aquí se renderiza la vista activa (Manuscrito, Codex, etc) */}
-        <div className={`flex-1 overflow-auto relative ${isFocusMode ? 'p-0 flex justify-center bg-blue-900' : 'p-6'}`}>
+        <div className={`flex-1 overflow-hidden relative ${isFocusMode ? 'p-0 flex justify-center bg-blue-900' : ''}`}>
           <Outlet />
         </div>
       </main>

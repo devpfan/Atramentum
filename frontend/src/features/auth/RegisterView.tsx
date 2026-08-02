@@ -9,7 +9,7 @@ export default function RegisterView() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { theme } = useOutletContext<{ theme: string }>();
 
@@ -34,7 +34,7 @@ export default function RegisterView() {
   return (
     <div>
       <h2 className={`text-xl mb-8 text-center uppercase tracking-widest border-b pb-4 ${theme === 'modern' ? 'font-semibold normal-case tracking-normal border-[var(--color-border)]/50' : theme === 'neon' ? 'text-indigo-400 border-indigo-400/20 drop-shadow-[0_0_5px_rgba(99,102,241,0.5)]' : 'font-cinzel text-yellow-500/80 border-yellow-500/20'}`}>Crear Cuenta</h2>
-      
+
       {error && (
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm text-center">
           {error}
@@ -50,8 +50,8 @@ export default function RegisterView() {
       <form onSubmit={handleRegister} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Email</label>
-          <input 
-            type="email" 
+          <input
+            type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -59,11 +59,11 @@ export default function RegisterView() {
             placeholder="nuevo@atramentum.com"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Contraseña</label>
-          <input 
-            type="password" 
+          <input
+            type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -72,8 +72,8 @@ export default function RegisterView() {
           />
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={isLoading || !!success}
           className={`w-full flex items-center justify-center transition-all disabled:opacity-50 mt-6 ${theme === 'modern' ? 'bg-[var(--color-surface-hover)] hover:bg-[#6366f1] text-[var(--color-text-primary)] font-medium rounded-lg px-4 py-2.5 border border-[var(--color-border)]' : theme === 'neon' ? 'bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-400/50 text-indigo-400 rounded-none px-4 py-3 uppercase tracking-widest shadow-[0_0_15px_rgba(99,102,241,0.2)]' : 'bg-yellow-600/10 hover:bg-yellow-600/20 border border-yellow-600/30 text-yellow-500 font-cinzel rounded-none px-4 py-3 uppercase tracking-widest text-sm'}`}
         >

@@ -86,8 +86,12 @@ export const manuscriptApi = {
     return response.data
   },
   
-  createChapter: async (actId: number, title: string): Promise<Chapter> => {
-    const response = await apiClient.post<Chapter>('/manuscript/chapters', { act_id: actId, title })
+  createChapter: async (params: { actId?: number, bookId?: number, title: string }): Promise<Chapter> => {
+    const response = await apiClient.post<Chapter>('/manuscript/chapters', {
+      act_id: params.actId,
+      book_id: params.bookId,
+      title: params.title
+    })
     return response.data
   },
 
@@ -96,13 +100,21 @@ export const manuscriptApi = {
     return response.data
   },
 
+  deleteChapter: async (id: number): Promise<void> => {
+    await apiClient.delete(`/manuscript/chapters/${id}`)
+  },
+
   createScene: async (chapterId: number, title: string): Promise<Scene> => {
     const response = await apiClient.post<Scene>('/manuscript/scenes', { chapter_id: chapterId, title })
     return response.data
   },
 
   updateScene: async (id: number, data: Partial<Scene>): Promise<Scene> => {
-    const response = await apiClient.put<Scene>(`/scenes/${id}`, data)
+    const response = await apiClient.put<Scene>(`/manuscript/scenes/${id}`, data)
     return response.data
+  },
+
+  deleteScene: async (id: number): Promise<void> => {
+    await apiClient.delete(`/manuscript/scenes/${id}`)
   }
 }

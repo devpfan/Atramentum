@@ -1,12 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import { AutoTagExtension } from './extensions/AutoTagExtension';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { Wand2, Sparkles, Shrink, PanelRightOpen, Check, X as CloseIcon } from 'lucide-react';
+import { Wand2, Sparkles, Shrink, PanelRightOpen, Check, X as CloseIcon, BookOpen } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
 import SceneInspector from './SceneInspector';
@@ -14,7 +13,6 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import EditorToolbar from './EditorToolbar';
-import { BookOpen } from 'lucide-react';
 
 export default function ManuscriptEditor() {
   const { entries, fetchEntries } = useCodexStore();
@@ -27,6 +25,25 @@ export default function ManuscriptEditor() {
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const isFocusMode = useAppStore(state => state.isFocusMode);
   const toggleFocusMode = useAppStore(state => state.toggleFocusMode);
+
+  // Dynamic Scrollbar Width Observer for 100% pixel-perfect alignment
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const updateScrollbar = () => {
+      const sw = el.offsetWidth - el.clientWidth;
+      setScrollbarWidth(sw);
+    };
+
+    updateScrollbar();
+    const ro = new ResizeObserver(updateScrollbar);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [activeSceneId]);
 
   // Tooltip State
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; entry: CodexEntry | null }>({
@@ -323,25 +340,33 @@ export default function ManuscriptEditor() {
     setSynonymsPopover(prev => ({ ...prev, visible: false }));
   };
 
-  const handleOpenAiMenu = () => {
+  const handleOpenAiMenu = (fromToolbar = false) => {
     if (!editor) return;
-    const { from } = editor.state.selection;
-    const coords = editor.view.coordsAtPos(from);
-    
-    let xPos = coords.left;
-    let yPos = coords.bottom + 10;
-    
-    if (yPos + 350 > window.innerHeight) {
-      yPos = coords.top - 360;
+    const { from, to } = editor.state.selection;
+    let xPos = window.innerWidth / 2 - 144;
+    let yPos = 140;
+
+    if (!fromToolbar && from !== to) {
+      try {
+        const coords = editor.view.coordsAtPos(from);
+        xPos = coords.left;
+        yPos = coords.bottom + 12;
+      } catch (e) {
+        // fallback
+      }
     }
-    if (xPos + 288 > window.innerWidth) { // 288px = w-72
-      xPos = window.innerWidth - 300;
+
+    if (yPos + 360 > window.innerHeight) {
+      yPos = Math.max(20, window.innerHeight - 380);
+    }
+    if (xPos + 295 > window.innerWidth) {
+      xPos = Math.max(20, window.innerWidth - 310);
     }
 
     setAiMenuPopover({
       visible: true,
-      x: xPos,
-      y: yPos,
+      x: Math.max(20, xPos),
+      y: Math.max(20, yPos),
       customInstruction: ''
     });
   };
@@ -357,12 +382,42 @@ export default function ManuscriptEditor() {
   const selectedTextForMenu = editor ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').trim() : '';
   const wordCount = selectedTextForMenu.split(/\s+/).filter(w => w.length > 0).length;
   const isSingleWord = wordCount === 1;
+  const hasSelection = editor ? !editor.state.selection.empty : false;
 
   return (
-    <div className="flex h-full w-full bg-[var(--color-background)]">
+    <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">
       {!isFocusMode && <ManuscriptSidebar />}
 
-      <div className={`flex-1 overflow-y-auto relative ${isFocusMode ? 'p-0 w-full' : 'p-8'}`}>
+      {/* COLUMNA CENTRAL: BARRA FIJA SIEMPRE VISIBLE + ÁREA DE ESCRITURA CON SCROLL */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+
+        {/* 1. BARRA SUPERIOR FIJA (SIEMPRE VISIBLE Y ALINEADA EXACTA CON EL MANUSCRITO) */}
+        {!isFocusMode && activeSceneId && (
+          <div 
+            className="h-14 pl-8 flex items-center shrink-0 z-20"
+            style={{ paddingRight: `calc(2rem + ${scrollbarWidth}px)` }}
+          >
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm px-3 py-1 flex items-center justify-between">
+                <EditorToolbar 
+                  editor={editor} 
+                  onOpenAiMenu={() => handleOpenAiMenu(true)}
+                  onFetchSynonyms={handleFetchSynonyms}
+                  isAiLoading={isAiLoading || isGeneratingScene}
+                  isSingleWord={isSingleWord}
+                  hasSelection={hasSelection}
+                  saveStatus={saveStatus}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. ÁREA DE ESCRITURA CON SCROLL (EL PERGAMINO) */}
+        <div 
+          ref={scrollContainerRef}
+          className={`flex-1 overflow-y-auto relative ${isFocusMode ? 'p-0 w-full' : 'px-8 py-4'}`}
+        >
         {/* Botón flotante para salir del modo focus */}
         {isFocusMode && (
           <button 
@@ -376,12 +431,6 @@ export default function ManuscriptEditor() {
             <Shrink size={20} />
           </button>
         )}
-
-        {/* Indicador de Autoguardado */}
-        <div className="absolute top-4 right-8 text-xs text-[var(--color-text-secondary)] font-medium">
-          {saveStatus === 'saving' && <span className="animate-pulse">Guardando...</span>}
-          {saveStatus === 'saved' && <span className="text-emerald-400">Guardado ✓</span>}
-        </div>
 
         <div className="max-w-4xl mx-auto relative">
           {/* Tooltip Flotante */}
@@ -570,7 +619,7 @@ export default function ManuscriptEditor() {
 
           {activeSceneId ? (
             <div 
-              className={isFocusMode ? 'min-h-[100vh] w-full max-w-[900px] mx-auto cursor-text flex flex-col pt-12' : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[70vh] cursor-text flex flex-col'}
+              className={isFocusMode ? 'min-h-[100vh] w-full max-w-[900px] mx-auto cursor-text flex flex-col pt-12' : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl min-h-[75vh] cursor-text flex flex-col p-10'}
               style={{
                 fontFamily: isFocusMode ? undefined : editorFontFamily,
                 fontSize: isFocusMode ? undefined : `${editorFontSize}px`,
@@ -579,61 +628,11 @@ export default function ManuscriptEditor() {
               onMouseMove={handleMouseMove}
               onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
             >
-              {!isFocusMode && <EditorToolbar editor={editor} />}
-              
-              <div className={`flex-1 ${isFocusMode ? 'px-8 pt-8' : 'px-10 pb-10'}`}>
-                <h1 className={`text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]`} style={{ fontFamily: isFocusMode ? 'inherit' : 'sans-serif' }}>
-                  {activeScene?.title || 'Sin Título'}
-                </h1>
-              
-              {editor && (
-                <BubbleMenu editor={editor} className="flex overflow-hidden rounded-xl shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md">
-                  <button 
-                    onClick={handleOpenAiMenu}
-                    disabled={isAiLoading || isGeneratingScene}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-indigo-500/20 hover:text-indigo-400 transition-colors disabled:opacity-50"
-                  >
-                    <Wand2 size={16} /> IA...
-                  </button>
-                  
-                  {isSingleWord && (
-                    <>
-                      <div className="w-px bg-[var(--color-border)]"></div>
-                      <button 
-                        onClick={handleFetchSynonyms}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-blue-500/20 hover:text-blue-400 transition-colors"
-                      >
-                        <BookOpen size={16} /> Sinónimos
-                      </button>
-                    </>
-                  )}
-
-                  <div className="w-px bg-[var(--color-border)]"></div>
-                  <button 
-                    onClick={() => editor.chain().focus().toggleHighlight({ color: '#fbbf24' }).run()}
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                      editor.isActive('highlight') 
-                        ? 'bg-yellow-500/30 text-yellow-500' 
-                        : 'text-[var(--color-text-primary)] hover:bg-yellow-500/20 hover:text-yellow-500'
-                    }`}
-                    title="Marcar nota / Resaltar"
-                  >
-                    Resaltar
-                  </button>
-                  
-                  {isAiLoading && (
-                    <>
-                      <div className="w-px bg-[var(--color-border)]"></div>
-                      <div className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)]">
-                        <Wand2 size={16} className="animate-pulse text-[#6366f1]" /> Pensando...
-                      </div>
-                    </>
-                  )}
-                </BubbleMenu>
-              )}
-              
+              <h1 className={`text-3xl font-bold mb-6 text-[var(--color-text-primary)] pb-4 border-b border-[var(--color-border)]`} style={{ fontFamily: isFocusMode ? 'inherit' : 'sans-serif' }}>
+                {activeScene?.title || 'Sin Título'}
+              </h1>
+            
               <EditorContent editor={editor} />
-              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center min-h-[50vh] text-[var(--color-text-secondary)]">
@@ -642,6 +641,7 @@ export default function ManuscriptEditor() {
           )}
         </div>
       </div>
+    </div>
 
       {!isFocusMode && (
         <SceneInspector 

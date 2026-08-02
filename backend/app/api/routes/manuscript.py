@@ -247,7 +247,30 @@ def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get
 
 @router.post("/chapters", response_model=ChapterSchema)
 def create_chapter(chapter: ChapterCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    db_chapter = Chapter(**chapter.model_dump(), user_id=current_user.id)
+    act_id = chapter.act_id
+    if not act_id:
+        if chapter.book_id:
+            act = db.query(Act).filter(Act.book_id == chapter.book_id, Act.user_id == current_user.id).first()
+            if not act:
+                act = Act(title="Acto 1", book_id=chapter.book_id, user_id=current_user.id)
+                db.add(act)
+                db.commit()
+                db.refresh(act)
+            act_id = act.id
+        else:
+            act = db.query(Act).filter(Act.user_id == current_user.id).first()
+            if act:
+                act_id = act.id
+
+    if not act_id:
+        raise HTTPException(status_code=400, detail="Acto o Libro requerido para crear capítulo")
+
+    db_chapter = Chapter(
+        title=chapter.title, 
+        order=chapter.order or 1, 
+        act_id=act_id, 
+        user_id=current_user.id
+    )
     db.add(db_chapter)
     db.commit()
     db.refresh(db_chapter)
@@ -271,6 +294,24 @@ def update_chapter(chapter_id: int, chapter_update: ChapterUpdate, db: Session =
     db.refresh(db_chapter)
     return db_chapter
 
+@router.delete("/chapters/{chapter_id}")
+def delete_chapter(chapter_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    chapter = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.user_id == current_user.id).first()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Capítulo no encontrado")
+    db.delete(chapter)
+    db.commit()
+    return {"message": "Capítulo eliminado exitosamente"}
+
+@router.delete("/scenes/{scene_id}")
+def delete_scene(scene_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    scene = db.query(Scene).filter(Scene.id == scene_id, Scene.user_id == current_user.id).first()
+    if not scene:
+        raise HTTPException(status_code=404, detail="Escena no encontrada")
+    db.delete(scene)
+    db.commit()
+    return {"message": "Escena eliminada exitosamente"}
+
 @router.put("/scenes/{scene_id}", response_model=SceneSchema)
 def update_scene(
     scene_id: int, 
@@ -289,7 +330,7 @@ def update_scene(
         if not new_chap:
             raise HTTPException(status_code=404, detail="Target Chapter not found")
             
-    update_data = scene_in.dict(exclude_unset=True)
+    update_data = scene_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(scene, field, value)
         

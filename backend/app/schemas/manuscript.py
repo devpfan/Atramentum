@@ -20,6 +20,7 @@ class SceneUpdate(BaseModel):
     beats: Optional[List[str]] = None
     pov: Optional[str] = None
     status: Optional[str] = None
+    chapter_id: Optional[int] = None
 
 class Scene(SceneBase):
     id: int
@@ -35,7 +36,8 @@ class ChapterBase(BaseModel):
     order: Optional[int] = 1
 
 class ChapterCreate(ChapterBase):
-    act_id: int
+    act_id: Optional[int] = None
+    book_id: Optional[int] = None
 
 class Chapter(ChapterBase):
     id: int

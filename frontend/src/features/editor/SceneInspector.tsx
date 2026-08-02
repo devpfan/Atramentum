@@ -64,7 +64,7 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
 
   return (
     <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0">
-      <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-start">
+      <div className="h-14 px-4 flex justify-between items-center">
         <div>
           <h3 className="font-semibold text-[var(--color-text-primary)]">Inspector de Escena</h3>
           <p className="text-xs text-[var(--color-text-secondary)] mt-1">{activeScene.title}</p>

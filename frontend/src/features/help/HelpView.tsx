@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Book, Edit3, Library, Bot, ChevronDown, ChevronRight, Zap, Target } from 'lucide-react';
+import { Book, Edit3, Library, Bot, ChevronDown, ChevronRight, Zap, Target, Sparkles } from 'lucide-react';
+import HelpBackground from './HelpBackground';
 
 interface FAQItem {
   id: string;
@@ -24,8 +25,10 @@ function HelpSection({ title, icon, items }: HelpSectionProps) {
 
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-3 mb-4 text-[#6366f1]">
-        {icon}
+      <div className="flex items-center gap-3 mb-4 text-[#818cf8]">
+        <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-sm">
+          {icon}
+        </div>
         <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{title}</h2>
       </div>
       <div className="space-y-3">
@@ -34,11 +37,11 @@ function HelpSection({ title, icon, items }: HelpSectionProps) {
           return (
             <div 
               key={item.id} 
-              className="border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)] overflow-hidden transition-all duration-200"
+              className="border border-[var(--color-border)]/80 rounded-xl bg-[var(--color-surface)]/80 backdrop-blur-md overflow-hidden transition-all duration-200 shadow-sm hover:border-[#6366f1]/40"
             >
               <button
                 onClick={() => toggleItem(item.id)}
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-[var(--color-surface-hover)] transition-colors"
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-[var(--color-surface-hover)]/70 transition-colors"
               >
                 <span className="font-medium text-[var(--color-text-primary)]">{item.question}</span>
                 <div className="text-[var(--color-text-secondary)]">
@@ -46,7 +49,7 @@ function HelpSection({ title, icon, items }: HelpSectionProps) {
                 </div>
               </button>
               {isOpen && (
-                <div className="p-4 pt-0 text-sm text-[var(--color-text-secondary)] leading-relaxed prose prose-invert max-w-none prose-p:text-[var(--color-text-secondary)]">
+                <div className="p-4 pt-0 text-sm text-[var(--color-text-secondary)] leading-relaxed prose prose-invert max-w-none prose-p:text-[var(--color-text-secondary)] border-t border-[var(--color-border)]/40 mt-1">
                   {item.answer}
                 </div>
               )}
@@ -228,16 +231,26 @@ export default function HelpView() {
   ];
 
   return (
-    <div className="h-full bg-[var(--color-background)] overflow-y-auto">
-      <div className="max-w-4xl mx-auto py-12 px-8">
+    <div className="relative h-full bg-[var(--color-background)] overflow-y-auto">
+      {/* Dynamic Animated Background with Floating Pages & Leaves */}
+      <HelpBackground />
+
+      <div className="relative z-10 max-w-4xl mx-auto py-12 px-8">
         
         <div className="mb-12 text-center">
-          <div className="w-16 h-16 bg-[#6366f1]/10 text-[#6366f1] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 mb-4 backdrop-blur-sm shadow-sm">
+            <Sparkles size={14} className="text-amber-400 animate-pulse" />
+            <span>Biblioteca de Conocimiento & Trucos</span>
+          </div>
+
+          <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500/20 via-purple-500/10 to-amber-500/20 text-[#818cf8] border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/10 backdrop-blur-md">
             <Target size={32} />
           </div>
-          <h1 className="text-4xl font-bold text-[var(--color-text-primary)] mb-4">Guía de Uso Atramentum</h1>
-          <p className="text-[var(--color-text-secondary)] text-lg max-w-2xl mx-auto">
-            Descubre todas las herramientas y trucos para sacarle el máximo partido a tu asistente de escritura.
+          <h1 className="text-4xl font-extrabold text-[var(--color-text-primary)] mb-4 tracking-tight drop-shadow-sm">
+            Guía de Uso Atramentum
+          </h1>
+          <p className="text-[var(--color-text-secondary)] text-lg max-w-2xl mx-auto leading-relaxed">
+            Descubre todas las herramientas, atajos y secretos para sacarle el máximo partido a tu asistente de escritura.
           </p>
         </div>
 
@@ -253,7 +266,7 @@ export default function HelpView() {
         </div>
         
         <div className="mt-16 text-center text-sm text-[var(--color-text-secondary)] pb-8 opacity-75">
-          <p>Atramentum v1.0 • Guía actualizada automáticamente</p>
+          <p>Atramentum v1.0 • Guía interactiva actualizada</p>
         </div>
       </div>
     </div>
