@@ -252,7 +252,7 @@ export default function ManuscriptEditor() {
     setAiPreview(prev => ({ ...prev, visible: false }));
   };
 
-  const handleGenerateScene = async (beatsText: string) => {
+  const handleGenerateScene = async (beatsText: string, style: string = 'novelist', customStylePrompt?: string) => {
     if (!editor || !activeSceneId) return;
     const token = useAppStore.getState().token;
     
@@ -272,7 +272,9 @@ export default function ManuscriptEditor() {
         },
         body: JSON.stringify({
           scene_id: activeSceneId,
-          prompt: prompt
+          prompt: prompt,
+          style: style,
+          custom_style_prompt: customStylePrompt
         })
       });
 

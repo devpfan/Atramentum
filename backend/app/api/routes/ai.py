@@ -76,7 +76,13 @@ def generate_scene(request: GenerateSceneRequest, db: Session = Depends(get_db),
         context = assemble_context(request.scene_id, current_user.id, db)
         ai_settings = get_merged_ai_settings(current_user.ai_settings, db)
         return StreamingResponse(
-            generate_scene_text(context, request.prompt, ai_settings), 
+            generate_scene_text(
+                context, 
+                request.prompt, 
+                ai_settings,
+                style=request.style or "novelist",
+                custom_style_prompt=request.custom_style_prompt
+            ), 
             media_type="text/event-stream"
         )
     except ValueError as e:

@@ -5,6 +5,8 @@ from datetime import datetime
 class GenerateSceneRequest(BaseModel):
     scene_id: int
     prompt: str
+    style: Optional[str] = "novelist"
+    custom_style_prompt: Optional[str] = None
 
 class EditInlineRequest(BaseModel):
     selected_text: str

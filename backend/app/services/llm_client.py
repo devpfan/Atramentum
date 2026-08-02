@@ -68,17 +68,79 @@ def get_litellm_args(ai_settings: dict):
     
     return args
 
-async def generate_scene_text(context: str, prompt: str, ai_settings: dict):
+SCENE_STYLE_PROMPTS = {
+    "novelist": (
+        "Eres un novelista profesional y maestro de la narrativa literaria.\n"
+        "Tu misión es redactar la escena completa en prosa inmersiva siguiendo fielmente los beats (eventos clave).\n"
+        "REGLAS:\n"
+        "- Aplica rigurosamente la regla: 'Muestra, no cuentes' (Show, don't tell).\n"
+        "- Escribe diálogos naturales con subtexto, ritmo y voces diferenciadas.\n"
+        "- Construye descripciones sensoriales vivas (atmósfera, olores, texturas) sin sobrecargar el ritmo.\n"
+        "- NO incluyas introducciones, resúmenes ni comentarios explicativos. Escribe DIRECTAMENTE el texto de la novela."
+    ),
+    "grimdark": (
+        "Eres un autor especializado en Fantasía Oscura y género Grimdark.\n"
+        "Tu misión es redactar la escena con una atmósfera cruda, visceral, decadente y psicológicamente intensa.\n"
+        "REGLAS:\n"
+        "- Destaca las texturas ásperas, el desgaste físico, el peligro latente y los dilemas morales de los personajes.\n"
+        "- Diálogos cortantes, directos y cargados de tensión.\n"
+        "- NO incluyas introducciones ni resúmenes. Escribe DIRECTAMENTE el texto de la novela."
+    ),
+    "noir": (
+        "Eres un maestro de la novela negra, thriller policíaco y suspense Noir.\n"
+        "Tu misión es redactar la escena con oraciones afiladas, ritmo pausado y atmósfera densa.\n"
+        "REGLAS:\n"
+        "- Emplea contrastes de luces y sombras, lluvia, humo, cinismo y silencios elocuentes.\n"
+        "- Diálogos inteligentes con doble sentido y tensión soterrada.\n"
+        "- NO incluyas introducciones ni resúmenes. Escribe DIRECTAMENTE el texto de la novela."
+    ),
+    "epic": (
+        "Eres un autor consagrado de Alta Fantasía y Épica Clásica.\n"
+        "Tu misión es redactar la escena con una prosa solemne, majestuosa y evocadora.\n"
+        "REGLAS:\n"
+        "- Cuida la resonancia mítica del mundo, la grandeza del entorno y la trascendencia de cada acción.\n"
+        "- Diálogos elocuentes y cargados de propósito.\n"
+        "- NO incluyas introducciones ni resúmenes. Escribe DIRECTAMENTE el texto de la novela."
+    ),
+    "action": (
+        "Eres un especialista en narrativa trepidante y escenas de acción de alto impacto.\n"
+        "Tu misión es redactar la escena con ritmo vertiginoso y tensión constante.\n"
+        "REGLAS:\n"
+        "- Utiliza oraciones breves, verbos de acción dinámicos y sensaciones inmediatas (adrenalina, impacto, velocidad).\n"
+        "- Sin pausas innecesarias; avance implacable de la acción.\n"
+        "- NO incluyas introducciones ni resúmenes. Escribe DIRECTAMENTE el texto de la novela."
+    ),
+}
+
+async def generate_scene_text(
+    context: str, 
+    prompt: str, 
+    ai_settings: dict, 
+    style: str = "novelist", 
+    custom_style_prompt: str = None
+):
     """
-    Genera el texto de una escena usando el contexto RAG inyectado como system prompt.
+    Genera el texto de una escena usando el contexto RAG inyectado junto a una directiva de estilo literario.
     """
     args = get_litellm_args(ai_settings)
     if not args.get("api_key") and not args.get("api_base"):
          yield f"Error: API Key no configurada para el proveedor {ai_settings.get('provider')}."
          return
 
+    # Determinar la directiva de estilo
+    if style == "custom" and custom_style_prompt:
+        style_directive = (
+            f"Eres un escritor de ficción profesional. Sigue estrictamente esta directriz de estilo del autor:\n"
+            f"{custom_style_prompt}\n"
+            f"- Escribe DIRECTAMENTE el texto de la escena en prosa sin introducciones ni resúmenes."
+        )
+    else:
+        style_directive = SCENE_STYLE_PROMPTS.get(style, SCENE_STYLE_PROMPTS["novelist"])
+
+    system_prompt = f"{style_directive}\n\n{context}"
+
     messages = [
-        {"role": "system", "content": context},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": prompt}
     ]
 

@@ -16,6 +16,9 @@ def assemble_context(scene_id: int, user_id: int, db: Session, context_settings:
     
     scene = db.query(Scene).filter(Scene.id == scene_id, Scene.user_id == user_id).first()
     if scene:
+        if scene.pov:
+            context_lines.append(f"\n--- PUNTO DE VISTA (POV) ---\nPerspectiva narrativa: {scene.pov}")
+            
         if scene.beats and context_settings.get("include_beats", True):
             context_lines.append("\n--- BEATS DE LA ESCENA (Lo que debe suceder) ---")
             for beat in scene.beats:
