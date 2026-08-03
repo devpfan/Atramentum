@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { ChevronDown, ChevronRight, FileText, Plus, Folder, Trash2, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Plus, Folder, Trash2, AlertCircle, Film, Palette, BookOpen } from 'lucide-react';
 
 export default function ManuscriptSidebar() {
   const { 
@@ -138,14 +138,29 @@ export default function ManuscriptSidebar() {
   return (
     <div className="w-64 border-r border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0 relative select-none">
       {/* Cabecera Sidebar */}
-      <div className="h-14 px-4 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider truncate" title={tree.title}>
-          {tree.title}
-        </h2>
+      <div className="h-14 px-4 flex items-center justify-between gap-2 border-b border-[var(--color-border)]">
+        <div className="flex items-center gap-2 min-w-0">
+          {tree.project_type === 'screenplay' ? (
+            <span className="p-1 rounded bg-amber-500/10 text-amber-400 shrink-0" title="Guion Cine/TV">
+              <Film size={14} />
+            </span>
+          ) : tree.project_type === 'manga' ? (
+            <span className="p-1 rounded bg-purple-500/10 text-purple-400 shrink-0" title="Guion Manga/Cómic">
+              <Palette size={14} />
+            </span>
+          ) : (
+            <span className="p-1 rounded bg-blue-500/10 text-blue-400 shrink-0" title="Novela">
+              <BookOpen size={14} />
+            </span>
+          )}
+          <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider truncate" title={tree.title}>
+            {tree.title}
+          </h2>
+        </div>
         <button 
           onClick={handleCreateChapter}
           className="p-1.5 hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-indigo-400 rounded-md transition-colors shrink-0"
-          title="Añadir nuevo capítulo"
+          title={tree.project_type === 'screenplay' ? "Añadir nueva secuencia" : "Añadir nuevo capítulo"}
         >
           <Plus size={16} />
         </button>
@@ -176,7 +191,7 @@ export default function ManuscriptSidebar() {
                   <button 
                     onClick={(e) => handleCreateScene(chapter.id, e)}
                     className="p-1 hover:bg-[#6366f1]/20 hover:text-[#6366f1] text-[var(--color-text-secondary)] rounded transition-colors"
-                    title="Añadir escena"
+                    title={tree.project_type === 'manga' ? "Añadir página" : tree.project_type === 'screenplay' ? "Añadir escena de guion" : "Añadir escena"}
                   >
                     <Plus size={14} />
                   </button>
@@ -186,7 +201,7 @@ export default function ManuscriptSidebar() {
                       setItemToDelete({ type: 'chapter', id: chapter.id, title: chapter.title });
                     }}
                     className="p-1 hover:bg-red-500/20 hover:text-red-400 text-[var(--color-text-secondary)] rounded transition-colors"
-                    title="Eliminar capítulo"
+                    title={tree.project_type === 'screenplay' ? "Eliminar secuencia" : "Eliminar capítulo"}
                   >
                     <Trash2 size={13} />
                   </button>

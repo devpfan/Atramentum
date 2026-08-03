@@ -17,12 +17,14 @@ class BookBase(BaseModel):
     title: str
     synopsis: Optional[str] = None
     target_word_count: Optional[int] = 50000
+    project_type: Optional[str] = "novel"
     series_id: Optional[int] = None
 
 class BookSchema(BookBase):
     id: int
     user_id: int
     created_at: datetime
+    project_type: str = "novel"
     series_id: Optional[int] = None
     
     class Config:
@@ -33,7 +35,7 @@ def get_books(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     books = db.query(Book).filter(Book.user_id == current_user.id).order_by(Book.created_at.desc()).all()
     if not books:
         # Create default book if none exists
-        book = Book(title="Proyecto Sin Título", user_id=current_user.id)
+        book = Book(title="Proyecto Sin Título", project_type="novel", user_id=current_user.id)
         db.add(book)
         db.commit()
         db.refresh(book)
@@ -62,10 +64,12 @@ def get_books(db: Session = Depends(get_db), current_user: User = Depends(get_cu
 
 @router.post("/books", response_model=BookSchema)
 def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    p_type = book_in.project_type or "novel"
     book = Book(
         title=book_in.title, 
         synopsis=book_in.synopsis, 
         target_word_count=book_in.target_word_count,
+        project_type=p_type,
         series_id=book_in.series_id,
         user_id=current_user.id
     )
@@ -73,24 +77,63 @@ def create_book(book_in: BookBase, db: Session = Depends(get_db), current_user: 
     db.commit()
     db.refresh(book)
     
-    act = Act(title="Acto 1", book_id=book.id, user_id=current_user.id)
-    db.add(act)
-    db.commit()
-    db.refresh(act)
-    
-    chapter = Chapter(title="Capítulo 1", act_id=act.id, user_id=current_user.id)
-    db.add(chapter)
-    db.commit()
-    db.refresh(chapter)
-    
-    scene = Scene(
-        title="Escena 1", 
-        chapter_id=chapter.id, 
-        user_id=current_user.id,
-        content="<p>Érase una vez...</p>"
-    )
-    db.add(scene)
-    db.commit()
+    if p_type == "screenplay":
+        act = Act(title="Secuencia 1", book_id=book.id, user_id=current_user.id)
+        db.add(act)
+        db.commit()
+        db.refresh(act)
+        
+        chapter = Chapter(title="Secuencia 1", act_id=act.id, user_id=current_user.id)
+        db.add(chapter)
+        db.commit()
+        db.refresh(chapter)
+        
+        scene = Scene(
+            title="Escena 1", 
+            chapter_id=chapter.id, 
+            user_id=current_user.id,
+            content="<p><strong>1. INT. HABITACIÓN - DÍA</strong></p><p>La luz entra por la ventana entreabierta.</p>"
+        )
+        db.add(scene)
+        db.commit()
+    elif p_type == "manga":
+        act = Act(title="Capítulo 1", book_id=book.id, user_id=current_user.id)
+        db.add(act)
+        db.commit()
+        db.refresh(act)
+        
+        chapter = Chapter(title="Capítulo 1", act_id=act.id, user_id=current_user.id)
+        db.add(chapter)
+        db.commit()
+        db.refresh(chapter)
+        
+        scene = Scene(
+            title="Página 1", 
+            chapter_id=chapter.id, 
+            user_id=current_user.id,
+            content="<p><strong>PANEL 1 (Plano General):</strong><br>Vista panorámica de la ciudad al amanecer.<br><em>[GLOBO NARRADOR]:</em> 'Todo comenzó aquella mañana...'</p>"
+        )
+        db.add(scene)
+        db.commit()
+    else:
+        act = Act(title="Acto 1", book_id=book.id, user_id=current_user.id)
+        db.add(act)
+        db.commit()
+        db.refresh(act)
+        
+        chapter = Chapter(title="Capítulo 1", act_id=act.id, user_id=current_user.id)
+        db.add(chapter)
+        db.commit()
+        db.refresh(chapter)
+        
+        scene = Scene(
+            title="Escena 1", 
+            chapter_id=chapter.id, 
+            user_id=current_user.id,
+            content="<p>Érase una vez...</p>"
+        )
+        db.add(scene)
+        db.commit()
     
     return book
 
@@ -146,6 +189,7 @@ async def import_book(file: UploadFile = File(...), db: Session = Depends(get_db
     return ManuscriptTree(
         book_id=book.id,
         title=book.title,
+        project_type=book.project_type or "novel",
         chapters=chapters
     )
 
@@ -153,6 +197,7 @@ class BookUpdate(BaseModel):
     title: Optional[str] = None
     synopsis: Optional[str] = None
     target_word_count: Optional[int] = None
+    project_type: Optional[str] = None
     series_id: Optional[int] = None
 
 @router.put("/books/{book_id}", response_model=BookSchema)
@@ -175,6 +220,9 @@ def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get
         
     if book_update.target_word_count is not None:
         book.target_word_count = book_update.target_word_count
+
+    if book_update.project_type is not None:
+        book.project_type = book_update.project_type
         
     if book_update.series_id is not None:
         book.series_id = book_update.series_id
@@ -208,7 +256,7 @@ def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get
     
     if not book:
         # Inicialización por defecto
-        book = Book(title="Proyecto Sin Título", user_id=current_user.id)
+        book = Book(title="Proyecto Sin Título", project_type="novel", user_id=current_user.id)
         db.add(book)
         db.commit()
         db.refresh(book)
@@ -242,6 +290,7 @@ def get_manuscript_tree(book_id: Optional[int] = None, db: Session = Depends(get
     return ManuscriptTree(
         book_id=book.id,
         title=book.title,
+        project_type=book.project_type or "novel",
         chapters=chapters
     )
 
@@ -527,4 +576,36 @@ def export_book(book_id: int, format: str = "md", db: Session = Depends(get_db),
 
     else:
         raise HTTPException(status_code=400, detail="Formato no soportado")
+
+@router.post("/scenes/{scene_id}/upload-image")
+async def upload_scene_image(
+    scene_id: int, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    import os
+    import uuid
+    import shutil
+
+    scene = db.query(Scene).filter(Scene.id == scene_id, Scene.user_id == current_user.id).first()
+    if not scene:
+        raise HTTPException(status_code=404, detail="Escena o página no encontrada")
+        
+    ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".png"
+    if ext not in [".png", ".jpg", ".jpeg", ".webp"]:
+        raise HTTPException(status_code=400, detail="Formato de imagen no soportado. Usa PNG, JPG o WebP.")
+        
+    unique_filename = f"manga_{scene.id}_{uuid.uuid4().hex[:8]}{ext}"
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    upload_dir = os.path.join(base_dir, "uploads", "manga")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    image_url = f"/uploads/manga/{unique_filename}"
+    return {"image_url": image_url}
 

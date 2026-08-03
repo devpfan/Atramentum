@@ -13,6 +13,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import EditorToolbar from './EditorToolbar';
+import { MangaCanvasEditor } from '../manga/MangaCanvasEditor';
 
 export default function ManuscriptEditor() {
   const { entries, fetchEntries } = useCodexStore();
@@ -385,6 +386,33 @@ export default function ManuscriptEditor() {
   const wordCount = selectedTextForMenu.split(/\s+/).filter(w => w.length > 0).length;
   const isSingleWord = wordCount === 1;
   const hasSelection = editor ? !editor.state.selection.empty : false;
+
+  // Manga Project Type - Visual Canvas & Lettering View
+  if (tree?.project_type === 'manga') {
+    return (
+      <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">
+        {!isFocusMode && <ManuscriptSidebar />}
+        <MangaCanvasEditor />
+        {!isFocusMode && (
+          <SceneInspector 
+            onGenerate={handleGenerateScene} 
+            isGenerating={isGeneratingScene} 
+            isOpen={isInspectorOpen}
+            onToggle={() => setIsInspectorOpen(!isInspectorOpen)}
+          />
+        )}
+        {!isFocusMode && !isInspectorOpen && activeSceneId && (
+          <button
+            onClick={() => setIsInspectorOpen(true)}
+            className="fixed right-4 top-24 z-20 p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-l-lg shadow-lg text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+            title="Abrir Inspector de Escena"
+          >
+            <PanelRightOpen size={24} />
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">

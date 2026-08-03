@@ -1,4 +1,5 @@
 import re
+import json
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from app.models.manuscript import Scene, SceneChunk
@@ -7,26 +8,46 @@ from app.services.llm_client import get_embedding, get_merged_ai_settings
 
 def chunk_html_text(html_content: str, max_words_per_chunk: int = 200) -> list[str]:
     """
-    Extrae texto limpio de HTML y lo divide en chunks aproximadamente del tamaño max_words_per_chunk.
+    Extrae texto limpio de HTML o JSON (Manga/Cómic) y lo divide en chunks aproximadamente del tamaño max_words_per_chunk.
     Intenta no cortar párrafos por la mitad si es posible.
     """
-    if not html_content:
+    if not html_content or not html_content.strip():
         return []
-        
-    soup = BeautifulSoup(html_content, "html.parser")
-    # Agrupamos el texto por bloques de párrafos
-    paragraphs = []
-    for p in soup.find_all(['p', 'h1', 'h2', 'h3']):
-        text = p.get_text(strip=True)
-        if text:
-            paragraphs.append(text)
-            
-    # Si no hay párrafos (texto sin etiquetas), partimos en líneas
-    if not paragraphs:
-        text = soup.get_text(strip=True)
-        if not text:
-            return []
-        paragraphs = [t.strip() for t in text.split('\n') if t.strip()]
+
+    # Si es una página de manga/canvas en JSON, extraemos únicamente los textos de los globos de diálogo
+    trimmed = html_content.strip()
+    if trimmed.startswith("{"):
+        try:
+            data = json.loads(trimmed)
+            if data.get("type") == "manga_canvas":
+                bubbles = data.get("bubbles", [])
+                bubble_texts = [
+                    b.get("text", "").strip() 
+                    for b in bubbles 
+                    if isinstance(b, dict) and b.get("text", "").strip()
+                ]
+                if not bubble_texts:
+                    return []
+                paragraphs = bubble_texts
+            else:
+                return []
+        except Exception:
+            paragraphs = []
+    else:
+        soup = BeautifulSoup(html_content, "html.parser")
+        # Agrupamos el texto por bloques de párrafos
+        paragraphs = []
+        for p in soup.find_all(['p', 'h1', 'h2', 'h3']):
+            text = p.get_text(strip=True)
+            if text:
+                paragraphs.append(text)
+                
+        # Si no hay párrafos (texto sin etiquetas), partimos en líneas
+        if not paragraphs:
+            text = soup.get_text(strip=True)
+            if not text:
+                return []
+            paragraphs = [t.strip() for t in text.split('\n') if t.strip()]
 
     chunks = []
     current_chunk = []

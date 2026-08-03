@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File as FileIcon, BookOpen, Folder, Plus, Upload } from 'lucide-react';
+import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File as FileIcon, BookOpen, Folder, Plus, Upload, Film, Palette } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { manuscriptApi } from '../../api/manuscript';
+import { manuscriptApi, type ProjectType } from '../../api/manuscript';
 import { Tooltip } from '../../components/Tooltip';
 
 interface ProjectManagementModalProps {
@@ -10,7 +10,7 @@ interface ProjectManagementModalProps {
 }
 
 export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ onClose }) => {
-  const { books, deleteBook, series, fetchSeries, createSeries, deleteSeries, updateBook } = useManuscriptStore();
+  const { books, deleteBook, series, fetchSeries, createSeries, deleteSeries, updateBook, createBook } = useManuscriptStore();
   const token = useAppStore(state => state.token);
   
   const [bookToDelete, setBookToDelete] = useState<{id: number, title: string} | null>(null);
@@ -18,6 +18,12 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
   
   const [isCreatingSeries, setIsCreatingSeries] = useState(false);
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
+
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectTitle, setNewProjectTitle] = useState('');
+  const [newProjectSynopsis, setNewProjectSynopsis] = useState('');
+  const [newProjectType, setNewProjectType] = useState<ProjectType>('novel');
+  const [newProjectSeriesId, setNewProjectSeriesId] = useState<number | undefined>(undefined);
   
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -34,10 +40,18 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
     }
   };
 
+  const handleCreateProject = async () => {
+    if (newProjectTitle.trim()) {
+      await createBook(newProjectTitle.trim(), newProjectSynopsis.trim() || undefined, newProjectType, newProjectSeriesId);
+      setNewProjectTitle('');
+      setNewProjectSynopsis('');
+      setNewProjectType('novel');
+      setNewProjectSeriesId(undefined);
+      setIsCreatingProject(false);
+    }
+  };
+
   const handleExport = (bookId: number, format: string) => {
-    // We can use a direct window.open or fetch to trigger download
-    // Direct window.open requires token in query string or cookie. 
-    // Since we use Bearer token, we need to fetch and trigger download.
     const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
     fetch(`${baseUrl}/manuscript/books/${bookId}/export?format=${format}`, {
       headers: {
@@ -53,7 +67,6 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      // Extract filename from response headers if possible, otherwise use fallback
       let ext = format;
       if (format === 'word') ext = 'docx';
       a.download = `manuscript.${ext}`;
@@ -80,7 +93,7 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
       alert("Hubo un error al importar el documento. Asegúrate de que es un formato soportado.");
     } finally {
       setIsImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = ''; // reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -102,9 +115,12 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
             <div className="p-2 bg-indigo-500/20 text-indigo-500 rounded-lg">
               <Folder className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
-              Gestión Avanzada de Proyectos
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
+                Atramentum Studio
+              </h2>
+              <p className="text-xs text-[var(--color-text-secondary)]">Gestión de Proyectos, Guiones y Series</p>
+            </div>
           </div>
           <button 
             onClick={onClose}
@@ -117,9 +133,9 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
         {/* Body */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
           
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">Tus Series y Libros</h3>
-            <div className="flex gap-2">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">Tus Proyectos y Universos</h3>
+            <div className="flex flex-wrap gap-2">
               <input 
                 type="file" 
                 ref={fileInputRef}
@@ -133,17 +149,143 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
                 className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-surface-hover)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-background)] rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
               >
                 {isImporting ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div> : <Upload size={16} />}
-                Importar Libro
+                Importar
               </button>
               <button 
-                onClick={() => setIsCreatingSeries(true)}
+                onClick={() => { setIsCreatingSeries(true); setIsCreatingProject(false); }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors text-sm font-medium"
               >
                 <Plus size={16} />
                 Nueva Serie
               </button>
+              <button 
+                onClick={() => { setIsCreatingProject(true); setIsCreatingSeries(false); }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium shadow-md shadow-indigo-600/20"
+              >
+                <Plus size={16} />
+                Nuevo Proyecto
+              </button>
             </div>
           </div>
+
+          {/* Formulario de Creación de Proyecto */}
+          {isCreatingProject && (
+            <div className="mb-6 p-5 border border-indigo-500/30 bg-indigo-500/5 rounded-xl space-y-4">
+              <div className="flex justify-between items-center border-b border-indigo-500/20 pb-2">
+                <h4 className="text-sm font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                  <Plus size={16} /> Crear Nuevo Proyecto Creativo
+                </h4>
+                <button onClick={() => setIsCreatingProject(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-xs">Cerrar</button>
+              </div>
+
+              {/* Selector de Tipo de Proyecto */}
+              <div>
+                <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-2">
+                  Selecciona el formato de tu proyecto:
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div 
+                    onClick={() => setNewProjectType('novel')}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      newProjectType === 'novel' 
+                        ? 'border-blue-500 bg-blue-500/10 shadow-sm shadow-blue-500/20' 
+                        : 'border-[var(--color-border)] bg-[var(--color-background)] hover:border-[var(--color-text-secondary)]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <BookOpen className={`w-4 h-4 ${newProjectType === 'novel' ? 'text-blue-400' : 'text-[var(--color-text-secondary)]'}`} />
+                      <span className={`text-sm font-bold ${newProjectType === 'novel' ? 'text-blue-400' : 'text-[var(--color-text-primary)]'}`}>Novela / Prosa</span>
+                    </div>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Manuscrito en prosa, capítulos, escenas y beats literarios.</p>
+                  </div>
+
+                  <div 
+                    onClick={() => setNewProjectType('screenplay')}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      newProjectType === 'screenplay' 
+                        ? 'border-amber-500 bg-amber-500/10 shadow-sm shadow-amber-500/20' 
+                        : 'border-[var(--color-border)] bg-[var(--color-background)] hover:border-[var(--color-text-secondary)]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Film className={`w-4 h-4 ${newProjectType === 'screenplay' ? 'text-amber-400' : 'text-[var(--color-text-secondary)]'}`} />
+                      <span className={`text-sm font-bold ${newProjectType === 'screenplay' ? 'text-amber-400' : 'text-[var(--color-text-primary)]'}`}>Guion Cine / TV</span>
+                    </div>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Formato de guion profesional (INT./EXT., Diálogos y Secuencias).</p>
+                  </div>
+
+                  <div 
+                    onClick={() => setNewProjectType('manga')}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      newProjectType === 'manga' 
+                        ? 'border-purple-500 bg-purple-500/10 shadow-sm shadow-purple-500/20' 
+                        : 'border-[var(--color-border)] bg-[var(--color-background)] hover:border-[var(--color-text-secondary)]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Palette className={`w-4 h-4 ${newProjectType === 'manga' ? 'text-purple-400' : 'text-[var(--color-text-secondary)]'}`} />
+                      <span className={`text-sm font-bold ${newProjectType === 'manga' ? 'text-purple-400' : 'text-[var(--color-text-primary)]'}`}>Manga / Cómic</span>
+                    </div>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Guion de viñetas, globos de diálogo y visor de dibujos del artista.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Título del Proyecto *</label>
+                  <input 
+                    type="text" 
+                    autoFocus
+                    value={newProjectTitle}
+                    onChange={(e) => setNewProjectTitle(e.target.value)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500"
+                    placeholder="Ej: El Despertar del Titán"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Universo / Serie (Opcional)</label>
+                  <select
+                    value={newProjectSeriesId || ''}
+                    onChange={(e) => setNewProjectSeriesId(e.target.value ? Number(e.target.value) : undefined)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">-- Proyecto Independiente --</option>
+                    {series.map(s => (
+                      <option key={s.id} value={s.id}>{s.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Sinopsis o Premisa (Opcional)</label>
+                <textarea 
+                  value={newProjectSynopsis}
+                  onChange={(e) => setNewProjectSynopsis(e.target.value)}
+                  rows={2}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500 resize-none"
+                  placeholder="Breve resumen de la trama o argumento..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button 
+                  onClick={() => setIsCreatingProject(false)} 
+                  className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-lg text-sm hover:bg-[var(--color-background)] transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleCreateProject} 
+                  disabled={!newProjectTitle.trim()}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Crear Proyecto
+                </button>
+              </div>
+            </div>
+          )}
           
           {isCreatingSeries && (
             <div className="mb-6 p-4 border border-indigo-500/30 bg-indigo-500/5 rounded-lg flex items-end gap-3">
@@ -174,7 +316,7 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
                     <div className="flex items-center gap-2">
                       <Folder className="w-5 h-5 text-indigo-400" />
                       <h4 className="font-bold text-[var(--color-text-primary)]">{s.title}</h4>
-                      <span className="text-xs px-2 py-0.5 bg-black/20 rounded-full text-[var(--color-text-secondary)]">{seriesBooks.length} libros</span>
+                      <span className="text-xs px-2 py-0.5 bg-black/20 rounded-full text-[var(--color-text-secondary)]">{seriesBooks.length} proyectos</span>
                     </div>
                     <button 
                       onClick={() => {
@@ -193,7 +335,7 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
                       <BookTableBody books={seriesBooks} onExport={handleExport} onDelete={(b) => setBookToDelete({id: b.id, title: b.title})} seriesList={series} onAssignSeries={updateBook} />
                     </table>
                   ) : (
-                    <div className="p-4 text-center text-sm text-[var(--color-text-secondary)]">No hay libros en esta serie. Puedes asignar libros desde la lista de abajo.</div>
+                    <div className="p-4 text-center text-sm text-[var(--color-text-secondary)]">No hay proyectos en esta serie. Puedes asignar proyectos desde la lista de abajo.</div>
                   )}
                 </div>
               );
@@ -204,7 +346,7 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
               <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
                 <div className="bg-[var(--color-surface-hover)] p-4 flex items-center gap-2 border-b border-[var(--color-border)]">
                   <BookOpen className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                  <h4 className="font-bold text-[var(--color-text-primary)]">Libros Independientes</h4>
+                  <h4 className="font-bold text-[var(--color-text-primary)]">Proyectos Independientes</h4>
                 </div>
                 <table className="w-full text-left border-collapse">
                   <BookTableBody books={books.filter(b => !b.series_id)} onExport={handleExport} onDelete={(b) => setBookToDelete({id: b.id, title: b.title})} seriesList={series} onAssignSeries={updateBook} />
@@ -212,9 +354,15 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
               </div>
             )}
             
-            {books.length === 0 && series.length === 0 && (
-              <div className="text-center py-10 text-[var(--color-text-secondary)]">
-                No tienes ningún proyecto o serie aún.
+            {books.length === 0 && series.length === 0 && !isCreatingProject && (
+              <div className="text-center py-10 text-[var(--color-text-secondary)] space-y-3">
+                <p>No tienes ningún proyecto o serie aún.</p>
+                <button 
+                  onClick={() => setIsCreatingProject(true)}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Crear mi primer proyecto
+                </button>
               </div>
             )}
           </div>
@@ -285,11 +433,34 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
     });
   };
 
+  const renderFormatBadge = (type: string) => {
+    if (type === 'screenplay') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <Film className="w-3 h-3" /> Guion
+        </span>
+      );
+    }
+    if (type === 'manga') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <Palette className="w-3 h-3" /> Manga
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+        <BookOpen className="w-3 h-3" /> Novela
+      </span>
+    );
+  };
+
   return (
     <>
       <thead>
         <tr className="border-b border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm">
           <th className="pb-3 pl-4 font-medium w-1/3">Nombre del Proyecto</th>
+          <th className="pb-3 font-medium text-center">Formato</th>
           <th className="pb-3 font-medium text-center">Creación</th>
           <th className="pb-3 font-medium text-center">Exportar</th>
           <th className="pb-3 pr-4 font-medium text-right">Acciones</th>
@@ -322,6 +493,9 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
                   <option key={s.id} value={s.id}>{s.title}</option>
                 ))}
               </select>
+            </td>
+            <td className="py-4 text-center">
+              {renderFormatBadge(book.project_type || 'novel')}
             </td>
             <td className="py-4 text-center text-sm text-[var(--color-text-secondary)]">
               <div className="flex items-center justify-center gap-1">

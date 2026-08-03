@@ -297,6 +297,9 @@ async def get_embedding(text: str, ai_settings: dict) -> list[float]:
     Genera un vector matemático (embedding) a partir de un texto.
     Por defecto usa models/text-embedding-004 de Gemini, que produce 768 dimensiones.
     """
+    if not text or not text.strip():
+        return []
+
     provider = ai_settings.get("provider", "gemini")
     
     # Configuramos los parámetros según el proveedor
@@ -308,9 +311,17 @@ async def get_embedding(text: str, ai_settings: dict) -> list[float]:
         args["model"] = "text-embedding-3-small"
         args["api_key"] = ai_settings.get("openai_key")
     elif provider == "local":
-        args["model"] = "openai/nomic-embed-text" # Ejemplo de modelo de embeddings local (requiere 768 dim si usamos pgvector 768)
-        args["api_base"] = ai_settings.get("local_url", "http://localhost:11434/v1")
-        args["api_key"] = "dummy"
+        local_url = ai_settings.get("local_url") or "http://localhost:11434"
+        clean_url = local_url.strip().rstrip("/")
+        if "11434" in clean_url or not clean_url.endswith("/v1"):
+            if clean_url.endswith("/v1"):
+                clean_url = clean_url[:-3]
+            args["model"] = "ollama/nomic-embed-text"
+            args["api_base"] = clean_url
+        else:
+            args["model"] = "openai/nomic-embed-text"
+            args["api_base"] = clean_url
+            args["api_key"] = "dummy"
     else:
         args["model"] = "gemini/text-embedding-004"
         args["api_key"] = settings.GEMINI_API_KEY
@@ -323,6 +334,5 @@ async def get_embedding(text: str, ai_settings: dict) -> list[float]:
         # Retorna la lista de floats (el vector)
         return response.data[0]["embedding"]
     except Exception as e:
-        print(f"Error generando embedding: {str(e)}")
-        # Devuelve vector nulo si falla
+        # En caso de que no haya modelo de embeddings o falle la conexión, retornamos vacío sin romper el editor
         return []

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { manuscriptApi } from '../api/manuscript'
 import { seriesApi } from '../api/series'
-import type { ManuscriptTree, Scene, Book, Chapter } from '../api/manuscript'
+import type { ManuscriptTree, Scene, Book, Chapter, ProjectType } from '../api/manuscript'
 import type { Series } from '../api/series'
 
 interface ManuscriptState {
@@ -20,7 +20,7 @@ interface ManuscriptState {
   fetchBooks: () => Promise<void>;
   setActiveBookId: (id: number | null) => void;
   fetchTree: () => Promise<void>;
-  createBook: (title: string, synopsis?: string, series_id?: number) => Promise<void>;
+  createBook: (title: string, synopsis?: string, project_type?: ProjectType, series_id?: number) => Promise<void>;
   updateBook: (id: number, data: Partial<Book>) => Promise<void>;
   deleteBook: (id: number) => Promise<void>;
   setActiveSceneId: (id: number | null) => void;
@@ -89,13 +89,9 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
     if (id) get().fetchTree();
   },
 
-  createBook: async (title: string, synopsis?: string, series_id?: number) => {
+  createBook: async (title: string, synopsis?: string, project_type: ProjectType = 'novel', series_id?: number) => {
     try {
-      const newBook = await manuscriptApi.createBook(title, synopsis);
-      if (series_id) {
-        await manuscriptApi.updateBook(newBook.id, { series_id });
-        newBook.series_id = series_id;
-      }
+      const newBook = await manuscriptApi.createBook(title, synopsis, project_type, series_id);
       set({ books: [newBook, ...get().books], activeBookId: newBook.id, tree: null, activeSceneId: null });
       get().fetchTree();
     } catch (err: any) {
@@ -131,7 +127,9 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
     try {
       const actId = tree.chapters.length > 0 ? tree.chapters[0].act_id : undefined;
       const chapterNumber = tree.chapters.length + 1;
-      const chapterTitle = title || `Capítulo ${chapterNumber}`;
+      const isScreenplay = tree.project_type === 'screenplay';
+      const defaultPrefix = isScreenplay ? 'Secuencia' : 'Capítulo';
+      const chapterTitle = title || `${defaultPrefix} ${chapterNumber}`;
       
       const newChap = await manuscriptApi.createChapter({
         actId,
@@ -170,7 +168,9 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
       const { tree } = get();
       const chapter = tree?.chapters.find(c => c.id === chapterId);
       const sceneNumber = (chapter?.scenes.length || 0) + 1;
-      const sceneTitle = title || `Escena ${sceneNumber}`;
+      const isManga = tree?.project_type === 'manga';
+      const defaultPrefix = isManga ? 'Página' : 'Escena';
+      const sceneTitle = title || `${defaultPrefix} ${sceneNumber}`;
       const newScene = await manuscriptApi.createScene(chapterId, sceneTitle);
       await get().fetchTree();
       set({ activeSceneId: newScene.id });

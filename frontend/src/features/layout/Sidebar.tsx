@@ -15,7 +15,7 @@ export default function Sidebar() {
   const [isProjectManagementOpen, setIsProjectManagementOpen] = useState(false);
   const setToken = useAppStore(state => state.setToken);
   const user = useAppStore(state => state.user);
-  const { books, activeBookId, fetchBooks, setActiveBookId, createBook } = useManuscriptStore();
+  const { books, activeBookId, fetchBooks, setActiveBookId } = useManuscriptStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,13 +25,6 @@ export default function Sidebar() {
   const handleLogout = () => {
     setToken(null);
     navigate('/login');
-  };
-
-  const handleCreateBook = async () => {
-    const title = prompt("Nombre del nuevo proyecto:");
-    if (title) {
-      await createBook(title);
-    }
   };
 
   return (
@@ -57,9 +50,14 @@ export default function Sidebar() {
               onChange={(e) => setActiveBookId(Number(e.target.value))}
               className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-1.5 px-2 text-sm focus:outline-none focus:border-[#6366f1]"
             >
-              {books.map(b => (
-                <option key={b.id} value={b.id}>{b.title}</option>
-              ))}
+              {books.map(b => {
+                const icon = b.project_type === 'screenplay' ? '🎬' : b.project_type === 'manga' ? '🎨' : '📖';
+                return (
+                  <option key={b.id} value={b.id}>
+                    {icon} {b.title}
+                  </option>
+                );
+              })}
             </select>
             <Tooltip content="Renombrar Proyecto" position="right">
               <button
@@ -78,7 +76,7 @@ export default function Sidebar() {
             </Tooltip>
           </div>
           <button 
-            onClick={handleCreateBook}
+            onClick={() => setIsProjectManagementOpen(true)}
             className="w-full mt-2 flex items-center justify-center gap-2 py-1.5 px-2 text-xs font-medium text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 rounded-md transition-colors"
           >
             <Plus size={14} /> Nuevo Proyecto

@@ -1,5 +1,7 @@
 import { apiClient } from './client'
 
+export type ProjectType = 'novel' | 'screenplay' | 'manga';
+
 export interface Scene {
   id: number;
   chapter_id: number;
@@ -25,6 +27,7 @@ export interface Book {
   synopsis?: string;
   previous_titles?: string[];
   target_word_count: number;
+  project_type: ProjectType;
   user_id: number;
   created_at: string;
   series_id?: number;
@@ -33,6 +36,7 @@ export interface Book {
 export interface ManuscriptTree {
   book_id: number;
   title: string;
+  project_type: ProjectType;
   chapters: Chapter[];
 }
 
@@ -42,8 +46,8 @@ export const manuscriptApi = {
     return response.data
   },
 
-  createBook: async (title: string, synopsis?: string): Promise<Book> => {
-    const response = await apiClient.post<Book>('/manuscript/books', { title, synopsis })
+  createBook: async (title: string, synopsis?: string, project_type: ProjectType = 'novel', series_id?: number): Promise<Book> => {
+    const response = await apiClient.post<Book>('/manuscript/books', { title, synopsis, project_type, series_id })
     return response.data
   },
 
@@ -116,5 +120,16 @@ export const manuscriptApi = {
 
   deleteScene: async (id: number): Promise<void> => {
     await apiClient.delete(`/manuscript/scenes/${id}`)
+  },
+
+  uploadSceneImage: async (sceneId: number, file: File): Promise<{ image_url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<{ image_url: string }>(`/manuscript/scenes/${sceneId}/upload-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 }

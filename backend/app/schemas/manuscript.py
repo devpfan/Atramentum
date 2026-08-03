@@ -50,4 +50,5 @@ class Chapter(ChapterBase):
 class ManuscriptTree(BaseModel):
     book_id: int
     title: str
+    project_type: Optional[str] = "novel"
     chapters: List[Chapter] = []
