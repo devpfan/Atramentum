@@ -1,7 +1,11 @@
 import axios from 'axios'
 import { useAppStore } from '../store/useAppStore'
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000/api/v1`;
+export const API_ROOT_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/api\/v1\/?$/, '') 
+  : `${window.location.protocol}//${window.location.hostname}${window.location.protocol === 'https:' ? '' : ':8000'}`;
+
+export const API_BASE_URL = import.meta.env.VITE_API_URL || `${API_ROOT_URL}/api/v1`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

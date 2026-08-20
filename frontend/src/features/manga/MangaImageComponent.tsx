@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Trash2, Move, ArrowUp, ArrowDown } from 'lucide-react';
+import { API_ROOT_URL } from '../../api/client';
 import type { MangaImageItem } from './types';
 
 interface MangaImageComponentProps {
@@ -106,7 +107,7 @@ export const MangaImageComponent: React.FC<MangaImageComponentProps> = ({
     };
   }, [isDragging, isResizing, image.x, image.y, onUpdate, canvasRef]);
 
-  const imageUrl = image.url.startsWith('http') ? image.url : `http://localhost:8000${image.url}`;
+  const imageUrl = image.url.startsWith('http') ? image.url : `${API_ROOT_URL}${image.url}`;
 
   return (
     <div

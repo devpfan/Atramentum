@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
+import { API_ROOT_URL } from '../../api/client';
 import type { Scene } from '../../api/manuscript';
 import type { MangaPageCanvasData } from './types';
 
@@ -53,7 +54,7 @@ export const MangaPageFilmstrip: React.FC<MangaPageFilmstripProps> = ({
               <div className="w-full flex-1 flex items-center justify-center bg-zinc-900/50 overflow-hidden relative">
                 {imageUrl ? (
                   <img 
-                    src={imageUrl.startsWith('http') ? imageUrl : `http://localhost:8000${imageUrl}`} 
+                    src={imageUrl.startsWith('http') ? imageUrl : `${API_ROOT_URL}${imageUrl}`} 
                     alt={`Pág ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
