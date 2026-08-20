@@ -232,10 +232,16 @@ async def test_ai_connection(req: Optional[AiTestRequest] = None, db: Session = 
         }
     except Exception as e:
         latency_ms = int((time.time() - start_time) * 1000)
+        err_raw = str(e)
+        if "prepayment credits are depleted" in err_raw or "RESOURCE_EXHAUSTED" in err_raw or "429" in err_raw:
+            err_msg = "⚠️ Cuota o créditos agotados en tu API Key de Gemini (Error 429: RESOURCE_EXHAUSTED). Visita https://ai.studio/projects para revisar tu facturación o ingresa una nueva API Key de Gemini."
+        else:
+            err_msg = err_raw
         return {
             "ok": False,
             "provider": provider,
             "model": args.get("model"),
             "latency_ms": latency_ms,
-            "error": str(e)
+            "error": err_msg
         }
+

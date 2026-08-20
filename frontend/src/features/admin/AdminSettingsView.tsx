@@ -5,6 +5,7 @@ import { Save, Server, ShieldCheck, RefreshCw, Check, Zap, CheckCircle2, XCircle
 
 export default function AdminSettingsView() {
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [localModels, setLocalModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
@@ -17,6 +18,7 @@ export default function AdminSettingsView() {
   const [testResult, setTestResult] = useState<AITestResponse | null>(null);
 
   const loadData = () => {
+    setIsLoadingSettings(true);
     adminService.getSettings().then(data => {
       const map: Record<string, string> = {};
       data.forEach(s => map[s.key] = s.value);
@@ -24,7 +26,7 @@ export default function AdminSettingsView() {
       if (map['global_ai_provider'] === 'local' || map['global_local_url']) {
         fetchLocalModels(map['global_local_url'], map['global_local_model']);
       }
-    });
+    }).finally(() => setIsLoadingSettings(false));
 
     adminService.getAiStatus().then(status => {
       setAiStatus(status);
@@ -32,6 +34,7 @@ export default function AdminSettingsView() {
       console.error("Error loading AI status", err);
     });
   };
+
 
   useEffect(() => {
     loadData();
@@ -143,9 +146,10 @@ export default function AdminSettingsView() {
             <label className="flex items-center gap-3">
               <input 
                 type="checkbox" 
-                checked={settings['allow_public_registration'] !== 'false'} 
+                disabled={isLoadingSettings}
+                checked={settings['allow_public_registration'] !== undefined ? settings['allow_public_registration'] === 'true' : true} 
                 onChange={(e) => handleChange('allow_public_registration', e.target.checked ? 'true' : 'false')}
-                className="w-5 h-5 rounded border-[var(--color-border)] text-[#6366f1] focus:ring-[#6366f1] bg-[var(--color-background)]"
+                className="w-5 h-5 rounded border-[var(--color-border)] text-[#6366f1] focus:ring-[#6366f1] bg-[var(--color-background)] disabled:opacity-50"
               />
               <div>
                 <div className="font-medium">Permitir Registro Público</div>
