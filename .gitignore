@@ -43,3 +43,7 @@ venv.bak/
 
 # User specific temp docs
 doc_temp/
+
+# Firebase & Frontend Build
+.firebase/
+frontend/dist/
