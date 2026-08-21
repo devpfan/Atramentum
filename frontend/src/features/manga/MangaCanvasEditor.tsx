@@ -420,7 +420,7 @@ export const MangaCanvasEditor: React.FC = () => {
       />
 
       {/* TOP STUDIO BAR: FILA 1 (Información, Pestañas de Modo y Zoom) */}
-      <div className="h-12 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 flex items-center justify-between gap-4 shrink-0 z-30">
+      <div className="h-12 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-2 md:px-4 flex items-center justify-between gap-2 md:gap-4 shrink-0 z-30 overflow-x-auto no-scrollbar">
         {/* Left: Page Title, Undo/Redo & Save Status */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex flex-col">
@@ -549,7 +549,7 @@ export const MangaCanvasEditor: React.FC = () => {
       </div>
 
       {/* TOP STUDIO BAR: FILA 2 (Sub-barra contextual según la pestaña activa) */}
-      <div className="h-11 bg-zinc-900/95 border-b border-zinc-800 px-4 flex items-center justify-between gap-4 shrink-0 z-20">
+      <div className="h-11 bg-zinc-900/95 border-b border-zinc-800 px-2 md:px-4 flex items-center justify-between gap-2 md:gap-4 shrink-0 z-20 overflow-x-auto no-scrollbar">
         {/* TAB 1: Viñetas & Dibujo */}
         {activeTab === 'panels' && (
           <div className="w-full flex items-center justify-between gap-4">
@@ -566,7 +566,7 @@ export const MangaCanvasEditor: React.FC = () => {
 
               <div className="h-4 w-px bg-zinc-750 mx-1" />
 
-              <span className="text-[11px] text-zinc-400 font-medium">Plantilla de Viñetas:</span>
+              <span className="shrink-0 text-[11px] text-zinc-400 font-medium">Plantilla de Viñetas:</span>
 
               {/* Panel Layouts Buttons (Horizontal row - always visible!) */}
               <div className="flex items-center gap-1 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800">
@@ -574,7 +574,7 @@ export const MangaCanvasEditor: React.FC = () => {
                   <button
                     key={opt.id}
                     onClick={() => handleSelectLayout(opt.id)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    className={`flex items-center shrink-0 gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                       currentLayout === opt.id
                         ? 'bg-indigo-600/30 text-white border border-indigo-500/50 shadow-xs'
                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
@@ -587,7 +587,7 @@ export const MangaCanvasEditor: React.FC = () => {
               </div>
             </div>
 
-            <span className="text-[11px] text-zinc-500">
+            <span className="shrink-0 text-[11px] text-zinc-500">
               {images.length} {images.length === 1 ? 'dibujo en página' : 'dibujos en página'}
             </span>
           </div>
@@ -597,11 +597,11 @@ export const MangaCanvasEditor: React.FC = () => {
         {activeTab === 'lettering' && (
           <div className="w-full flex items-center justify-between gap-4">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-zinc-400 font-medium mr-1">Insertar Globos:</span>
+              <span className="shrink-0 text-[11px] text-zinc-400 font-medium mr-1">Insertar Globos:</span>
 
               <button
                 onClick={() => handleAddBubble('speech')}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
+                className="flex items-center shrink-0 gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
                 title="Añadir bocadillo de diálogo estándar"
               >
                 <MessageSquare size={13} className="text-indigo-400" />
@@ -610,7 +610,7 @@ export const MangaCanvasEditor: React.FC = () => {
 
               <button
                 onClick={() => handleAddBubble('thought')}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
+                className="flex items-center shrink-0 gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
                 title="Añadir bocadillo de pensamiento"
               >
                 <Cloud size={13} className="text-sky-400" />
@@ -619,7 +619,7 @@ export const MangaCanvasEditor: React.FC = () => {
 
               <button
                 onClick={() => handleAddBubble('scream')}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
+                className="flex items-center shrink-0 gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
                 title="Añadir bocadillo de grito o impacto"
               >
                 <Zap size={13} className="text-amber-400" />
@@ -628,7 +628,7 @@ export const MangaCanvasEditor: React.FC = () => {
 
               <button
                 onClick={() => handleAddBubble('narrative')}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
+                className="flex items-center shrink-0 gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
                 title="Añadir cartela de narrador"
               >
                 <BookOpen size={13} className="text-emerald-400" />
@@ -637,7 +637,7 @@ export const MangaCanvasEditor: React.FC = () => {
 
               <button
                 onClick={() => handleAddBubble('sfx')}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
+                className="flex items-center shrink-0 gap-1.5 px-3 py-1 text-xs font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 rounded-md transition-colors"
                 title="Añadir onomatopeya sonora / SFX"
               >
                 <Volume2 size={13} className="text-rose-400" />
@@ -645,7 +645,7 @@ export const MangaCanvasEditor: React.FC = () => {
               </button>
             </div>
 
-            <span className="text-[11px] text-zinc-500">
+            <span className="shrink-0 text-[11px] text-zinc-500">
               {canvasData.bubbles.length} {canvasData.bubbles.length === 1 ? 'globo colocado' : 'globos colocados'}
             </span>
           </div>
@@ -655,12 +655,12 @@ export const MangaCanvasEditor: React.FC = () => {
         {activeTab === 'canvas' && (
           <div className="w-full flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-zinc-400 font-medium">Tamaño de Publicación:</span>
+              <span className="shrink-0 text-[11px] text-zinc-400 font-medium">Tamaño de Publicación:</span>
 
-              <div className="flex items-center gap-1 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800">
+              <div className="flex items-center shrink-0 gap-1 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800">
                 <button
                   onClick={() => handleUpdatePageWidth(680)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  className={`shrink-0 px-3 py-1 rounded text-xs font-medium transition-colors ${
                     pageWidth === 680
                       ? 'bg-indigo-600 text-white shadow-xs'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
@@ -670,7 +670,7 @@ export const MangaCanvasEditor: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleUpdatePageWidth(800)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  className={`shrink-0 px-3 py-1 rounded text-xs font-medium transition-colors ${
                     pageWidth === 800
                       ? 'bg-indigo-600 text-white shadow-xs'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'

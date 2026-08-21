@@ -160,11 +160,20 @@ export default function CodexEditor({ entry, onClose }: CodexEditorProps) {
   return (
     <div className="h-full flex flex-col bg-[var(--color-background)]">
       {/* Header */}
-      <div className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-6 shrink-0 bg-[var(--color-surface)]">
-        <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">
-          {isNew ? 'Nueva Entrada' : `Editando: ${entry.name}`}
-        </h3>
-        <div className="flex gap-2">
+      <div className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-4 md:px-6 shrink-0 bg-[var(--color-surface)]">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <button 
+            onClick={onClose}
+            className="md:hidden p-1.5 -ml-1 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] rounded-lg transition-colors shrink-0"
+            title="Volver a la lista"
+          >
+            <X size={20} />
+          </button>
+          <h3 className="font-semibold text-lg text-[var(--color-text-primary)] truncate">
+            {isNew ? 'Nueva Entrada' : `Editando: ${entry.name}`}
+          </h3>
+        </div>
+        <div className="flex gap-2 shrink-0">
           {!isNew && (
             <button 
               onClick={handleDelete}

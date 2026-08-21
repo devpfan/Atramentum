@@ -19,17 +19,23 @@ export default function CodexView() {
   const selectedEntry = entries.find(e => e.id === selectedEntryId) || null;
 
   return (
-    <div className="flex h-full w-full bg-[var(--color-background)]">
-      {/* Panel Izquierdo: Lista */}
-      <div className="w-64 border-r border-[var(--color-border)] h-full shrink-0">
+    <div className="flex h-full w-full bg-[var(--color-background)] relative">
+      {/* Panel Izquierdo: Lista (Oculto en móvil si hay selección) */}
+      <div className={`
+        ${selectedEntryId !== null ? 'hidden md:block' : 'block'} 
+        w-full md:w-64 border-r border-[var(--color-border)] h-full shrink-0
+      `}>
         <CodexList 
           selectedEntryId={selectedEntryId} 
           onSelectEntry={setSelectedEntryId} 
         />
       </div>
 
-      {/* Panel Derecho: Editor */}
-      <div className="flex-1 h-full overflow-hidden bg-[var(--color-surface)]">
+      {/* Panel Derecho: Editor (Oculto en móvil si NO hay selección) */}
+      <div className={`
+        ${selectedEntryId !== null ? 'flex' : 'hidden md:flex'}
+        flex-1 h-full overflow-hidden bg-[var(--color-surface)] flex-col
+      `}>
         {selectedEntryId ? (
           <CodexEditor 
             entry={selectedEntry} 

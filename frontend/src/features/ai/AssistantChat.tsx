@@ -113,8 +113,13 @@ export default function AssistantChat() {
   };
 
   return (
-    <div className="w-80 h-full bg-[var(--color-background)] border-l border-[var(--color-border)] flex flex-col shadow-xl z-20 transition-all duration-300">
-      {/* Header */}
+    <>
+      <div 
+        className="md:hidden fixed inset-0 bg-black/50 z-[50] backdrop-blur-sm"
+        onClick={toggleChat}
+      />
+      <div className="fixed md:static inset-y-0 right-0 z-[60] w-80 h-full bg-[var(--color-background)] border-l border-[var(--color-border)] flex flex-col shadow-xl transition-transform duration-300">
+        {/* Header */}
       <div className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-4 bg-[var(--color-background)]/95 backdrop-blur shrink-0">
         <div className="flex items-center gap-2">
           <Bot size={18} className="text-blue-400" />
@@ -246,5 +251,6 @@ export default function AssistantChat() {
         <AiSettingsModal onClose={() => setShowPersonaModal(false)} onSaved={loadSettings} />
       )}
     </div>
+    </>
   );
 }

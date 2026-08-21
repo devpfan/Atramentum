@@ -1,4 +1,4 @@
-import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2, HelpCircle, Shield } from 'lucide-react';
+import { Book, Library, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Folder, BarChart2, HelpCircle, Shield, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { useState, useEffect } from 'react';
@@ -8,7 +8,12 @@ import { StatisticsModal } from './StatisticsModal';
 import { ProjectManagementModal } from './ProjectManagementModal';
 import { Tooltip } from '../../components/Tooltip';
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  setMobileOpen?: (open: boolean) => void;
+}
+
+export default function Sidebar({ mobileOpen = false, setMobileOpen }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
@@ -29,21 +34,45 @@ export default function Sidebar() {
 
   return (
     <>
-    <div className={`h-screen flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+    {/* Mobile Overlay Backdrop */}
+    {mobileOpen && (
+      <div 
+        className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+        onClick={() => setMobileOpen?.(false)}
+      />
+    )}
+    <div className={`
+      fixed md:static inset-y-0 left-0 z-50
+      h-screen flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] transition-all duration-300
+      ${isCollapsed ? 'md:w-16' : 'md:w-64'}
+      w-64
+      ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
       {/* Header */}
-      <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--color-border)]">
-        {!isCollapsed && <span className="font-semibold text-[var(--color-text-primary)] flex items-center gap-2"><Folder size={18} className="text-[#6366f1]" /> Proyectos</span>}
+      <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--color-border)] shrink-0">
+        <span className={`font-semibold text-[var(--color-text-primary)] flex items-center gap-2 ${isCollapsed ? 'hidden md:hidden' : 'flex'}`}>
+          <Folder size={18} className="text-[#6366f1]" /> Proyectos
+        </span>
+        
+        {/* Close button for mobile */}
+        <button 
+          onClick={() => setMobileOpen?.(false)}
+          className="md:hidden p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]"
+        >
+          <X size={18} />
+        </button>
+
+        {/* Collapse button for desktop */}
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors ${isCollapsed ? 'mx-auto' : ''}`}
+          className={`hidden md:block p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors ${isCollapsed ? 'mx-auto' : ''}`}
         >
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
       {/* Project Selector */}
-      {!isCollapsed && (
-        <div className="p-3 border-b border-[var(--color-border)]">
+      <div className={`p-3 border-b border-[var(--color-border)] shrink-0 ${isCollapsed ? 'hidden md:hidden' : 'block'}`}>
           <div className="flex gap-2">
             <select 
               value={activeBookId || ''} 
@@ -88,7 +117,6 @@ export default function Sidebar() {
             <Folder size={14} /> Gestionar Proyectos
           </button>
         </div>
-      )}
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">

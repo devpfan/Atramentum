@@ -49,21 +49,21 @@ export default function AdminUsersView() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold">Gestión de Usuarios</h1>
           <p className="text-[var(--color-text-secondary)] mt-1">Crea cuentas nuevas y administra accesos.</p>
         </div>
         <button 
           onClick={handleCreate}
-          className="bg-[#6366f1] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-[#4f46e5] transition-colors"
+          className="bg-[#6366f1] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-[#4f46e5] transition-colors shrink-0"
         >
           <UserPlus size={18} /> Nuevo Usuario
         </button>
       </div>
 
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-x-auto shadow-sm">
+        <table className="w-full min-w-[600px] text-left border-collapse">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-background)]">
               <th className="p-4 font-medium text-[var(--color-text-secondary)] text-sm">ID</th>

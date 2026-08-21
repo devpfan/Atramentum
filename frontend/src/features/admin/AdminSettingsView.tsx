@@ -119,7 +119,7 @@ export default function AdminSettingsView() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold">Configuración Global</h1>
           <p className="text-[var(--color-text-secondary)] mt-1">Ajustes a nivel de servidor que aplican a todos los usuarios.</p>
@@ -127,7 +127,7 @@ export default function AdminSettingsView() {
         <button 
           onClick={handleSave}
           disabled={isSaving}
-          className="bg-[#6366f1] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-[#4f46e5] transition-colors disabled:opacity-50"
+          className="bg-[#6366f1] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-[#4f46e5] transition-colors disabled:opacity-50 shrink-0"
         >
           <Save size={18} /> {isSaving ? 'Guardando...' : 'Guardar Cambios'}
         </button>
@@ -354,19 +354,19 @@ export default function AdminSettingsView() {
             {/* Ollama URL */}
             <div>
               <label className="block text-sm font-medium mb-1">URL Base de Ollama (Offline)</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input 
                   type="text" 
                   placeholder="http://localhost:11434"
                   value={settings['global_local_url'] || ''} 
                   onChange={(e) => handleChange('global_local_url', e.target.value)}
-                  className="flex-1 bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
+                  className="flex-1 min-w-0 bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
                 />
                 <button
                   type="button"
                   onClick={() => fetchLocalModels(settings['global_local_url'])}
                   disabled={isLoadingModels}
-                  className="px-3 py-2 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded-md border border-[var(--color-border)] flex items-center gap-2 text-sm transition-colors disabled:opacity-50"
+                  className="shrink-0 px-3 py-2 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded-md border border-[var(--color-border)] flex items-center justify-center gap-2 text-sm transition-colors disabled:opacity-50"
                   title="Detectar modelos disponibles"
                 >
                   <RefreshCw className={`w-4 h-4 ${isLoadingModels ? 'animate-spin text-[#6366f1]' : ''}`} />

@@ -24,6 +24,7 @@ export default function ManuscriptEditor() {
   const [isGeneratingScene, setIsGeneratingScene] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [isMobileIndexOpen, setIsMobileIndexOpen] = useState(false);
   const isFocusMode = useAppStore(state => state.isFocusMode);
   const toggleFocusMode = useAppStore(state => state.toggleFocusMode);
 
@@ -391,7 +392,7 @@ export default function ManuscriptEditor() {
   if (tree?.project_type === 'manga') {
     return (
       <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">
-        {!isFocusMode && <ManuscriptSidebar />}
+        {!isFocusMode && <ManuscriptSidebar mobileOpen={isMobileIndexOpen} setMobileOpen={setIsMobileIndexOpen} />}
         <MangaCanvasEditor />
         {!isFocusMode && (
           <SceneInspector 
@@ -416,7 +417,7 @@ export default function ManuscriptEditor() {
 
   return (
     <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">
-      {!isFocusMode && <ManuscriptSidebar />}
+      {!isFocusMode && <ManuscriptSidebar mobileOpen={isMobileIndexOpen} setMobileOpen={setIsMobileIndexOpen} />}
 
       {/* COLUMNA CENTRAL: BARRA FIJA SIEMPRE VISIBLE + ÁREA DE ESCRITURA CON SCROLL */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -433,6 +434,7 @@ export default function ManuscriptEditor() {
                   editor={editor} 
                   onOpenAiMenu={() => handleOpenAiMenu(true)}
                   onFetchSynonyms={handleFetchSynonyms}
+                  onToggleMobileIndex={() => setIsMobileIndexOpen(true)}
                   isAiLoading={isAiLoading || isGeneratingScene}
                   isSingleWord={isSingleWord}
                   hasSelection={hasSelection}

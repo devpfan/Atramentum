@@ -194,35 +194,35 @@ export default function SettingsModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-2xl shadow-2xl flex max-h-[90vh] overflow-hidden">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-2xl shadow-2xl flex flex-col md:flex-row max-h-[90vh] overflow-hidden">
         
         {/* Sidebar Tabs */}
-        <div className="w-48 border-r border-[var(--color-border)] bg-[var(--color-background)] p-4 space-y-2">
-          <h2 className="font-semibold text-[var(--color-text-primary)] mb-4 px-2">Configuración</h2>
+        <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-[var(--color-border)] bg-[var(--color-background)] p-2 md:p-4 space-y-0 md:space-y-2 flex flex-row md:flex-col overflow-x-auto no-scrollbar shrink-0">
+          <h2 className="hidden md:block font-semibold text-[var(--color-text-primary)] mb-4 px-2">Configuración</h2>
           
           <button 
             onClick={() => setActiveTab('account')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'account' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
+            className={`flex-1 md:w-full flex items-center justify-center md:justify-start shrink-0 gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'account' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
           >
             <User size={16} /> Cuenta
           </button>
           <button 
             onClick={() => setActiveTab('appearance')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'appearance' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
+            className={`flex-1 md:w-full flex items-center justify-center md:justify-start shrink-0 gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'appearance' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
           >
             <Palette size={16} /> Apariencia
           </button>
           
           <button 
             onClick={() => setActiveTab('ai')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'ai' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
+            className={`flex-1 md:w-full flex items-center justify-center md:justify-start shrink-0 gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'ai' ? 'bg-[#6366f1]/10 text-[#6366f1]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'}`}
           >
             <Bot size={16} /> Asistente IA
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">

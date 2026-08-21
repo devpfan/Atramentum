@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { ChevronDown, ChevronRight, FileText, Plus, Folder, Trash2, AlertCircle, Film, Palette, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Plus, Folder, Trash2, AlertCircle, Film, Palette, BookOpen, X } from 'lucide-react';
 
-export default function ManuscriptSidebar() {
+interface ManuscriptSidebarProps {
+  mobileOpen?: boolean;
+  setMobileOpen?: (open: boolean) => void;
+}
+
+export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen }: ManuscriptSidebarProps) {
   const { 
     tree, 
     activeSceneId, 
@@ -136,9 +141,23 @@ export default function ManuscriptSidebar() {
   if (!tree) return null;
 
   return (
-    <div className="w-64 border-r border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0 relative select-none">
+    <>
+    {/* Mobile Overlay Backdrop */}
+    {mobileOpen && (
+      <div 
+        className="md:hidden fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm"
+        onClick={() => setMobileOpen?.(false)}
+      />
+    )}
+
+    <div className={`
+      fixed md:static inset-y-0 left-0 z-[70]
+      w-64 border-r border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0 select-none
+      transition-transform duration-300
+      ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
       {/* Cabecera Sidebar */}
-      <div className="h-14 px-4 flex items-center justify-between gap-2 border-b border-[var(--color-border)]">
+      <div className="h-14 px-4 flex items-center justify-between gap-2 border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           {tree.project_type === 'screenplay' ? (
             <span className="p-1 rounded bg-amber-500/10 text-amber-400 shrink-0" title="Guion Cine/TV">
@@ -157,13 +176,22 @@ export default function ManuscriptSidebar() {
             {tree.title}
           </h2>
         </div>
-        <button 
-          onClick={handleCreateChapter}
-          className="p-1.5 hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-indigo-400 rounded-md transition-colors shrink-0"
-          title={tree.project_type === 'screenplay' ? "Añadir nueva secuencia" : "Añadir nuevo capítulo"}
-        >
-          <Plus size={16} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button 
+            onClick={handleCreateChapter}
+            className="p-1.5 hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-indigo-400 rounded-md transition-colors"
+            title={tree.project_type === 'screenplay' ? "Añadir nueva secuencia" : "Añadir nuevo capítulo"}
+          >
+            <Plus size={16} />
+          </button>
+          {/* Close button for mobile */}
+          <button 
+            onClick={() => setMobileOpen?.(false)}
+            className="md:hidden p-1.5 hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] rounded-md transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Lista de Capítulos y Escenas */}
@@ -324,6 +352,7 @@ export default function ManuscriptSidebar() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

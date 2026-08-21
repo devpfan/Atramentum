@@ -1,9 +1,9 @@
 import { Outlet, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import { useAppStore } from '../../store/useAppStore';
 import AssistantChat from '../ai/AssistantChat';
-import { Bot } from 'lucide-react';
+import { Bot, Menu } from 'lucide-react';
 import { useChatStore } from '../../store/useChatStore';
 import CommandPalette from './CommandPalette';
 
@@ -11,6 +11,7 @@ export default function AppLayout() {
   const token = useAppStore(state => state.token);
   const isFocusMode = useAppStore(state => state.isFocusMode);
   const toggleChat = useChatStore(state => state.toggleChat);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -57,18 +58,26 @@ export default function AppLayout() {
   return (
     <div className={`flex h-screen bg-[var(--color-background)] overflow-hidden text-[var(--color-text-primary)] ${isFocusMode ? 'focus-mode-active' : ''}`}>
       <CommandPalette />
-      {!isFocusMode && <Sidebar />}
+      {!isFocusMode && <Sidebar mobileOpen={isMobileMenuOpen} setMobileOpen={setIsMobileMenuOpen} />}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Aquí va el header superior del área de trabajo */}
         {!isFocusMode && (
-          <header className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-6 bg-[var(--color-background)]/95 backdrop-blur z-10">
-            <h2 className="text-sm font-medium text-[var(--color-text-secondary)]">Proyecto Activo / <span className="text-[var(--color-text-primary)]">Capítulo 1</span></h2>
+          <header className="h-14 border-b border-[var(--color-border)] flex items-center justify-between px-4 md:px-6 bg-[var(--color-background)]/95 backdrop-blur z-10 shrink-0">
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]"
+              >
+                <Menu size={20} />
+              </button>
+              <h2 className="text-sm font-medium text-[var(--color-text-secondary)] truncate max-w-[150px] md:max-w-none">Proyecto Activo / <span className="text-[var(--color-text-primary)]">Cap. 1</span></h2>
+            </div>
             <button
               onClick={toggleChat}
-              className="flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-2 md:px-3 py-1.5 rounded-lg shrink-0"
             >
               <Bot size={16} />
-              Chat AtrIA
+              <span className="hidden md:inline">Chat AtrIA</span>
             </button>
           </header>
         )}

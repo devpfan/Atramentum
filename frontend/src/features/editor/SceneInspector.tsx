@@ -62,7 +62,7 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
 
   if (!activeScene) {
     return (
-      <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex items-center justify-center p-4 text-center shrink-0 relative">
+      <div className="fixed md:static inset-y-0 right-0 z-[60] w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex items-center justify-center p-4 text-center shrink-0">
         <button onClick={onToggle} className="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]">
           <X size={20} />
         </button>
@@ -74,8 +74,13 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
   }
 
   return (
-    <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0">
-      <div className="h-14 px-4 flex justify-between items-center border-b border-[var(--color-border)]">
+    <>
+      <div 
+        className="md:hidden fixed inset-0 bg-black/50 z-[50] backdrop-blur-sm"
+        onClick={onToggle}
+      />
+      <div className="fixed md:static inset-y-0 right-0 z-[60] w-80 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full flex flex-col shrink-0 shadow-xl md:shadow-none transition-transform duration-300">
+        <div className="h-14 px-4 flex justify-between items-center border-b border-[var(--color-border)] shrink-0">
         <div>
           <h3 className="font-semibold text-[var(--color-text-primary)]">Inspector de Escena</h3>
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{activeScene.title}</p>
@@ -165,5 +170,6 @@ export default function SceneInspector({ onGenerate, isGenerating, isOpen, onTog
 
       </div>
     </div>
+    </>
   );
 }

@@ -13,7 +13,8 @@ import {
   Highlighter, 
   Quote, 
   List, 
-  ListOrdered
+  ListOrdered,
+  Folder
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -21,6 +22,7 @@ interface EditorToolbarProps {
   editor: Editor | null;
   onOpenAiMenu?: () => void;
   onFetchSynonyms?: () => void;
+  onToggleMobileIndex?: () => void;
   isAiLoading?: boolean;
   isSingleWord?: boolean;
   hasSelection?: boolean;
@@ -31,6 +33,7 @@ export default function EditorToolbar({
   editor, 
   onOpenAiMenu, 
   onFetchSynonyms, 
+  onToggleMobileIndex,
   isAiLoading = false,
   isSingleWord = false,
   hasSelection = false,
@@ -41,10 +44,22 @@ export default function EditorToolbar({
   }
 
   return (
-    <div className="flex items-center gap-1.5 py-1.5 select-none w-full flex-wrap">
+    <div className="flex items-center gap-1.5 py-1.5 select-none w-full overflow-x-auto no-scrollbar">
       
+      {/* Botón de Índice (Móvil) */}
+      {onToggleMobileIndex && (
+        <button
+          onClick={onToggleMobileIndex}
+          className="md:hidden flex items-center shrink-0 gap-1 px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-md text-xs font-semibold mr-1"
+          title="Ver Índice de Capítulos"
+        >
+          <Folder size={14} />
+          <span>Índice</span>
+        </button>
+      )}
+
       {/* --- HERRAMIENTAS INTELIGENTES DE IA Y LÉXICO --- */}
-      <div className="flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/25 rounded-lg p-0.5 mr-1">
+      <div className="flex items-center shrink-0 gap-1 bg-indigo-500/10 border border-indigo-500/25 rounded-lg p-0.5 mr-1">
         <button
           onClick={onOpenAiMenu}
           disabled={isAiLoading}
@@ -77,7 +92,7 @@ export default function EditorToolbar({
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         disabled={!editor.can().chain().focus().toggleBold().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('bold') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('bold') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Negrita (Ctrl+B)"
       >
         <Bold size={16} />
@@ -86,7 +101,7 @@ export default function EditorToolbar({
       <button
         onClick={() => editor.chain().focus().toggleItalic().run()}
         disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('italic') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('italic') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Cursiva (Ctrl+I)"
       >
         <Italic size={16} />
@@ -95,7 +110,7 @@ export default function EditorToolbar({
       <button
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         disabled={!editor.can().chain().focus().toggleUnderline().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('underline') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('underline') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Subrayado (Ctrl+U)"
       >
         <UnderlineIcon size={16} />
@@ -104,7 +119,7 @@ export default function EditorToolbar({
       <button
         onClick={() => editor.chain().focus().toggleStrike().run()}
         disabled={!editor.can().chain().focus().toggleStrike().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('strike') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('strike') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Tachado"
       >
         <Strikethrough size={16} />
@@ -113,7 +128,7 @@ export default function EditorToolbar({
       {/* --- RESALTADOR --- */}
       <button
         onClick={() => editor.chain().focus().toggleHighlight({ color: '#fbbf24' }).run()}
-        className={`p-1.5 rounded-md transition-colors ${
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${
           editor.isActive('highlight') 
             ? 'bg-amber-500/25 text-amber-400 border border-amber-500/40' 
             : 'text-[var(--color-text-secondary)] hover:bg-amber-500/15 hover:text-amber-300'
@@ -155,7 +170,7 @@ export default function EditorToolbar({
       {/* --- LISTAS & CITAS --- */}
       <button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('bulletList') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('bulletList') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Lista de viñetas"
       >
         <List size={16} />
@@ -163,7 +178,7 @@ export default function EditorToolbar({
 
       <button
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('orderedList') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('orderedList') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Lista numerada"
       >
         <ListOrdered size={16} />
@@ -171,7 +186,7 @@ export default function EditorToolbar({
 
       <button
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
+        className={`p-1.5 shrink-0 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'}`}
         title="Cita en bloque"
       >
         <Quote size={16} />
@@ -181,7 +196,7 @@ export default function EditorToolbar({
 
       {/* --- ESTADO DE GUARDADO --- */}
       {saveStatus !== 'idle' && (
-        <div className="text-xs font-medium px-2 py-1 select-none">
+        <div className="shrink-0 text-xs font-medium px-2 py-1 select-none">
           {saveStatus === 'saving' && <span className="text-amber-400 animate-pulse">Guardando...</span>}
           {saveStatus === 'saved' && <span className="text-emerald-400">Guardado ✓</span>}
           {saveStatus === 'error' && <span className="text-rose-400">Error al guardar</span>}
@@ -197,7 +212,7 @@ export default function EditorToolbar({
             useAppStore.getState().toggleFocusMode(true);
           }
         }}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+        className="flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors"
         title="Modo Concentración (F11)"
       >
         <Maximize size={15} />

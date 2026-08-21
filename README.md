@@ -4,9 +4,11 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 
 ## Características Principales 
 
-*   **Gestión Multi-Proyecto:** Organiza múltiples libros o proyectos literarios de forma independiente en una sola cuenta.
+*   **Atramentum Multiformato:** Diseñado para la flexibilidad creativa. Puedes crear proyectos tipo **Novela**, **Guion Cinematográfico** o **Manga/Cómic**. La interfaz se adapta al tipo de proyecto que elijas.
+*   **Gestión Multi-Proyecto:** Organiza múltiples libros o proyectos literarios de forma independiente en una sola cuenta, con posibilidad de agruparlos en **Series o Universos Compartidos**.
 *   **Gestión de Manuscritos Estructurada:** Divide tu obra en Actos, Capítulos y Escenas con un árbol de navegación intuitivo.
 *   **El Archivum (Biblia de la Historia):** Un repositorio multimedia dedicado para el *lore* de tu historia. Crea entradas para Personajes, Lugares, Objetos y Conceptos, e ilustra sus perfiles con retratos e imágenes (soporte integrado).
+*   **Atramentum Manga Studio:** Si eliges el formato Manga, cuentas con un **Lienzo Visual** para cargar tus páginas dibujadas y un sistema de arrastrar y soltar para colocar Globos de Diálogo, Pensamiento, Gritos, Cartelas de Narrador y Onomatopeyas.
 *   **Generador de Prosa Asistido por "Beats":** ¿Tienes claro qué va a pasar en una escena pero no sabes cómo escribirlo? Escribe una lista de eventos clave (Beats) y la Inteligencia Artificial redactará la prosa en tiempo real, inyectando automáticamente en el contexto la información de tu Archivum (RAG - *Retrieval-Augmented Generation*).
 *   **Escáner Inteligente:** Atramentum puede leer tus capítulos y poblar el Archivum automáticamente detectando personajes que aún no tengas registrados.
 *   **Editor de Texto Enriquecido:** Un entorno de escritura limpio y sin distracciones, con autoguardado y autocompletado inteligente de etiquetas. Al pasar el ratón por los personajes etiquetados, verás su información e imagen en una ventana flotante.
@@ -16,7 +18,7 @@ Atramentum es una aplicación inteligente de asistencia a la escritura diseñada
 *   **Soporte Multi-Modelo:** Diseñado con una arquitectura modular para integrarse con diferentes Grandes Modelos de Lenguaje (LLMs) según tus preferencias (Gemini, OpenAI, Ollama).
 *   **Exportación Universal:** Compila tu manuscrito en cuestión de segundos a múltiples formatos listos para publicar o revisar: Markdown, Word (.docx), PDF y EPUB (100% compatible con Amazon Kindle).
 *   **Estadísticas y Metas:** Mantén la motivación visualizando tu progreso en tiempo real con barras de progreso y conteo de palabras inteligente.
-*   **Personalización Visual:** Interfaz de usuario altamente estética y adaptable con 7 modos de color distintos (Oscuro, Claro, Sepia, Océano, Bosque, Vino y Lavanda).
+*   **Personalización Visual y Responsividad:** Interfaz de usuario altamente estética y adaptable con 7 modos de color distintos (Oscuro, Claro, Sepia, Océano, Bosque, Vino y Lavanda). **Totalmente compatible con dispositivos móviles** gracias a un diseño adaptable tipo cajón (drawers).
 
 ## Guía de Uso Rápido 🚀
 
