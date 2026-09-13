@@ -40,12 +40,12 @@ export default function CommandPalette() {
   if (!isOpen) return null;
 
   // Recolectar items
-  const scenes = tree?.chapters.flatMap(c => c.scenes.map(s => ({
+  const scenes = tree?.chapters?.flatMap(c => c.scenes?.map(s => ({
     id: s.id,
     title: s.title,
     type: 'scene',
     chapterTitle: c.title
-  }))) || [];
+  })) || []) || [];
 
   const codexItems = entries.map(e => ({
     id: e.id,

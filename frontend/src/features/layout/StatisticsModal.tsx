@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { X, Target, BarChart2, Hash, BookOpen } from 'lucide-react';
+import { X, Target, BarChart2, Hash, LayoutList } from 'lucide-react';
 
 interface StatisticsModalProps {
   onClose: () => void;
@@ -62,12 +62,13 @@ export const StatisticsModal: React.FC<StatisticsModalProps> = ({ onClose }) => 
     },
     {
       label: 'Capítulos',
-      value: tree?.chapters.length || 0,
-      icon: <BookOpen className="w-5 h-5 text-indigo-500" />
+      value: tree?.chapters?.length || 0,
+      icon: <LayoutList size={18} className="text-[#6366f1]" />,
+      color: 'bg-[#6366f1]/10 text-[#6366f1]'
     },
     {
-      label: 'Escenas',
-      value: tree?.chapters.reduce((acc, chap) => acc + chap.scenes.length, 0) || 0,
+      label: 'Total de Escenas',
+      value: tree?.chapters?.reduce((acc, chap) => acc + (chap.scenes?.length || 0), 0) || 0,
       icon: <BarChart2 className="w-5 h-5 text-indigo-500" />
     }
   ];

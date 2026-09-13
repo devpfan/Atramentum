@@ -25,45 +25,44 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
     global_groq_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_groq_model").first()
     global_openrouter_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openrouter_model").first()
     
-    # Si el usuario NO tiene un provider seteado con llaves validas, usamos el global como fallback
-    has_user_keys = bool(merged.get("gemini_key") or merged.get("openai_key") or merged.get("anthropic_key") or merged.get("groq_key") or merged.get("openrouter_key") or merged.get("local_url"))
-    
-    if not has_user_keys:
+    # Siempre usamos los valores globales como fallback si el usuario no los ha definido
+    if not merged.get("provider"):
         merged["provider"] = global_provider.value if global_provider else "gemini"
-        if global_gemini_key:
-            merged["gemini_key"] = global_gemini_key.value
-        if global_openai_key:
-            merged["openai_key"] = global_openai_key.value
-        if global_anthropic_key:
-            merged["anthropic_key"] = global_anthropic_key.value
-        if global_groq_key:
-            merged["groq_key"] = global_groq_key.value
-        if global_openrouter_key:
-            merged["openrouter_key"] = global_openrouter_key.value
-        if global_local_url:
-            merged["local_url"] = global_local_url.value
-        if global_local_model:
-            merged["local_model"] = global_local_model.value
-            
-        # Modeles
-        if global_gemini_model:
-            merged["gemini_model"] = global_gemini_model.value
-        if global_openai_model:
-            merged["openai_model"] = global_openai_model.value
-        if global_anthropic_model:
-            merged["anthropic_model"] = global_anthropic_model.value
-        if global_groq_model:
-            merged["groq_model"] = global_groq_model.value
-        if global_openrouter_model:
-            merged["openrouter_model"] = global_openrouter_model.value
-            
+        
+    if not merged.get("gemini_key") and global_gemini_key:
+        merged["gemini_key"] = global_gemini_key.value
+    if not merged.get("openai_key") and global_openai_key:
+        merged["openai_key"] = global_openai_key.value
+    if not merged.get("anthropic_key") and global_anthropic_key:
+        merged["anthropic_key"] = global_anthropic_key.value
+    if not merged.get("groq_key") and global_groq_key:
+        merged["groq_key"] = global_groq_key.value
+    if not merged.get("openrouter_key") and global_openrouter_key:
+        merged["openrouter_key"] = global_openrouter_key.value
+    if not merged.get("local_url") and global_local_url:
+        merged["local_url"] = global_local_url.value
+    if not merged.get("local_model") and global_local_model:
+        merged["local_model"] = global_local_model.value
+        
+    # Modelos globales como fallback
+    if not merged.get("gemini_model") and global_gemini_model:
+        merged["gemini_model"] = global_gemini_model.value
+    if not merged.get("openai_model") and global_openai_model:
+        merged["openai_model"] = global_openai_model.value
+    if not merged.get("anthropic_model") and global_anthropic_model:
+        merged["anthropic_model"] = global_anthropic_model.value
+    if not merged.get("groq_model") and global_groq_model:
+        merged["groq_model"] = global_groq_model.value
+    if not merged.get("openrouter_model") and global_openrouter_model:
+        merged["openrouter_model"] = global_openrouter_model.value
+
     return merged
 
 def get_litellm_args(ai_settings: dict):
     provider = ai_settings.get("provider", "gemini")
     args = {}
     if provider == "gemini":
-        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-flash-lite-latest"
+        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-1.5-flash"
         args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     elif provider == "openai":
         args["model"] = ai_settings.get("openai_model") or "gpt-4o-mini"
@@ -89,14 +88,14 @@ def get_litellm_args(ai_settings: dict):
             args["api_base"] = clean_url
             args["api_key"] = "dummy-key"
     elif provider == "groq":
-        args["model"] = ai_settings.get("groq_model") or "groq/llama-3.3-70b-versatile"
+        args["model"] = ai_settings.get("groq_model") or "groq/llama-3.1-8b-instant"
         args["api_key"] = ai_settings.get("groq_key") or settings.GROQ_API_KEY
     elif provider == "openrouter":
         args["model"] = ai_settings.get("openrouter_model") or "openrouter/meta-llama/llama-3.3-70b-instruct"
         args["api_key"] = ai_settings.get("openrouter_key") or settings.OPENROUTER_API_KEY
     else:
-        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-flash-lite-latest"
-        args["api_key"] = settings.GEMINI_API_KEY
+        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-1.5-flash"
+        args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     
     return args
 
@@ -386,3 +385,32 @@ async def get_embedding(text: str, ai_settings: dict) -> list[float]:
     except Exception as e:
         # En caso de que no haya modelo de embeddings o falle la conexión, retornamos vacío sin romper el editor
         return []
+
+async def fetch_provider_models(provider: str, api_key: str) -> list[str]:
+    import httpx
+    models = []
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            if provider == "openai":
+                res = await client.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {api_key}"})
+                if res.status_code == 200:
+                    models = [m["id"] for m in res.json().get("data", [])]
+            elif provider == "groq":
+                res = await client.get("https://api.groq.com/openai/v1/models", headers={"Authorization": f"Bearer {api_key}"})
+                if res.status_code == 200:
+                    models = [m["id"] for m in res.json().get("data", [])]
+            elif provider == "openrouter":
+                res = await client.get("https://openrouter.ai/api/v1/models", headers={"Authorization": f"Bearer {api_key}"})
+                if res.status_code == 200:
+                    models = [m["id"] for m in res.json().get("data", [])]
+            elif provider == "gemini":
+                res = await client.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}")
+                if res.status_code == 200:
+                    models = [m["name"].replace("models/", "gemini/") for m in res.json().get("models", []) if "generateContent" in m.get("supportedGenerationMethods", [])]
+            elif provider == "anthropic":
+                res = await client.get("https://api.anthropic.com/v1/models", headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"})
+                if res.status_code == 200:
+                    models = [m["id"] for m in res.json().get("data", [])]
+    except Exception:
+        pass
+    return models

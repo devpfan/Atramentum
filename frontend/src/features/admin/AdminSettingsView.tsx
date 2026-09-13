@@ -10,7 +10,11 @@ export default function AdminSettingsView() {
   const [localModels, setLocalModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
-  const [isCustomModel, setIsCustomModel] = useState(false);
+  const [isCustomModel, setIsCustomModel] = useState<Record<string, boolean>>({});
+  
+  // Dynamic provider models state
+  const [providerModels, setProviderModels] = useState<Record<string, string[]>>({});
+  const [isLoadingProviderModels, setIsLoadingProviderModels] = useState<Record<string, boolean>>({});
 
   // AI Status & Live Test
   const [aiStatus, setAiStatus] = useState<AIStatusResponse | null>(null);
@@ -58,9 +62,38 @@ export default function AdminSettingsView() {
       }
     } catch (err) {
       setLocalModels([]);
-      setModelsError('No se pudo conectar con Ollama.');
+      setModelsError(err instanceof Error ? err.message : 'Error desconocido al conectar con Ollama');
     } finally {
       setIsLoadingModels(false);
+    }
+  };
+
+  const handleFetchProviderModels = async (provider: string, apiKeyField: string) => {
+    const apiKey = settings[apiKeyField];
+    if (!apiKey) {
+      alert(`Por favor, ingresa una API Key para ${provider} antes de detectar modelos.`);
+      return;
+    }
+    
+    setIsLoadingProviderModels(prev => ({ ...prev, [provider]: true }));
+    try {
+      const res = await aiApi.getProviderModels(provider, apiKey);
+      if (res.models && res.models.length > 0) {
+        setProviderModels(prev => ({ ...prev, [provider]: res.models }));
+        
+        const currentModel = settings[`global_${provider}_model`];
+        if (!currentModel || !res.models.includes(currentModel)) {
+          setSettings(prev => ({ ...prev, [`global_${provider}_model`]: res.models[0] }));
+        }
+        
+        alert(`✓ Se detectaron ${res.models.length} modelos disponibles. Da clic en la caja de texto para ver la lista completa.`);
+      } else {
+        alert(res.error || `No se detectaron modelos para ${provider}.`);
+      }
+    } catch (err) {
+      alert(`Error de conexión al obtener modelos de ${provider}.`);
+    } finally {
+      setIsLoadingProviderModels(prev => ({ ...prev, [provider]: false }));
     }
   };
 
@@ -84,11 +117,21 @@ export default function AdminSettingsView() {
         case 'gemini': default: return settings['global_gemini_key'];
       }
     };
+    const getModel = () => {
+      switch(activeProv) {
+        case 'openai': return settings['global_openai_model'];
+        case 'anthropic': return settings['global_anthropic_model'];
+        case 'groq': return settings['global_groq_model'];
+        case 'openrouter': return settings['global_openrouter_model'];
+        case 'gemini': default: return settings['global_gemini_model'];
+      }
+    };
     
     try {
       const res = await adminService.testAiConnection({
         provider: activeProv,
         api_key: getApiKey(),
+        model: getModel(),
         local_url: settings['global_local_url'],
         local_model: settings['global_local_model']
       });
@@ -301,16 +344,52 @@ export default function AdminSettingsView() {
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
               <div className="mt-2">
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de Gemini</label>
-                <select 
-                  value={settings['global_gemini_model'] || 'gemini/gemini-2.5-flash'} 
-                  onChange={(e) => handleChange('global_gemini_model', e.target.value)}
-                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
-                >
-                  <option value="gemini/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                  <option value="gemini/gemini-2.5-pro">Gemini 2.5 Pro</option>
-                  <option value="gemini/gemini-flash-lite-latest">Gemini Flash Lite</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)]">Modelo de Gemini</label>
+                  <div className="flex items-center gap-3">
+                    {(providerModels['gemini']?.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomModel(prev => ({ ...prev, gemini: !prev.gemini }))}
+                        className="text-xs text-[#6366f1] hover:underline"
+                      >
+                        {isCustomModel['gemini'] ? 'Usar detectados' : 'Escribir manual...'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleFetchProviderModels('gemini', 'global_gemini_key')}
+                      disabled={isLoadingProviderModels['gemini']}
+                      className="text-xs px-2 py-0.5 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded border border-[var(--color-border)] flex items-center justify-center gap-1 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingProviderModels['gemini'] ? 'animate-spin text-[#6366f1]' : ''}`} />
+                      <span>{isLoadingProviderModels['gemini'] ? 'Buscando...' : 'Detectar'}</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {(providerModels['gemini']?.length > 0) && !isCustomModel['gemini'] ? (
+                  <div className="relative">
+                    <select
+                      value={settings['global_gemini_model'] || providerModels['gemini'][0]}
+                      onChange={(e) => handleChange('global_gemini_model', e.target.value)}
+                      className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)] appearance-none cursor-pointer pr-8"
+                    >
+                      {providerModels['gemini'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)] text-xs">▼</div>
+                  </div>
+                ) : (
+                  <input 
+                    type="text"
+                    value={settings['global_gemini_model'] || 'gemini/gemini-1.5-flash'} 
+                    onChange={(e) => handleChange('global_gemini_model', e.target.value)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                    placeholder="Ej. gemini/gemini-1.5-flash"
+                  />
+                )}
               </div>
               {aiStatus?.providers.gemini.source === 'env' && !settings['global_gemini_key'] && (
                 <p className="text-xs text-emerald-400 mt-1">
@@ -345,16 +424,52 @@ export default function AdminSettingsView() {
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
               <div className="mt-2">
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de OpenAI</label>
-                <select 
-                  value={settings['global_openai_model'] || 'gpt-4o-mini'} 
-                  onChange={(e) => handleChange('global_openai_model', e.target.value)}
-                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
-                >
-                  <option value="gpt-4o-mini">GPT-4o Mini (Rápido)</option>
-                  <option value="gpt-4o">GPT-4o (Avanzado)</option>
-                  <option value="o1-mini">o1-mini (Razonamiento)</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)]">Modelo de OpenAI</label>
+                  <div className="flex items-center gap-3">
+                    {(providerModels['openai']?.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomModel(prev => ({ ...prev, openai: !prev.openai }))}
+                        className="text-xs text-[#6366f1] hover:underline"
+                      >
+                        {isCustomModel['openai'] ? 'Usar detectados' : 'Escribir manual...'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleFetchProviderModels('openai', 'global_openai_key')}
+                      disabled={isLoadingProviderModels['openai']}
+                      className="text-xs px-2 py-0.5 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded border border-[var(--color-border)] flex items-center justify-center gap-1 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingProviderModels['openai'] ? 'animate-spin text-[#6366f1]' : ''}`} />
+                      <span>{isLoadingProviderModels['openai'] ? 'Buscando...' : 'Detectar'}</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {(providerModels['openai']?.length > 0) && !isCustomModel['openai'] ? (
+                  <div className="relative">
+                    <select
+                      value={settings['global_openai_model'] || providerModels['openai'][0]}
+                      onChange={(e) => handleChange('global_openai_model', e.target.value)}
+                      className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)] appearance-none cursor-pointer pr-8"
+                    >
+                      {providerModels['openai'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)] text-xs">▼</div>
+                  </div>
+                ) : (
+                  <input 
+                    type="text"
+                    value={settings['global_openai_model'] || 'gpt-4o-mini'} 
+                    onChange={(e) => handleChange('global_openai_model', e.target.value)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                    placeholder="Ej. gpt-4o"
+                  />
+                )}
               </div>
             </div>
 
@@ -384,16 +499,52 @@ export default function AdminSettingsView() {
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
               <div className="mt-2">
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de Anthropic</label>
-                <select 
-                  value={settings['global_anthropic_model'] || 'claude-3-5-haiku-latest'} 
-                  onChange={(e) => handleChange('global_anthropic_model', e.target.value)}
-                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
-                >
-                  <option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (Rápido)</option>
-                  <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Recomendado)</option>
-                  <option value="claude-3-opus-latest">Claude 3 Opus (Potente)</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)]">Modelo de Anthropic</label>
+                  <div className="flex items-center gap-3">
+                    {(providerModels['anthropic']?.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomModel(prev => ({ ...prev, anthropic: !prev.anthropic }))}
+                        className="text-xs text-[#6366f1] hover:underline"
+                      >
+                        {isCustomModel['anthropic'] ? 'Usar detectados' : 'Escribir manual...'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleFetchProviderModels('anthropic', 'global_anthropic_key')}
+                      disabled={isLoadingProviderModels['anthropic']}
+                      className="text-xs px-2 py-0.5 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded border border-[var(--color-border)] flex items-center justify-center gap-1 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingProviderModels['anthropic'] ? 'animate-spin text-[#6366f1]' : ''}`} />
+                      <span>{isLoadingProviderModels['anthropic'] ? 'Buscando...' : 'Detectar'}</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {(providerModels['anthropic']?.length > 0) && !isCustomModel['anthropic'] ? (
+                  <div className="relative">
+                    <select
+                      value={settings['global_anthropic_model'] || providerModels['anthropic'][0]}
+                      onChange={(e) => handleChange('global_anthropic_model', e.target.value)}
+                      className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)] appearance-none cursor-pointer pr-8"
+                    >
+                      {providerModels['anthropic'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)] text-xs">▼</div>
+                  </div>
+                ) : (
+                  <input 
+                    type="text"
+                    value={settings['global_anthropic_model'] || 'claude-3-5-haiku-latest'} 
+                    onChange={(e) => handleChange('global_anthropic_model', e.target.value)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                    placeholder="Ej. claude-3-5-sonnet-latest"
+                  />
+                )}
               </div>
             </div>
 
@@ -423,16 +574,52 @@ export default function AdminSettingsView() {
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
               <div className="mt-2">
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de Groq</label>
-                <select 
-                  value={settings['global_groq_model'] || 'groq/llama-3.3-70b-versatile'} 
-                  onChange={(e) => handleChange('global_groq_model', e.target.value)}
-                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
-                >
-                  <option value="groq/llama-3.3-70b-versatile">Llama 3.3 70B (Versátil)</option>
-                  <option value="groq/llama-3.1-8b-instant">Llama 3.1 8B (Instantáneo)</option>
-                  <option value="groq/mixtral-8x7b-32768">Mixtral 8x7B (32K Contexto)</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)]">Modelo de Groq</label>
+                  <div className="flex items-center gap-3">
+                    {(providerModels['groq']?.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomModel(prev => ({ ...prev, groq: !prev.groq }))}
+                        className="text-xs text-[#6366f1] hover:underline"
+                      >
+                        {isCustomModel['groq'] ? 'Usar detectados' : 'Escribir manual...'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleFetchProviderModels('groq', 'global_groq_key')}
+                      disabled={isLoadingProviderModels['groq']}
+                      className="text-xs px-2 py-0.5 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded border border-[var(--color-border)] flex items-center justify-center gap-1 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingProviderModels['groq'] ? 'animate-spin text-[#6366f1]' : ''}`} />
+                      <span>{isLoadingProviderModels['groq'] ? 'Buscando...' : 'Detectar'}</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {(providerModels['groq']?.length > 0) && !isCustomModel['groq'] ? (
+                  <div className="relative">
+                    <select
+                      value={settings['global_groq_model'] || providerModels['groq'][0]}
+                      onChange={(e) => handleChange('global_groq_model', e.target.value)}
+                      className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)] appearance-none cursor-pointer pr-8"
+                    >
+                      {providerModels['groq'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)] text-xs">▼</div>
+                  </div>
+                ) : (
+                  <input 
+                    type="text"
+                    value={settings['global_groq_model'] || 'groq/llama-3.1-8b-instant'} 
+                    onChange={(e) => handleChange('global_groq_model', e.target.value)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                    placeholder="Ej. groq/llama-3.1-8b-instant"
+                  />
+                )}
               </div>
             </div>
 
@@ -462,16 +649,52 @@ export default function AdminSettingsView() {
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
               <div className="mt-2">
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de OpenRouter</label>
-                <select 
-                  value={settings['global_openrouter_model'] || 'openrouter/meta-llama/llama-3.3-70b-instruct'} 
-                  onChange={(e) => handleChange('global_openrouter_model', e.target.value)}
-                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
-                >
-                  <option value="openrouter/meta-llama/llama-3.3-70b-instruct">Meta: Llama 3.3 70B</option>
-                  <option value="openrouter/anthropic/claude-3.5-sonnet">Anthropic: Claude 3.5 Sonnet</option>
-                  <option value="openrouter/google/gemini-2.5-pro">Google: Gemini 2.5 Pro</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-[var(--color-text-secondary)]">Modelo de OpenRouter</label>
+                  <div className="flex items-center gap-3">
+                    {(providerModels['openrouter']?.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomModel(prev => ({ ...prev, openrouter: !prev.openrouter }))}
+                        className="text-xs text-[#6366f1] hover:underline"
+                      >
+                        {isCustomModel['openrouter'] ? 'Usar detectados' : 'Escribir manual...'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleFetchProviderModels('openrouter', 'global_openrouter_key')}
+                      disabled={isLoadingProviderModels['openrouter']}
+                      className="text-xs px-2 py-0.5 bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] rounded border border-[var(--color-border)] flex items-center justify-center gap-1 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingProviderModels['openrouter'] ? 'animate-spin text-[#6366f1]' : ''}`} />
+                      <span>{isLoadingProviderModels['openrouter'] ? 'Buscando...' : 'Detectar'}</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {(providerModels['openrouter']?.length > 0) && !isCustomModel['openrouter'] ? (
+                  <div className="relative">
+                    <select
+                      value={settings['global_openrouter_model'] || providerModels['openrouter'][0]}
+                      onChange={(e) => handleChange('global_openrouter_model', e.target.value)}
+                      className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)] appearance-none cursor-pointer pr-8"
+                    >
+                      {providerModels['openrouter'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)] text-xs">▼</div>
+                  </div>
+                ) : (
+                  <input 
+                    type="text"
+                    value={settings['global_openrouter_model'] || 'openrouter/meta-llama/llama-3.3-70b-instruct'} 
+                    onChange={(e) => handleChange('global_openrouter_model', e.target.value)}
+                    className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                    placeholder="Ej. openrouter/meta-llama/llama-3.3-70b-instruct"
+                  />
+                )}
               </div>
             </div>
 
@@ -507,15 +730,15 @@ export default function AdminSettingsView() {
                 {localModels.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setIsCustomModel(!isCustomModel)}
+                    onClick={() => setIsCustomModel(prev => ({ ...prev, local: !prev.local }))}
                     className="text-xs text-[#6366f1] hover:underline"
                   >
-                    {isCustomModel ? 'Usar lista detectada' : 'Escribir a mano...'}
+                    {isCustomModel['local'] ? 'Usar lista detectada' : 'Escribir a mano...'}
                   </button>
                 )}
               </div>
 
-              {localModels.length > 0 && !isCustomModel ? (
+              {localModels.length > 0 && !isCustomModel['local'] ? (
                 <div className="relative">
                   <select
                     value={settings['global_local_model'] || localModels[0]}

@@ -125,6 +125,7 @@ class AiTestRequest(BaseModel):
     api_key: Optional[str] = None
     local_url: Optional[str] = None
     local_model: Optional[str] = None
+    model: Optional[str] = None
 
 @router.get("/ai-status")
 def get_ai_status(db: Session = Depends(get_db)):
@@ -163,10 +164,10 @@ def get_ai_status(db: Session = Depends(get_db)):
     openrouter_source = "db" if db_openrouter else ("env" if env_openrouter else "none")
     openrouter_key = db_openrouter or env_openrouter
     
-    gemini_model = settings_db.get("global_gemini_model", "gemini/gemini-2.5-flash")
+    gemini_model = settings_db.get("global_gemini_model", "gemini/gemini-1.5-flash")
     openai_model = settings_db.get("global_openai_model", "gpt-4o-mini")
     anthropic_model = settings_db.get("global_anthropic_model", "claude-3-5-haiku-latest")
-    groq_model = settings_db.get("global_groq_model", "groq/llama-3.3-70b-versatile")
+    groq_model = settings_db.get("global_groq_model", "groq/llama-3.1-8b-instant")
     openrouter_model = settings_db.get("global_openrouter_model", "openrouter/meta-llama/llama-3.3-70b-instruct")
 
     # Local
@@ -266,6 +267,20 @@ async def test_ai_connection(req: Optional[AiTestRequest] = None, db: Session = 
             ai_dict["groq_key"] = settings_db.get("global_groq_key")
         elif provider == "openrouter":
             ai_dict["openrouter_key"] = settings_db.get("global_openrouter_key")
+
+    if req and req.model:
+        if provider == "gemini":
+            ai_dict["gemini_model"] = req.model
+        elif provider == "openai":
+            ai_dict["openai_model"] = req.model
+        elif provider == "anthropic":
+            ai_dict["anthropic_model"] = req.model
+        elif provider == "groq":
+            ai_dict["groq_model"] = req.model
+        elif provider == "openrouter":
+            ai_dict["openrouter_model"] = req.model
+        elif provider == "local":
+            ai_dict["local_model"] = req.model
 
     if provider == "local":
         ai_dict["local_url"] = (req.local_url if req and req.local_url else None) or settings_db.get("global_local_url", "http://localhost:11434")

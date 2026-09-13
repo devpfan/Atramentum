@@ -36,7 +36,11 @@ def assemble_context(scene_id: int, user_id: int, db: Session, context_settings:
     # Agregamos la información del Archivum al contexto (Lore)
     entries = []
     if scene and context_settings.get("include_archivum", True):
-        entries = db.query(CodexEntry).filter(CodexEntry.book_id == scene.chapter.act.book_id).all()
+        book_id = None
+        if scene.chapter and scene.chapter.act:
+            book_id = scene.chapter.act.book_id
+        if book_id:
+            entries = db.query(CodexEntry).filter(CodexEntry.book_id == book_id).all()
     
     if entries:
         context_lines.append("\n--- LORE DEL MUNDO (ARCHIVUM) ---")

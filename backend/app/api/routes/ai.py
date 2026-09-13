@@ -55,6 +55,16 @@ async def list_local_models(url: str = "http://localhost:11434"):
     
     return {"models": []}
 
+@router.get("/provider-models/{provider}")
+async def list_provider_models(provider: str, api_key: str):
+    from app.services.llm_client import fetch_provider_models
+    if not api_key:
+        return {"models": [], "error": "API Key is required"}
+    models = await fetch_provider_models(provider, api_key)
+    if not models:
+        return {"models": [], "error": "No se pudieron obtener los modelos. Revisa la llave o la conexión."}
+    return {"models": models}
+
 @router.get("/synonyms")
 def get_synonyms(word: str):
     nltk.download('wordnet', quiet=True)

@@ -32,5 +32,11 @@ export const aiApi = {
       params: url ? { url } : undefined
     });
     return response.data;
+  },
+  getProviderModels: async (provider: string, apiKey: string): Promise<{ models: string[]; error?: string }> => {
+    const response = await apiClient.get<{ models: string[]; error?: string }>(`/ai/provider-models/${provider}`, {
+      params: { api_key: apiKey }
+    });
+    return response.data;
   }
 }

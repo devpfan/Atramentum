@@ -72,7 +72,7 @@ export const adminService = {
     const res = await apiClient.get<AIStatusResponse>('/admin/ai-status');
     return res.data;
   },
-  testAiConnection: async (data?: { provider?: string; api_key?: string; local_url?: string; local_model?: string }) => {
+  testAiConnection: async (data?: { provider?: string; api_key?: string; local_url?: string; local_model?: string; model?: string }) => {
     const res = await apiClient.post<AITestResponse>('/admin/ai-test', data || {});
     return res.data;
   }
