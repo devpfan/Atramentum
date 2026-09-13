@@ -200,7 +200,15 @@ async def edit_selected_text(selected_text: str, instruction: str, ai_settings: 
             if chunk.choices and chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
     except Exception as e:
-        yield f"Error al editar con {ai_settings.get('provider')}: {str(e)}"
+        import logging
+        logging.error(f"Error en edit_with_ai: {str(e)}")
+        error_str = str(e).lower()
+        if "rate limit" in error_str or "ratelimit" in error_str or "429" in error_str:
+            friendly_msg = "⚠️ El proveedor de IA ha rechazado la solicitud porque se ha alcanzado el límite de uso (Rate Limit) o la solicitud es demasiado grande para tu plan actual. Por favor, intenta de nuevo en unos momentos o reduce el tamaño del texto."
+        else:
+            friendly_msg = f"⚠️ Ha ocurrido un error de conexión con el proveedor ({ai_settings.get('provider')}). Por favor revisa la configuración."
+        
+        yield f"{friendly_msg}\n\n<!-- DETALLE TÉCNICO PARA DEVTOOLS:\n{str(e)}\n-->"
 
 async def chat_with_assistant(context: str, messages: list, ai_settings: dict, persona: str = "cowriter"):
     """
@@ -256,7 +264,15 @@ async def chat_with_assistant(context: str, messages: list, ai_settings: dict, p
             if chunk.choices and chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
     except Exception as e:
-        yield f"Error en el chat con {ai_settings.get('provider')}: {str(e)}"
+        import logging
+        logging.error(f"Error en chat_with_assistant: {str(e)}")
+        error_str = str(e).lower()
+        if "rate limit" in error_str or "ratelimit" in error_str or "429" in error_str:
+            friendly_msg = "⚠️ El proveedor de IA ha rechazado la solicitud porque se ha alcanzado el límite de uso (Rate Limit) o la solicitud es demasiado grande para tu plan actual. Por favor, intenta de nuevo en unos momentos."
+        else:
+            friendly_msg = f"⚠️ Ha ocurrido un error de conexión con el proveedor ({ai_settings.get('provider')}). Por favor revisa la configuración."
+        
+        yield f"{friendly_msg}\n\n<!-- DETALLE TÉCNICO PARA DEVTOOLS:\n{str(e)}\n-->"
 
 async def extract_characters(text: str, ai_settings: dict) -> list:
     """

@@ -5,9 +5,10 @@ import { ChevronDown, ChevronRight, FileText, Plus, Folder, Trash2, AlertCircle,
 interface ManuscriptSidebarProps {
   mobileOpen?: boolean;
   setMobileOpen?: (open: boolean) => void;
+  onCloseDesktop?: () => void;
 }
 
-export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen }: ManuscriptSidebarProps) {
+export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen, onCloseDesktop }: ManuscriptSidebarProps) {
   const { 
     tree, 
     activeSceneId, 
@@ -184,10 +185,13 @@ export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen }:
           >
             <Plus size={16} />
           </button>
-          {/* Close button for mobile */}
+          {/* Close button */}
           <button 
-            onClick={() => setMobileOpen?.(false)}
-            className="md:hidden p-1.5 hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] rounded-md transition-colors"
+            onClick={() => {
+              if (mobileOpen && setMobileOpen) setMobileOpen(false);
+              if (onCloseDesktop) onCloseDesktop();
+            }}
+            className="p-1.5 hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] rounded-md transition-colors"
           >
             <X size={16} />
           </button>

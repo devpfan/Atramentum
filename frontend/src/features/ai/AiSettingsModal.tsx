@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { aiApi, type AiSettings, type AiPersona } from '../../api/ai';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 
@@ -83,8 +84,8 @@ export default function AiSettingsModal({ onClose, onSaved }: AiSettingsModalPro
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
       <div className="bg-[var(--color-surface)] w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-gradient-to-r from-[var(--color-surface)] to-[var(--color-surface-hover)]">
@@ -162,6 +163,7 @@ export default function AiSettingsModal({ onClose, onSaved }: AiSettingsModalPro
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

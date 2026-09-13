@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
 import { X, FileText, Trash2, AlertTriangle, FileType2, Calendar, File as FileIcon, BookOpen, Folder, Plus, Upload, Film, Palette } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
@@ -105,8 +106,8 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-[var(--color-surface)] w-full max-w-4xl rounded-xl shadow-2xl border flex flex-col max-h-[90vh]">
         
         {/* Header */}
@@ -371,7 +372,7 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
 
       {/* Delete Confirmation Modal */}
       {bookToDelete && (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-[110] flex items-center justify-center p-4">
           <div className="bg-[#1e1e1e] border border-red-900/50 w-full max-w-md rounded-xl shadow-2xl flex flex-col overflow-hidden">
             <div className="bg-red-500/10 p-6 flex flex-col items-center text-center border-b border-red-900/30">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
@@ -413,7 +414,8 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 

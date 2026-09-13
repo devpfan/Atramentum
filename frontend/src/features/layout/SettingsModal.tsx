@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X, Save, Bot, Palette, Type, User, RefreshCw, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { X, User, Palette, Check, RefreshCw, Key, Shield, HardDrive, Smartphone, Zap, Bot, Brain, Save, Type } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import type { AISettings } from '../../api/auth';
 import { aiApi } from '../../api/ai';
@@ -21,7 +22,7 @@ const FONTS = [
   { value: 'Nunito, sans-serif', label: 'Nunito (Sans-serif)' },
   { value: '"Fira Code", monospace', label: 'Fira Code (Mono)' },
   { value: 'Courier, monospace', label: 'Courier (Mono)' },
-  { value: 'Inconsolata, monospace', label: 'Inconsolata (Mono)' },
+  { value: '"Inconsolata", monospace', label: 'Inconsolata (Mono)' },
   { value: 'custom', label: 'Personalizada (Instalada localmente)...' }
 ];
 
@@ -192,9 +193,9 @@ export default function SettingsModal({ onClose }: Props) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-2xl shadow-2xl flex flex-col md:flex-row max-h-[90vh] overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] shadow-2xl">
         
         {/* Sidebar Tabs */}
         <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-[var(--color-border)] bg-[var(--color-background)] p-2 md:p-4 space-y-0 md:space-y-2 flex flex-row md:flex-col overflow-x-auto no-scrollbar shrink-0">
@@ -687,6 +688,7 @@ export default function SettingsModal({ onClose }: Props) {
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -5,7 +5,7 @@ import { AutoTagExtension } from './extensions/AutoTagExtension';
 import { useCodexStore } from '../../store/useCodexStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useManuscriptStore } from '../../store/useManuscriptStore';
-import { Wand2, Sparkles, Shrink, PanelRightOpen, Check, X as CloseIcon, BookOpen } from 'lucide-react';
+import { Wand2, Sparkles, Shrink, PanelRightOpen, PanelLeftOpen, Check, X as CloseIcon, BookOpen } from 'lucide-react';
 import type { CodexEntry } from '../../api/codex';
 import ManuscriptSidebar from './ManuscriptSidebar';
 import SceneInspector from './SceneInspector';
@@ -24,6 +24,7 @@ export default function ManuscriptEditor() {
   const [isGeneratingScene, setIsGeneratingScene] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileIndexOpen, setIsMobileIndexOpen] = useState(false);
   const isFocusMode = useAppStore(state => state.isFocusMode);
   const toggleFocusMode = useAppStore(state => state.toggleFocusMode);
@@ -395,7 +396,16 @@ export default function ManuscriptEditor() {
   if (tree?.project_type === 'manga') {
     return (
       <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">
-        {!isFocusMode && <ManuscriptSidebar mobileOpen={isMobileIndexOpen} setMobileOpen={setIsMobileIndexOpen} />}
+        {!isFocusMode && isSidebarOpen && <ManuscriptSidebar mobileOpen={isMobileIndexOpen} setMobileOpen={setIsMobileIndexOpen} onCloseDesktop={() => setIsSidebarOpen(false)} />}
+        {!isFocusMode && !isSidebarOpen && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="fixed left-4 top-24 z-20 p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-r-lg shadow-lg text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+            title="Abrir Índice del Manuscrito"
+          >
+            <PanelLeftOpen size={24} />
+          </button>
+        )}
         <MangaCanvasEditor />
         {!isFocusMode && (
           <SceneInspector 
@@ -420,7 +430,16 @@ export default function ManuscriptEditor() {
 
   return (
     <div className="flex h-full w-full bg-[var(--color-background)] overflow-hidden">
-      {!isFocusMode && <ManuscriptSidebar mobileOpen={isMobileIndexOpen} setMobileOpen={setIsMobileIndexOpen} />}
+      {!isFocusMode && isSidebarOpen && <ManuscriptSidebar mobileOpen={isMobileIndexOpen} setMobileOpen={setIsMobileIndexOpen} onCloseDesktop={() => setIsSidebarOpen(false)} />}
+      {!isFocusMode && !isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-4 top-24 z-20 p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-r-lg shadow-lg text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+          title="Abrir Índice del Manuscrito"
+        >
+          <PanelLeftOpen size={24} />
+        </button>
+      )}
 
       {/* COLUMNA CENTRAL: BARRA FIJA SIEMPRE VISIBLE + ÁREA DE ESCRITURA CON SCROLL */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
