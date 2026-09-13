@@ -75,12 +75,20 @@ export default function AdminSettingsView() {
     setIsTestingAi(true);
     setTestResult(null);
     const activeProv = settings['global_ai_provider'] || aiStatus?.active_provider || 'gemini';
+    const getApiKey = () => {
+      switch(activeProv) {
+        case 'openai': return settings['global_openai_key'];
+        case 'anthropic': return settings['global_anthropic_key'];
+        case 'groq': return settings['global_groq_key'];
+        case 'openrouter': return settings['global_openrouter_key'];
+        case 'gemini': default: return settings['global_gemini_key'];
+      }
+    };
+    
     try {
       const res = await adminService.testAiConnection({
         provider: activeProv,
-        api_key: activeProv === 'openai' 
-          ? settings['global_openai_key'] 
-          : (activeProv === 'anthropic' ? settings['global_anthropic_key'] : settings['global_gemini_key']),
+        api_key: getApiKey(),
         local_url: settings['global_local_url'],
         local_model: settings['global_local_model']
       });

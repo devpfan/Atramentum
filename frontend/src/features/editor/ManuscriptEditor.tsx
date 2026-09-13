@@ -96,8 +96,8 @@ export default function ManuscriptEditor() {
   }, [fetchTree]);
 
   // Encontrar la escena activa
-  const activeScene = activeSceneId && tree 
-    ? tree.chapters.flatMap(c => c.scenes).find(s => s.id === activeSceneId) 
+  const activeScene = activeSceneId && tree?.chapters
+    ? tree.chapters.flatMap(c => c.scenes || []).find(s => s.id === activeSceneId) 
     : null;
 
   // Manejo del autoguardado con debounce manual

@@ -200,7 +200,7 @@ export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen, o
 
       {/* Lista de Capítulos y Escenas */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
-        {tree.chapters.map(chapter => {
+        {tree?.chapters?.map(chapter => {
           const isExpanded = expandedChapters[chapter.id] !== false; // Default expanded
 
           return (
@@ -253,7 +253,7 @@ export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen, o
                      }
                   }}
                 >
-                  {chapter.scenes.map(scene => (
+                  {(chapter.scenes || []).map(scene => (
                     <div
                       key={scene.id}
                       draggable
