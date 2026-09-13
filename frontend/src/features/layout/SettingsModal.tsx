@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, User, Palette, Check, RefreshCw, Key, Shield, HardDrive, Smartphone, Zap, Bot, Brain, Save, Type } from 'lucide-react';
+import { X, Save, Bot, Palette, Type, User, RefreshCw, Check } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import type { AISettings } from '../../api/auth';
 import { aiApi } from '../../api/ai';
