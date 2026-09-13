@@ -261,6 +261,8 @@ export default function AdminSettingsView() {
                 <option value="gemini">Google Gemini</option>
                 <option value="openai">OpenAI (ChatGPT)</option>
                 <option value="anthropic">Anthropic (Claude)</option>
+                <option value="groq">Groq</option>
+                <option value="openrouter">OpenRouter</option>
                 <option value="local">Ollama (Local / Offline)</option>
               </select>
             </div>
@@ -347,6 +349,60 @@ export default function AdminSettingsView() {
                 value={settings['global_anthropic_key'] || ''}
                 onChange={(e) => handleChange('global_anthropic_key', e.target.value)}
                 placeholder={aiStatus?.providers.anthropic.source === 'env' ? `Usando clave de .env (${aiStatus.providers.anthropic.masked_key})` : 'sk-ant-...'}
+                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
+              />
+            </div>
+
+            {/* Groq */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium">API Key de Groq</label>
+                {aiStatus?.providers.groq && (
+                  <span className={`text-xs px-2 py-0.5 rounded border ${
+                    aiStatus.providers.groq.source === 'env'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : (aiStatus.providers.groq.source === 'db'
+                          ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                          : 'text-[var(--color-text-secondary)] border-transparent')
+                  }`}>
+                    {aiStatus.providers.groq.source === 'env' && `✓ Detectada en .env (${aiStatus.providers.groq.masked_key})`}
+                    {aiStatus.providers.groq.source === 'db' && `✓ Guardada en BD (${aiStatus.providers.groq.masked_key})`}
+                    {aiStatus.providers.groq.source === 'none' && '⚪ Sin configurar'}
+                  </span>
+                )}
+              </div>
+              <input 
+                type="password"
+                value={settings['global_groq_key'] || ''}
+                onChange={(e) => handleChange('global_groq_key', e.target.value)}
+                placeholder={aiStatus?.providers.groq?.source === 'env' ? `Usando clave de .env (${aiStatus.providers.groq.masked_key})` : 'gsk_...'}
+                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
+              />
+            </div>
+
+            {/* OpenRouter */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium">API Key de OpenRouter</label>
+                {aiStatus?.providers.openrouter && (
+                  <span className={`text-xs px-2 py-0.5 rounded border ${
+                    aiStatus.providers.openrouter.source === 'env'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : (aiStatus.providers.openrouter.source === 'db'
+                          ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                          : 'text-[var(--color-text-secondary)] border-transparent')
+                  }`}>
+                    {aiStatus.providers.openrouter.source === 'env' && `✓ Detectada en .env (${aiStatus.providers.openrouter.masked_key})`}
+                    {aiStatus.providers.openrouter.source === 'db' && `✓ Guardada en BD (${aiStatus.providers.openrouter.masked_key})`}
+                    {aiStatus.providers.openrouter.source === 'none' && '⚪ Sin configurar'}
+                  </span>
+                )}
+              </div>
+              <input 
+                type="password"
+                value={settings['global_openrouter_key'] || ''}
+                onChange={(e) => handleChange('global_openrouter_key', e.target.value)}
+                placeholder={aiStatus?.providers.openrouter?.source === 'env' ? `Usando clave de .env (${aiStatus.providers.openrouter.masked_key})` : 'sk-or-...'}
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
             </div>

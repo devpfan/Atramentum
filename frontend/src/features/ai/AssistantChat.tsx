@@ -95,7 +95,11 @@ export default function AssistantChat() {
         const { done, value } = await reader.read();
         if (done) break;
         currentText += decoder.decode(value, { stream: true });
-        updateMessage(botMessageId, currentText);
+        
+        // Ocultar el proceso de razonamiento interno de algunos modelos
+        const cleanText = currentText.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim();
+        
+        updateMessage(botMessageId, cleanText);
       }
     } catch (error) {
       console.error('Error en el chat:', error);

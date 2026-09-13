@@ -20,9 +20,12 @@ class Settings(BaseSettings):
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     # Inteligencia Artificial (LLM)
+    GROQ_API_KEY: str | None = None
+    OPENROUTER_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
+
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

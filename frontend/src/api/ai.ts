@@ -10,6 +10,9 @@ export interface AiSettings {
   provider?: string;
   openai_api_key?: string;
   gemini_api_key?: string;
+  anthropic_api_key?: string;
+  groq_api_key?: string;
+  openrouter_api_key?: string;
   local_url?: string;
   local_model?: string;
   custom_personas?: AiPersona[];

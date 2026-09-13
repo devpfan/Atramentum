@@ -47,3 +47,6 @@ doc_temp/
 # Firebase & Frontend Build
 .firebase/
 frontend/dist/
+
+# Agentes
+.agents/

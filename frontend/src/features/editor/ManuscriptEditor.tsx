@@ -228,13 +228,16 @@ export default function ManuscriptEditor() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
+      let rawText = '';
       let done = false;
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
           const chunk = decoder.decode(value, { stream: !done });
-          setAiPreview(prev => ({ ...prev, generatedText: prev.generatedText + chunk }));
+          rawText += chunk;
+          const cleanText = rawText.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trimStart();
+          setAiPreview(prev => ({ ...prev, generatedText: cleanText }));
         }
       }
     } catch (err) {

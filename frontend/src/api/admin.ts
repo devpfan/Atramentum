@@ -23,6 +23,8 @@ export interface AIStatusResponse {
     gemini: AIProviderStatus;
     openai: AIProviderStatus;
     anthropic: AIProviderStatus;
+    groq: AIProviderStatus;
+    openrouter: AIProviderStatus;
     local: AIProviderStatus;
   };
 }
@@ -48,6 +50,10 @@ export const adminService = {
   },
   toggleUserStatus: async (userId: number) => {
     const res = await apiClient.patch<User>(`/admin/users/${userId}/status`);
+    return res.data;
+  },
+  resetUserPassword: async (userId: number, new_password: string) => {
+    const res = await apiClient.patch<User>(`/admin/users/${userId}/password`, { new_password });
     return res.data;
   },
   

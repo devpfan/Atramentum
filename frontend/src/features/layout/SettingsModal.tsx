@@ -470,6 +470,8 @@ export default function SettingsModal({ onClose }: Props) {
                         <option value="gemini">Google Gemini (Por defecto global)</option>
                         <option value="openai">OpenAI (ChatGPT)</option>
                         <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="groq">Groq</option>
+                        <option value="openrouter">OpenRouter</option>
                         <option value="local">Modelo Local (Ollama / Offline)</option>
                       </select>
                       <p className="text-xs text-[var(--color-text-secondary)] mt-1">
@@ -520,6 +522,38 @@ export default function SettingsModal({ onClose }: Props) {
                           value={aiSettings.anthropic_key || ''} 
                           onChange={handleAiChange}
                           placeholder="Dejar vacío para usar clave del servidor (o ingresar propia sk-ant-...)"
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                    )}
+
+                    {aiSettings.provider === 'groq' && (
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          API Key de Groq
+                        </label>
+                        <input 
+                          type="password" 
+                          name="groq_key" 
+                          value={aiSettings.groq_key || ''} 
+                          onChange={handleAiChange}
+                          placeholder="Dejar vacío para usar clave del servidor (o ingresar propia gsk_...)"
+                          className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
+                        />
+                      </div>
+                    )}
+
+                    {aiSettings.provider === 'openrouter' && (
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          API Key de OpenRouter
+                        </label>
+                        <input 
+                          type="password" 
+                          name="openrouter_key" 
+                          value={aiSettings.openrouter_key || ''} 
+                          onChange={handleAiChange}
+                          placeholder="Dejar vacío para usar clave del servidor (o ingresar propia sk-or-...)"
                           className="w-full bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md py-2 px-3 focus:outline-none focus:border-[#6366f1]"
                         />
                       </div>

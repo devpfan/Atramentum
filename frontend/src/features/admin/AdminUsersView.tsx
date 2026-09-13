@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../api/admin';
 import type { User } from '../../store/useAppStore';
-import { UserPlus, Shield } from 'lucide-react';
+import { UserPlus, Shield, Key } from 'lucide-react';
 
 export default function AdminUsersView() {
   const [users, setUsers] = useState<User[]>([]);
@@ -43,6 +43,19 @@ export default function AdminUsersView() {
       await adminService.toggleUserStatus(id);
       fetchUsers();
     } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleResetPassword = async (id: number) => {
+    const newPassword = prompt("Ingresa la nueva contraseña para este usuario:");
+    if (!newPassword) return;
+
+    try {
+      await adminService.resetUserPassword(id, newPassword);
+      alert("Contraseña actualizada con éxito.");
+    } catch (e) {
+      alert("Error al actualizar la contraseña. Revisa la consola.");
       console.error(e);
     }
   };
@@ -99,6 +112,13 @@ export default function AdminUsersView() {
                   )}
                 </td>
                 <td className="p-4 text-right space-x-2">
+                  <button 
+                    onClick={() => handleResetPassword(u.id)}
+                    className="text-sm px-3 py-1.5 rounded bg-[var(--color-background)] border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors inline-flex items-center gap-1"
+                    title="Resetear Contraseña"
+                  >
+                    <Key size={14} />
+                  </button>
                   <button 
                     onClick={() => handleToggleStatus(u.id)}
                     className="text-sm px-3 py-1.5 rounded bg-[var(--color-background)] border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors"

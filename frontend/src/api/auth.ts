@@ -6,6 +6,8 @@ export interface AISettings {
   gemini_key?: string;
   openai_key?: string;
   anthropic_key?: string;
+  groq_key?: string;
+  openrouter_key?: string;
   local_url?: string;
   local_model?: string;
 }

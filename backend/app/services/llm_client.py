@@ -14,11 +14,13 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
     global_gemini_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_gemini_key").first()
     global_openai_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openai_key").first()
     global_anthropic_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_anthropic_key").first()
+    global_groq_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_groq_key").first()
+    global_openrouter_key = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openrouter_key").first()
     global_local_url = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_url").first()
     global_local_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_model").first()
     
     # Si el usuario NO tiene un provider seteado con llaves validas, usamos el global como fallback
-    has_user_keys = bool(merged.get("gemini_key") or merged.get("openai_key") or merged.get("anthropic_key") or merged.get("local_url"))
+    has_user_keys = bool(merged.get("gemini_key") or merged.get("openai_key") or merged.get("anthropic_key") or merged.get("groq_key") or merged.get("openrouter_key") or merged.get("local_url"))
     
     if not has_user_keys and global_provider:
         merged["provider"] = global_provider.value
@@ -28,6 +30,10 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
             merged["openai_key"] = global_openai_key.value
         if global_anthropic_key:
             merged["anthropic_key"] = global_anthropic_key.value
+        if global_groq_key:
+            merged["groq_key"] = global_groq_key.value
+        if global_openrouter_key:
+            merged["openrouter_key"] = global_openrouter_key.value
         if global_local_url:
             merged["local_url"] = global_local_url.value
         if global_local_model:
@@ -51,6 +57,8 @@ def get_litellm_args(ai_settings: dict):
         local_url = ai_settings.get("local_url") or "http://localhost:11434"
         local_model = ai_settings.get("local_model") or "llama3:8b"
         clean_url = local_url.strip().rstrip("/")
+        if not clean_url.startswith("http://") and not clean_url.startswith("https://"):
+            clean_url = f"http://{clean_url}"
         
         # Si es Ollama (puerto 11434 por defecto), usamos el provider nativo de litellm 'ollama/'
         if "11434" in clean_url or not clean_url.endswith("/v1"):
@@ -62,6 +70,12 @@ def get_litellm_args(ai_settings: dict):
             args["model"] = f"openai/{local_model}"
             args["api_base"] = clean_url
             args["api_key"] = "dummy-key"
+    elif provider == "groq":
+        args["model"] = "groq/qwen/qwen3.6-27b"
+        args["api_key"] = ai_settings.get("groq_key") or settings.GROQ_API_KEY
+    elif provider == "openrouter":
+        args["model"] = "openrouter/meta-llama/llama-3-8b-instruct"
+        args["api_key"] = ai_settings.get("openrouter_key") or settings.OPENROUTER_API_KEY
     else:
         args["model"] = "gemini/gemini-flash-lite-latest"
         args["api_key"] = settings.GEMINI_API_KEY
@@ -313,6 +327,8 @@ async def get_embedding(text: str, ai_settings: dict) -> list[float]:
     elif provider == "local":
         local_url = ai_settings.get("local_url") or "http://localhost:11434"
         clean_url = local_url.strip().rstrip("/")
+        if not clean_url.startswith("http://") and not clean_url.startswith("https://"):
+            clean_url = f"http://{clean_url}"
         if "11434" in clean_url or not clean_url.endswith("/v1"):
             if clean_url.endswith("/v1"):
                 clean_url = clean_url[:-3]

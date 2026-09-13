@@ -26,6 +26,9 @@ class UserCreate(BaseModel):
     password: str
     is_superuser: bool = False
 
+class UserAdminPasswordUpdate(BaseModel):
+    new_password: str
+
 class GlobalSettingUpdate(BaseModel):
     key: str
     value: str
@@ -69,6 +72,17 @@ def toggle_user_status(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     user.is_active = not user.is_active
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.patch("/users/{user_id}/password", response_model=UserOut)
+def reset_user_password(user_id: int, password_data: UserAdminPasswordUpdate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    user.hashed_password = get_password_hash(password_data.new_password)
     db.commit()
     db.refresh(user)
     return user
@@ -137,6 +151,18 @@ def get_ai_status(db: Session = Depends(get_db)):
     anthropic_source = "db" if db_anthropic else ("env" if env_anthropic else "none")
     anthropic_key = db_anthropic or env_anthropic
     
+    # Groq
+    db_groq = settings_db.get("global_groq_key")
+    env_groq = app_settings.GROQ_API_KEY
+    groq_source = "db" if db_groq else ("env" if env_groq else "none")
+    groq_key = db_groq or env_groq
+    
+    # OpenRouter
+    db_openrouter = settings_db.get("global_openrouter_key")
+    env_openrouter = app_settings.OPENROUTER_API_KEY
+    openrouter_source = "db" if db_openrouter else ("env" if env_openrouter else "none")
+    openrouter_key = db_openrouter or env_openrouter
+    
     # Local
     local_url = settings_db.get("global_local_url", "http://localhost:11434")
     local_model = settings_db.get("global_local_model", "llama3:8b")
@@ -147,6 +173,10 @@ def get_ai_status(db: Session = Depends(get_db)):
         active_model = "gpt-4o-mini"
     elif active_provider == "anthropic":
         active_model = "claude-3-5-haiku-latest"
+    elif active_provider == "groq":
+        active_model = "groq/qwen/qwen3.6-27b"
+    elif active_provider == "openrouter":
+        active_model = "openrouter/meta-llama/llama-3-8b-instruct"
     elif active_provider == "local":
         active_model = f"ollama/{local_model}"
         
@@ -175,6 +205,20 @@ def get_ai_status(db: Session = Depends(get_db)):
                 "masked_key": mask_key(anthropic_key),
                 "model": "claude-3-5-haiku-latest"
             },
+            "groq": {
+                "name": "Groq",
+                "configured": bool(groq_key),
+                "source": groq_source,
+                "masked_key": mask_key(groq_key),
+                "model": "groq/qwen/qwen3.6-27b"
+            },
+            "openrouter": {
+                "name": "OpenRouter",
+                "configured": bool(openrouter_key),
+                "source": openrouter_source,
+                "masked_key": mask_key(openrouter_key),
+                "model": "openrouter/meta-llama/llama-3-8b-instruct"
+            },
             "local": {
                 "name": "Ollama (Local / Offline)",
                 "configured": bool(local_url and local_model),
@@ -201,6 +245,10 @@ async def test_ai_connection(req: Optional[AiTestRequest] = None, db: Session = 
             ai_dict["openai_key"] = req.api_key
         elif provider == "anthropic":
             ai_dict["anthropic_key"] = req.api_key
+        elif provider == "groq":
+            ai_dict["groq_key"] = req.api_key
+        elif provider == "openrouter":
+            ai_dict["openrouter_key"] = req.api_key
     else:
         if provider == "gemini":
             ai_dict["gemini_key"] = settings_db.get("global_gemini_key")
@@ -208,6 +256,10 @@ async def test_ai_connection(req: Optional[AiTestRequest] = None, db: Session = 
             ai_dict["openai_key"] = settings_db.get("global_openai_key")
         elif provider == "anthropic":
             ai_dict["anthropic_key"] = settings_db.get("global_anthropic_key")
+        elif provider == "groq":
+            ai_dict["groq_key"] = settings_db.get("global_groq_key")
+        elif provider == "openrouter":
+            ai_dict["openrouter_key"] = settings_db.get("global_openrouter_key")
 
     if provider == "local":
         ai_dict["local_url"] = (req.local_url if req and req.local_url else None) or settings_db.get("global_local_url", "http://localhost:11434")
