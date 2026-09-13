@@ -163,20 +163,26 @@ def get_ai_status(db: Session = Depends(get_db)):
     openrouter_source = "db" if db_openrouter else ("env" if env_openrouter else "none")
     openrouter_key = db_openrouter or env_openrouter
     
+    gemini_model = settings_db.get("global_gemini_model", "gemini/gemini-2.5-flash")
+    openai_model = settings_db.get("global_openai_model", "gpt-4o-mini")
+    anthropic_model = settings_db.get("global_anthropic_model", "claude-3-5-haiku-latest")
+    groq_model = settings_db.get("global_groq_model", "groq/llama-3.3-70b-versatile")
+    openrouter_model = settings_db.get("global_openrouter_model", "openrouter/meta-llama/llama-3.3-70b-instruct")
+
     # Local
     local_url = settings_db.get("global_local_url", "http://localhost:11434")
     local_model = settings_db.get("global_local_model", "llama3:8b")
     
     # Modelo activo
-    active_model = "gemini/gemini-flash-lite-latest"
+    active_model = gemini_model
     if active_provider == "openai":
-        active_model = "gpt-4o-mini"
+        active_model = openai_model
     elif active_provider == "anthropic":
-        active_model = "claude-3-5-haiku-latest"
+        active_model = anthropic_model
     elif active_provider == "groq":
-        active_model = "groq/qwen/qwen3.6-27b"
+        active_model = groq_model
     elif active_provider == "openrouter":
-        active_model = "openrouter/meta-llama/llama-3-8b-instruct"
+        active_model = openrouter_model
     elif active_provider == "local":
         active_model = f"ollama/{local_model}"
         
@@ -189,35 +195,35 @@ def get_ai_status(db: Session = Depends(get_db)):
                 "configured": bool(gemini_key),
                 "source": gemini_source,
                 "masked_key": mask_key(gemini_key),
-                "model": "gemini/gemini-flash-lite-latest"
+                "model": gemini_model
             },
             "openai": {
                 "name": "OpenAI (ChatGPT)",
                 "configured": bool(openai_key),
                 "source": openai_source,
                 "masked_key": mask_key(openai_key),
-                "model": "gpt-4o-mini"
+                "model": openai_model
             },
             "anthropic": {
                 "name": "Anthropic (Claude)",
                 "configured": bool(anthropic_key),
                 "source": anthropic_source,
                 "masked_key": mask_key(anthropic_key),
-                "model": "claude-3-5-haiku-latest"
+                "model": anthropic_model
             },
             "groq": {
                 "name": "Groq",
                 "configured": bool(groq_key),
                 "source": groq_source,
                 "masked_key": mask_key(groq_key),
-                "model": "groq/qwen/qwen3.6-27b"
+                "model": groq_model
             },
             "openrouter": {
                 "name": "OpenRouter",
                 "configured": bool(openrouter_key),
                 "source": openrouter_source,
                 "masked_key": mask_key(openrouter_key),
-                "model": "openrouter/meta-llama/llama-3-8b-instruct"
+                "model": openrouter_model
             },
             "local": {
                 "name": "Ollama (Local / Offline)",

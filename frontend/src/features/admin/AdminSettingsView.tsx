@@ -300,6 +300,18 @@ export default function AdminSettingsView() {
                 placeholder={aiStatus?.providers.gemini.source === 'env' ? `Usando clave de .env (${aiStatus.providers.gemini.masked_key})` : 'AIzaSy...'}
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de Gemini</label>
+                <select 
+                  value={settings['global_gemini_model'] || 'gemini/gemini-2.5-flash'} 
+                  onChange={(e) => handleChange('global_gemini_model', e.target.value)}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                >
+                  <option value="gemini/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="gemini/gemini-2.5-pro">Gemini 2.5 Pro</option>
+                  <option value="gemini/gemini-flash-lite-latest">Gemini Flash Lite</option>
+                </select>
+              </div>
               {aiStatus?.providers.gemini.source === 'env' && !settings['global_gemini_key'] && (
                 <p className="text-xs text-emerald-400 mt-1">
                   💡 Clave activa desde el archivo <code className="bg-white/5 px-1 py-0.5 rounded">.env</code>. No es necesario escribirla de nuevo a menos que quieras anularla.
@@ -332,6 +344,18 @@ export default function AdminSettingsView() {
                 placeholder={aiStatus?.providers.openai.source === 'env' ? `Usando clave de .env (${aiStatus.providers.openai.masked_key})` : 'sk-...'}
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de OpenAI</label>
+                <select 
+                  value={settings['global_openai_model'] || 'gpt-4o-mini'} 
+                  onChange={(e) => handleChange('global_openai_model', e.target.value)}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                >
+                  <option value="gpt-4o-mini">GPT-4o Mini (Rápido)</option>
+                  <option value="gpt-4o">GPT-4o (Avanzado)</option>
+                  <option value="o1-mini">o1-mini (Razonamiento)</option>
+                </select>
+              </div>
             </div>
 
             {/* Anthropic */}
@@ -359,6 +383,18 @@ export default function AdminSettingsView() {
                 placeholder={aiStatus?.providers.anthropic.source === 'env' ? `Usando clave de .env (${aiStatus.providers.anthropic.masked_key})` : 'sk-ant-...'}
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de Anthropic</label>
+                <select 
+                  value={settings['global_anthropic_model'] || 'claude-3-5-haiku-latest'} 
+                  onChange={(e) => handleChange('global_anthropic_model', e.target.value)}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                >
+                  <option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (Rápido)</option>
+                  <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Recomendado)</option>
+                  <option value="claude-3-opus-latest">Claude 3 Opus (Potente)</option>
+                </select>
+              </div>
             </div>
 
             {/* Groq */}
@@ -386,6 +422,18 @@ export default function AdminSettingsView() {
                 placeholder={aiStatus?.providers.groq?.source === 'env' ? `Usando clave de .env (${aiStatus.providers.groq.masked_key})` : 'gsk_...'}
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de Groq</label>
+                <select 
+                  value={settings['global_groq_model'] || 'groq/llama-3.3-70b-versatile'} 
+                  onChange={(e) => handleChange('global_groq_model', e.target.value)}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                >
+                  <option value="groq/llama-3.3-70b-versatile">Llama 3.3 70B (Versátil)</option>
+                  <option value="groq/llama-3.1-8b-instant">Llama 3.1 8B (Instantáneo)</option>
+                  <option value="groq/mixtral-8x7b-32768">Mixtral 8x7B (32K Contexto)</option>
+                </select>
+              </div>
             </div>
 
             {/* OpenRouter */}
@@ -413,6 +461,18 @@ export default function AdminSettingsView() {
                 placeholder={aiStatus?.providers.openrouter?.source === 'env' ? `Usando clave de .env (${aiStatus.providers.openrouter.masked_key})` : 'sk-or-...'}
                 className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-2 text-[var(--color-text-primary)]"
               />
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Modelo de OpenRouter</label>
+                <select 
+                  value={settings['global_openrouter_model'] || 'openrouter/meta-llama/llama-3.3-70b-instruct'} 
+                  onChange={(e) => handleChange('global_openrouter_model', e.target.value)}
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-md px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+                >
+                  <option value="openrouter/meta-llama/llama-3.3-70b-instruct">Meta: Llama 3.3 70B</option>
+                  <option value="openrouter/anthropic/claude-3.5-sonnet">Anthropic: Claude 3.5 Sonnet</option>
+                  <option value="openrouter/google/gemini-2.5-pro">Google: Gemini 2.5 Pro</option>
+                </select>
+              </div>
             </div>
 
             {/* Ollama URL */}

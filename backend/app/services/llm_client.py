@@ -19,11 +19,17 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
     global_local_url = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_url").first()
     global_local_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_local_model").first()
     
+    global_gemini_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_gemini_model").first()
+    global_openai_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openai_model").first()
+    global_anthropic_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_anthropic_model").first()
+    global_groq_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_groq_model").first()
+    global_openrouter_model = db.query(GlobalSettings).filter(GlobalSettings.key == "global_openrouter_model").first()
+    
     # Si el usuario NO tiene un provider seteado con llaves validas, usamos el global como fallback
     has_user_keys = bool(merged.get("gemini_key") or merged.get("openai_key") or merged.get("anthropic_key") or merged.get("groq_key") or merged.get("openrouter_key") or merged.get("local_url"))
     
-    if not has_user_keys and global_provider:
-        merged["provider"] = global_provider.value
+    if not has_user_keys:
+        merged["provider"] = global_provider.value if global_provider else "gemini"
         if global_gemini_key:
             merged["gemini_key"] = global_gemini_key.value
         if global_openai_key:
@@ -39,19 +45,31 @@ def get_merged_ai_settings(user_settings: dict, db: Session) -> dict:
         if global_local_model:
             merged["local_model"] = global_local_model.value
             
+        # Modeles
+        if global_gemini_model:
+            merged["gemini_model"] = global_gemini_model.value
+        if global_openai_model:
+            merged["openai_model"] = global_openai_model.value
+        if global_anthropic_model:
+            merged["anthropic_model"] = global_anthropic_model.value
+        if global_groq_model:
+            merged["groq_model"] = global_groq_model.value
+        if global_openrouter_model:
+            merged["openrouter_model"] = global_openrouter_model.value
+            
     return merged
 
 def get_litellm_args(ai_settings: dict):
     provider = ai_settings.get("provider", "gemini")
     args = {}
     if provider == "gemini":
-        args["model"] = "gemini/gemini-flash-lite-latest"
+        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-flash-lite-latest"
         args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     elif provider == "openai":
-        args["model"] = "gpt-4o-mini"
+        args["model"] = ai_settings.get("openai_model") or "gpt-4o-mini"
         args["api_key"] = ai_settings.get("openai_key") or settings.OPENAI_API_KEY
     elif provider == "anthropic":
-        args["model"] = "claude-3-5-haiku-latest"
+        args["model"] = ai_settings.get("anthropic_model") or "claude-3-5-haiku-latest"
         args["api_key"] = ai_settings.get("anthropic_key") or settings.ANTHROPIC_API_KEY
     elif provider == "local":
         local_url = ai_settings.get("local_url") or "http://localhost:11434"
@@ -71,13 +89,13 @@ def get_litellm_args(ai_settings: dict):
             args["api_base"] = clean_url
             args["api_key"] = "dummy-key"
     elif provider == "groq":
-        args["model"] = "groq/qwen/qwen3.6-27b"
+        args["model"] = ai_settings.get("groq_model") or "groq/llama-3.3-70b-versatile"
         args["api_key"] = ai_settings.get("groq_key") or settings.GROQ_API_KEY
     elif provider == "openrouter":
-        args["model"] = "openrouter/meta-llama/llama-3-8b-instruct"
+        args["model"] = ai_settings.get("openrouter_model") or "openrouter/meta-llama/llama-3.3-70b-instruct"
         args["api_key"] = ai_settings.get("openrouter_key") or settings.OPENROUTER_API_KEY
     else:
-        args["model"] = "gemini/gemini-flash-lite-latest"
+        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-flash-lite-latest"
         args["api_key"] = settings.GEMINI_API_KEY
     
     return args
