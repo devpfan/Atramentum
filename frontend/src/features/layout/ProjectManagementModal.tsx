@@ -251,7 +251,7 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
                     className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500"
                   >
                     <option value="">-- Proyecto Independiente --</option>
-                    {series.map(s => (
+                    {(Array.isArray(series) ? series : []).map(s => (
                       <option key={s.id} value={s.id}>{s.title}</option>
                     ))}
                   </select>
@@ -308,8 +308,8 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
 
           <div className="space-y-8">
             {/* Primero mostramos las Series */}
-            {series.map(s => {
-              const seriesBooks = books.filter(b => b.series_id === s.id);
+            {(Array.isArray(series) ? series : []).map(s => {
+              const seriesBooks = (Array.isArray(books) ? books : []).filter(b => b.series_id === s.id);
               return (
                 <div key={`series-${s.id}`} className="border border-[var(--color-border)] rounded-xl overflow-hidden">
                   <div className="bg-[var(--color-surface-hover)] p-4 flex justify-between items-center border-b border-[var(--color-border)]">
@@ -342,14 +342,14 @@ export const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({ 
             })}
 
             {/* Libros sin serie */}
-            {books.filter(b => !b.series_id).length > 0 && (
+            {(Array.isArray(books) ? books : []).filter(b => !b.series_id).length > 0 && (
               <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
                 <div className="bg-[var(--color-surface-hover)] p-4 flex items-center gap-2 border-b border-[var(--color-border)]">
                   <BookOpen className="w-5 h-5 text-[var(--color-text-secondary)]" />
                   <h4 className="font-bold text-[var(--color-text-primary)]">Proyectos Independientes</h4>
                 </div>
                 <table className="w-full text-left border-collapse">
-                  <BookTableBody books={books.filter(b => !b.series_id)} onExport={handleExport} onDelete={(b) => setBookToDelete({id: b.id, title: b.title})} seriesList={series} onAssignSeries={updateBook} />
+                  <BookTableBody books={(Array.isArray(books) ? books : []).filter(b => !b.series_id)} onExport={handleExport} onDelete={(b) => setBookToDelete({id: b.id, title: b.title})} seriesList={series} onAssignSeries={updateBook} />
                 </table>
               </div>
             )}
@@ -467,7 +467,7 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
         </tr>
       </thead>
       <tbody>
-        {books.map(book => (
+        {(Array.isArray(books) ? books : []).map(book => (
           <tr key={book.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-background)] transition-colors group">
             <td className="py-4 pl-4">
               <div className="font-semibold text-[var(--color-text-primary)]">{book.title}</div>
@@ -481,7 +481,7 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
               )}
               {/* Selector de Serie */}
               <select 
-                className="mt-2 text-xs bg-[var(--color-background)] border border-[var(--color-border)] rounded px-2 py-1 text-[var(--color-text-secondary)] focus:outline-none focus:border-indigo-500 max-w-[200px]"
+                className="w-full text-xs bg-[var(--color-background)] border border-[var(--color-border)] rounded px-2 py-1 text-[var(--color-text-primary)] mt-2 max-w-[200px]"
                 value={book.series_id || ''}
                 onChange={(e) => {
                   const val = e.target.value ? parseInt(e.target.value) : null;
@@ -489,7 +489,7 @@ const BookTableBody = ({ books, onExport, onDelete, seriesList, onAssignSeries }
                 }}
               >
                 <option value="">-- Sin Serie --</option>
-                {seriesList.map(s => (
+                {(Array.isArray(seriesList) ? seriesList : []).map(s => (
                   <option key={s.id} value={s.id}>{s.title}</option>
                 ))}
               </select>
