@@ -10,10 +10,7 @@
     "rewrites": [
       {
         "source": "**",
-        "run": {
-          "serviceId": "atramentum",
-          "region": "us-central1"
-        }
+        "destination": "/index.html"
       }
     ]
   }
