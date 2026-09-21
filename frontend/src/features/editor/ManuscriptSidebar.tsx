@@ -219,7 +219,7 @@ export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen, o
                   />
                 </div>
 
-                <div className="flex items-center gap-1 opacity-30 hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity shrink-0">
+                <div className="flex items-center gap-1 transition-opacity shrink-0 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                   <button 
                     onClick={(e) => handleCreateScene(chapter.id, e)}
                     className="p-1 hover:bg-[#6366f1]/20 hover:text-[#6366f1] text-[var(--color-text-secondary)] rounded transition-colors"
@@ -288,7 +288,7 @@ export default function ManuscriptSidebar({ mobileOpen = false, setMobileOpen, o
                           e.stopPropagation();
                           setItemToDelete({ type: 'scene', id: scene.id, title: scene.title });
                         }}
-                        className="opacity-30 hover:opacity-100 lg:opacity-0 lg:group-hover/scene:opacity-100 p-1 hover:bg-red-500/20 hover:text-red-400 text-[var(--color-text-secondary)] rounded transition-opacity shrink-0"
+                        className="p-1 hover:bg-red-500/20 hover:text-red-400 text-[var(--color-text-secondary)] rounded transition-opacity shrink-0 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/scene:opacity-100"
                         title="Eliminar escena"
                       >
                         <Trash2 size={13} />
