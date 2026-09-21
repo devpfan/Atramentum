@@ -180,14 +180,15 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
     db.commit()
     
     # Recuperar solo los últimos 10 mensajes para enviar al LLM y ahorrar tokens
-    recent_messages = db.query(ChatMessage).filter(
+    recent_messages_objs = db.query(ChatMessage).filter(
         ChatMessage.session_id == chat_session.id
     ).order_by(ChatMessage.id.desc()).limit(10).all()
     
-    # Invertir para que queden en orden cronológico correcto
-    recent_messages = list(reversed(recent_messages))
+    # Invertir para que queden en orden cronológico correcto y convertir a dict
+    recent_messages = [{"role": m.role, "content": m.content} for m in reversed(recent_messages_objs)]
     
     ai_settings = get_merged_ai_settings(current_user.ai_settings, db)
+    chat_session_id = chat_session.id
     
     async def chat_generator():
         full_response = ""
@@ -195,10 +196,15 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db), current_user
             full_response += chunk
             yield chunk
             
-        # Al finalizar el stream, guardamos en BD
-        model_msg_db = ChatMessage(session_id=chat_session.id, role="model", content=full_response)
-        db.add(model_msg_db)
-        db.commit()
+        # Al finalizar el stream, guardamos en BD con una nueva sesión
+        from app.db.database import SessionLocal
+        db_stream = SessionLocal()
+        try:
+            model_msg_db = ChatMessage(session_id=chat_session_id, role="model", content=full_response)
+            db_stream.add(model_msg_db)
+            db_stream.commit()
+        finally:
+            db_stream.close()
 
     return StreamingResponse(
         chat_generator(),
