@@ -92,8 +92,10 @@ export default function ManuscriptEditor() {
   }, [fetchEntries, activeBookId]);
 
   useEffect(() => {
-    fetchTree();
-  }, [fetchTree]);
+    if (activeBookId) {
+      fetchTree();
+    }
+  }, [fetchTree, activeBookId]);
 
   // Encontrar la escena activa
   const activeScene = activeSceneId && tree?.chapters
@@ -127,12 +129,20 @@ export default function ManuscriptEditor() {
     }
   });
 
-  // Si cambia la escena activa, actualizamos el contenido del editor
+  // Si cambia la escena activa o su contenido en el store, actualizamos el editor
   useEffect(() => {
-    if (editor && activeScene && editor.getHTML() !== activeScene.content) {
-      editor.commands.setContent(activeScene.content || '<p>Comienza a escribir aquí...</p>');
+    if (editor && !editor.isDestroyed && activeScene) {
+      try {
+        const currentHTML = editor.getHTML();
+        const newContent = activeScene.content || '<p>Comienza a escribir aquí...</p>';
+        if (currentHTML !== newContent) {
+          editor.commands.setContent(newContent);
+        }
+      } catch (e) {
+        console.warn("Editor not fully initialized yet", e);
+      }
     }
-  }, [activeSceneId, editor]);
+  }, [activeScene?.content, editor]);
 
   // Forzar actualización de tags cuando las entradas del codex (Archivum) terminen de cargar
   useEffect(() => {

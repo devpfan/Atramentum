@@ -62,13 +62,16 @@ def get_litellm_args(ai_settings: dict):
     provider = ai_settings.get("provider", "gemini")
     args = {}
     if provider == "gemini":
-        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-1.5-flash"
+        model = ai_settings.get("gemini_model") or "gemini-1.5-flash"
+        args["model"] = model if model.startswith("gemini/") else f"gemini/{model}"
         args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     elif provider == "openai":
-        args["model"] = ai_settings.get("openai_model") or "gpt-4o-mini"
+        model = ai_settings.get("openai_model") or "gpt-4o-mini"
+        args["model"] = model if model.startswith("openai/") else f"openai/{model}"
         args["api_key"] = ai_settings.get("openai_key") or settings.OPENAI_API_KEY
     elif provider == "anthropic":
-        args["model"] = ai_settings.get("anthropic_model") or "claude-3-5-haiku-latest"
+        model = ai_settings.get("anthropic_model") or "claude-3-5-haiku-latest"
+        args["model"] = model if model.startswith("anthropic/") else f"anthropic/{model}"
         args["api_key"] = ai_settings.get("anthropic_key") or settings.ANTHROPIC_API_KEY
     elif provider == "local":
         local_url = ai_settings.get("local_url") or "http://localhost:11434"
@@ -88,13 +91,16 @@ def get_litellm_args(ai_settings: dict):
             args["api_base"] = clean_url
             args["api_key"] = "dummy-key"
     elif provider == "groq":
-        args["model"] = ai_settings.get("groq_model") or "groq/llama-3.1-8b-instant"
+        model = ai_settings.get("groq_model") or "llama-3.1-8b-instant"
+        args["model"] = model if model.startswith("groq/") else f"groq/{model}"
         args["api_key"] = ai_settings.get("groq_key") or settings.GROQ_API_KEY
     elif provider == "openrouter":
-        args["model"] = ai_settings.get("openrouter_model") or "openrouter/meta-llama/llama-3.3-70b-instruct"
+        model = ai_settings.get("openrouter_model") or "meta-llama/llama-3.3-70b-instruct"
+        args["model"] = model if model.startswith("openrouter/") else f"openrouter/{model}"
         args["api_key"] = ai_settings.get("openrouter_key") or settings.OPENROUTER_API_KEY
     else:
-        args["model"] = ai_settings.get("gemini_model") or "gemini/gemini-1.5-flash"
+        model = ai_settings.get("gemini_model") or "gemini-1.5-flash"
+        args["model"] = model if model.startswith("gemini/") else f"gemini/{model}"
         args["api_key"] = ai_settings.get("gemini_key") or settings.GEMINI_API_KEY
     
     return args

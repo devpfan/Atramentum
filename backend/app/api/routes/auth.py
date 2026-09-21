@@ -65,7 +65,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     user = User(
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
-        ai_settings={"provider": "gemini"}
+        ai_settings={}
     )
     db.add(user)
     db.commit()

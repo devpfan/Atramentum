@@ -78,6 +78,7 @@ export const useManuscriptStore = create<ManuscriptState>((set, get) => ({
       set({ books });
       if (books.length > 0 && !get().activeBookId) {
         set({ activeBookId: books[0].id });
+        get().fetchTree();
       }
     } catch (err: any) {
       console.error(err);
